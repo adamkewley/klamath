@@ -1,5 +1,5 @@
-#ifndef PROJECT_MMAPED_DATA_H
-#define PROJECT_MMAPED_DATA_H
+#ifndef PROJECT_MMAP_H
+#define PROJECT_MMAP_H
 
 #include <string>
 
@@ -22,4 +22,4 @@ namespace klamath {
     };
 }
 
-#endif //PROJECT_MMAPED_DATA_H
+#endif //PROJECT_MMAP_H

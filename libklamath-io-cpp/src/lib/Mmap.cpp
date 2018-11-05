@@ -4,9 +4,9 @@
 #include <sys/mman.h>
 #include <fcntl.h>
 #include <errno.h>
+#include <unistd.h>
 #include <stdexcept>
 #include <cstring>
-#include <unistd.h>
 
 namespace klamath {
     Mmap Mmap::from_file(const std::string &path) {

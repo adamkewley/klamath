@@ -2,11 +2,17 @@ cmake_minimum_required(VERSION 3.9)
 
 project(libklamath-io-cpp)
 
-
 add_library(${PROJECT_NAME} SHARED
         src/dat2/dat2_file_viewer.cpp
         src/dat2/dat2_entry_metadata.cpp
-        src/lib/Mmap.cpp)
+        src/lib/Mmap.cpp
+        src/lib/zlib_helpers.cpp)
+
+find_package( ZLIB REQUIRED )
+if ( ZLIB_FOUND )
+    include_directories( ${ZLIB_INCLUDE_DIRS} )
+    target_link_libraries( ${PROJECT_NAME} ${ZLIB_LIBRARIES} )
+endif( ZLIB_FOUND )
 
 target_include_directories(${PROJECT_NAME}
         PUBLIC

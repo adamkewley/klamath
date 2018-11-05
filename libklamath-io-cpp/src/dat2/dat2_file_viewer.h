@@ -4,11 +4,9 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
-#include <lib/Mmap.h>
-#include <bits/unique_ptr.h>
 
 #include "../lib/optional.h"
-
+#include "../lib/Mmap.h"
 #include "dat2_entry_metadata.h"
 
 namespace klamath {

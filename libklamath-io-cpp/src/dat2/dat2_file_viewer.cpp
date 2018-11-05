@@ -1,7 +1,9 @@
+#include "dat2_file_viewer.h"
+
 #include <utility>
 #include <sstream>
 
-#include "dat2_file_viewer.h"
+#include "../lib/zlib_helpers.h"
 
 namespace {
     const size_t NUM_FILES_FIELD_LEN = 4;
@@ -67,7 +69,7 @@ namespace {
             throw std::runtime_error(errmsg.str());
         }
 
-        size_t tree_start = footer_start - tree_size;
+        size_t tree_start = (footer_start + TREE_SIZE_FIELD_LEN) - tree_size;
 
         if (tree_size < NUM_FILES_FIELD_LEN) {
             std::stringstream errmsg;
@@ -107,14 +109,14 @@ namespace {
         filename.reserve(filename_len);
 
         for (size_t i = 0; i < filename_len; i++) {
-            filename[i] = filename_start[i];
+            filename.push_back(filename_start[i]);
         }
 
         const uint8_t* footer_start = data + TREE_ENT_FILENAME_FIELD_LEN + filename_len;
         bool is_compressed = footer_start[0] != 0;
-        size_t decompressed_size = read_little_endian_u32(data + TREE_ENT_IS_COMPRESSED_FIELD_LEN);
-        size_t packed_size = read_little_endian_u32(data + TREE_ENT_IS_COMPRESSED_FIELD_LEN + TREE_ENT_DECOMP_SIZE_FIELD_LEN);
-        size_t offset = read_little_endian_u32(data + TREE_ENT_IS_COMPRESSED_FIELD_LEN + TREE_ENT_DECOMP_SIZE_FIELD_LEN + TREE_ENT_PACKED_SIZE_FIELD_LEN);
+        size_t decompressed_size = read_little_endian_u32(footer_start + TREE_ENT_IS_COMPRESSED_FIELD_LEN);
+        size_t packed_size = read_little_endian_u32(footer_start + TREE_ENT_IS_COMPRESSED_FIELD_LEN + TREE_ENT_DECOMP_SIZE_FIELD_LEN);
+        size_t offset = read_little_endian_u32(footer_start + TREE_ENT_IS_COMPRESSED_FIELD_LEN + TREE_ENT_DECOMP_SIZE_FIELD_LEN + TREE_ENT_PACKED_SIZE_FIELD_LEN);
 
         Dat2TreeEntry left = {
                 .filename = std::move(filename),
@@ -168,10 +170,24 @@ namespace klamath {
     }
 
     tl::optional<std::vector<uint8_t>> Dat2FileViewer::read_entry(const std::string &path) const {
-        return tl::optional<std::vector<uint8_t>>(*((uint8_t *)this->_mmap.get()));
+        if (this->_entries.count(path) == 0) {
+            return tl::nullopt;
+        } else {
+            const Dat2EntryMetadata& entry = this->_entries.at(path);
+            const uint8_t* data_ptr = this->_mmap.get() + entry.get_offset();
+
+            std::vector<uint8_t> data =
+                    ZlibHelpers::inflate_all(data_ptr, entry.get_packed_size(), entry.get_decompressed_size());
+
+            return {std::move(data)};
+        }
     }
 
     std::vector<std::string> Dat2FileViewer::entry_names() const {
-        return std::vector<std::string>();
+        std::vector<std::string> ret(this->_entries.size());
+        for (const auto& e : this->_entries) {
+            ret.push_back(e.first);
+        }
+        return ret;
     }
 }
