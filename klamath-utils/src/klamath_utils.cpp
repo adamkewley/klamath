@@ -1,6 +1,6 @@
 #include <iostream>
 
-#include "dat2/dat2_file_viewer.h"
+#include "dat2/Dat2FileViewer.h"
 
 #include "dat2.h"
 

@@ -3,7 +3,7 @@
 #include <sys/mman.h>
 #include <iostream>
 
-#include <dat2/dat2_file_viewer.h>
+#include <dat2/Dat2FileViewer.h>
 
 namespace klamath {
     int dat2_main(int argc, const char **argv) {

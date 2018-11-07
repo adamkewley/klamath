@@ -1,4 +1,4 @@
-#include "zlib_helpers.h"
+#include "ZlibHelpers.h"
 
 #include <stdexcept>
 

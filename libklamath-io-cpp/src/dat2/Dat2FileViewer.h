@@ -7,7 +7,7 @@
 
 #include "../lib/optional.h"
 #include "../lib/Mmap.h"
-#include "dat2_entry_metadata.h"
+#include "Dat2EntryMetadata.h"
 
 namespace klamath {
 

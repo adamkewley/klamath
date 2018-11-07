@@ -1,9 +1,9 @@
-#include "dat2_file_viewer.h"
+#include "Dat2FileViewer.h"
 
 #include <utility>
 #include <sstream>
 
-#include "../lib/zlib_helpers.h"
+#include "lib/ZlibHelpers.h"
 
 namespace {
     const size_t NUM_FILES_FIELD_LEN = 4;

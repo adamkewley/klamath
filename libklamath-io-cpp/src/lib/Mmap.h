@@ -12,6 +12,8 @@ namespace klamath {
         Mmap(Mmap&&) noexcept;
         ~Mmap();
 
+        Mmap& operator=(const Mmap&) = delete;
+
         const uint8_t* get() const;
         const size_t size() const;
 
