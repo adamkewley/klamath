@@ -1,15 +1,14 @@
-#ifndef PROJECT_AAF_PARSER_H
-#define PROJECT_AAF_PARSER_H
+#ifndef PROJECT_AAFPARSER_H
+#define PROJECT_AAFPARSER_H
 
 #include <cstddef>
 #include <cstdint>
+
 #include "AafFile.h"
 
 namespace klamath {
-    class AafParser {
-    public:
-        AafFile static parse(uint8_t const * data, size_t data_avail);
-    };
+
+    AafFile aaf_parse(const uint8_t* data, size_t size);
 }
 
-#endif //PROJECT_AAF_PARSER_H
+#endif //PROJECT_AAFPARSER_H

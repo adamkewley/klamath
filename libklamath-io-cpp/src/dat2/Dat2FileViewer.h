@@ -7,9 +7,14 @@
 
 #include "../lib/optional.h"
 #include "../lib/Mmap.h"
-#include "Dat2EntryMetadata.h"
 
 namespace klamath {
+
+    typedef struct Dat2EntryMetadata {
+        uint32_t offset;
+        uint32_t packed_size;
+        uint32_t decompressed_size;
+    } Dat2EntryMetadata;
 
     class Dat2FileViewer {
 

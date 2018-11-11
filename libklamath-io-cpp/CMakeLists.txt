@@ -4,9 +4,10 @@ project(libklamath-io-cpp)
 
 add_library(${PROJECT_NAME} SHARED
         src/dat2/Dat2FileViewer.cpp
-        src/dat2/Dat2EntryMetadata.cpp
+        src/dat2/Dat2Parser.cpp
         src/lib/Mmap.cpp
-        src/lib/ZlibHelpers.cpp src/aaf/AafParser.cpp src/aaf/AafParser.h src/aaf/AafFile.cpp src/aaf/AafFile.h src/aaf/AafGlyph.cpp src/aaf/AafGlyph.h)
+        src/lib/ZlibHelpers.cpp
+        src/aaf/AafParser.cpp)
 
 find_package( ZLIB REQUIRED )
 if ( ZLIB_FOUND )
