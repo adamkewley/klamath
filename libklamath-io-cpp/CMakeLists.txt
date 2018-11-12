@@ -7,7 +7,8 @@ add_library(${PROJECT_NAME} SHARED
         src/dat2/Dat2Parser.cpp
         src/lib/Mmap.cpp
         src/lib/ZlibHelpers.cpp
-        src/aaf/AafParser.cpp)
+        src/aaf/AafParser.cpp
+        src/lib/stream.cpp)
 
 find_package( ZLIB REQUIRED )
 if ( ZLIB_FOUND )

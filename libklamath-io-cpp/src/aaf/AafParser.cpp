@@ -4,16 +4,11 @@
 #include <stdexcept>
 
 #include "../lib/multibyte_readers.h"
+#include "../lib/stream.h"
 
 namespace {
     const size_t MIN_FILE_SIZE = 0x080c;
-    const size_t MAX_GLYPH_HEIGHT_START = 0x4;
-    const size_t LETTER_SPACING_START = 0x6;
-    const size_t SPACE_WIDTH_START = 0x8;
-    const size_t LINE_SPACING_START = 0xa;
-    const size_t GLYPH_DESCRIPTIONS_START = 0xc;
     const size_t NUM_GLYPHS_IN_AAF_FILE = 256;
-    const size_t GLYPH_DATA_START = 0x080c;
 
 
     struct AafHeader {
@@ -30,62 +25,68 @@ namespace {
     };
 
 
-    AafHeader read_aaf_header(const uint8_t* data) {
-        if (data[0] != 'A' || data[1] != 'A' || data[2] != 'F' || data[3] != 'F') {
+    AafHeader read_aaf_header(klamath::Stream& s) {
+        if (s.read_u8() != 'A' || s.read_u8() != 'A' || s.read_u8() != 'F' || s.read_u8() != 'F') {
             throw std::runtime_error("First four bytes of an AAF file is not the magic number (AAFF)");
         }
 
         return AafHeader {
-            .max_glyph_height = klamath::read_be_u16(data + MAX_GLYPH_HEIGHT_START),
-            .letter_spacing = klamath::read_be_u16(data + LETTER_SPACING_START),
-            .space_width = klamath::read_be_u16(data + SPACE_WIDTH_START),
-            .line_spacing = klamath::read_be_u16(data + LINE_SPACING_START),
+            .max_glyph_height = s.read_big_endian_u16(),
+            .letter_spacing = s.read_big_endian_u16(),
+            .space_width = s.read_big_endian_u16(),
+            .line_spacing = s.read_big_endian_u16(),
         };
     }
 
-    AafGlyphDescription read_glyph_description(const uint8_t* data) {
+    AafGlyphDescription read_glyph_description(klamath::Stream& s) {
         AafGlyphDescription desc = {
-                .width = klamath::read_be_u16(data),
-                .height = klamath::read_be_u16(data + 2),
-                .offset_in_glyph_data = klamath::read_be_u32(data + 4),
+                .width = s.read_big_endian_u16(),
+                .height = s.read_big_endian_u16(),
+                .offset_in_glyph_data = s.read_big_endian_u32(),
         };
 
         return desc;
     }
 
-    std::vector<AafGlyphDescription> read_aaf_glyph_descriptions(const uint8_t* data, size_t size) {
+    std::vector<AafGlyphDescription> read_aaf_glyph_descriptions(klamath::Stream& s) {
         std::vector<AafGlyphDescription> descriptions;
         descriptions.reserve(sizeof(AafGlyphDescription) * 255);
 
-        const uint8_t* glyph_description = data;
         for (uint32_t i = 0; i < NUM_GLYPHS_IN_AAF_FILE; ++i) {
-            descriptions.push_back(read_glyph_description(glyph_description));
-            glyph_description += sizeof(AafGlyphDescription);
+            descriptions.push_back(read_glyph_description(s));
         }
 
         return descriptions;
     }
 
-    std::pair<klamath::AafGlyph, size_t> read_glyph(const uint8_t* data, size_t size, const AafGlyphDescription& description) {
-        size_t num_bytes_to_read = description.width * description.height;
-
-        if (size < num_bytes_to_read) {
-            throw std::runtime_error("Not enough data left in aaf file to read glyph data");
-        }
-
-        std::vector<uint8_t> opacities;
-        opacities.reserve(num_bytes_to_read);
-        for (size_t i = 0; i < num_bytes_to_read; i++) {
-            opacities.push_back(data[i]);
-        }
-
+    klamath::AafGlyph read_glyph(klamath::Stream& s, const AafGlyphDescription& description) {
         return {
-            klamath::AafGlyph {
                 .width = description.width,
                 .height = description.height,
-                .opacities = std::move(opacities)
-            },
-            num_bytes_to_read
+                .opacities = s.read_n_bytes(description.width * description.height),
+        };
+    }
+
+    klamath::AafFile aaf_internal_parse(klamath::Stream& s) {
+        if (s.remaining() < MIN_FILE_SIZE) {
+            throw std::runtime_error("AAF file is below minimum size");
+        }
+
+        AafHeader header = read_aaf_header(s);
+        std::vector<AafGlyphDescription> descriptions = read_aaf_glyph_descriptions(s);
+
+        std::vector<klamath::AafGlyph> glyphs;
+        glyphs.reserve(descriptions.size());
+        for(const auto& description : descriptions) {
+            glyphs.push_back(read_glyph(s, description));
+        }
+
+        return klamath::AafFile {
+                .max_glyph_height = header.max_glyph_height,
+                .letter_spacing = header.letter_spacing,
+                .space_width = header.space_width,
+                .line_spacing = header.line_spacing,
+                .glyphs = std::move(glyphs),
         };
     }
 }
@@ -93,33 +94,7 @@ namespace {
 namespace klamath {
 
     AafFile aaf_parse(const uint8_t *data, size_t size) {
-        if (size < MIN_FILE_SIZE) {
-            throw std::runtime_error("AAF file is below minimum size");
-        }
-
-        AafHeader header = read_aaf_header(data);
-        std::vector<AafGlyphDescription> descriptions = read_aaf_glyph_descriptions(data + GLYPH_DESCRIPTIONS_START, size - GLYPH_DESCRIPTIONS_START);
-
-
-        const uint8_t* glyph_data = data + GLYPH_DATA_START;
-
-        std::vector<AafGlyph> glyphs;
-        glyphs.reserve(NUM_GLYPHS_IN_AAF_FILE);
-
-        for(const auto& description : descriptions) {
-            std::pair<AafGlyph, size_t> p = read_glyph(glyph_data, size, description);
-
-            glyphs.push_back(std::move(p.first));
-            glyph_data += p.second;
-            size -= p.second;
-        }
-
-        return AafFile {
-                .max_glyph_height = header.max_glyph_height,
-                .letter_spacing = header.letter_spacing,
-                .space_width = header.space_width,
-                .line_spacing = header.line_spacing,
-                .glyphs = std::move(glyphs),
-        };
+        Stream s(data, size);
+        return aaf_internal_parse(s);
     }
 }

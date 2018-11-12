@@ -69,7 +69,7 @@ namespace {
 }
 
 namespace klamath {
-    Dat2FileMetadata dat2_parse_file(const uint8_t* data, uint32_t size) {
+    Dat2TopLevelHeaders dat2_parse_top_level_headers(const uint8_t *data, uint32_t size) {
         if (size < MIN_DAT2_FILE_SIZE) {
             std::stringstream errmsg;
             errmsg << "amount of data available (" << size << " bytes) is too small. Minimum size of DAT2 file is " << MIN_DAT2_FILE_SIZE << " bytes";
@@ -106,7 +106,7 @@ namespace klamath {
 
         uint32_t num_files = read_le_u32(data + num_files_start);
 
-        return Dat2FileMetadata {
+        return Dat2TopLevelHeaders {
                 .data_section_size = num_files_start,
                 .num_files = num_files,
                 .tree_offset = tree_start,

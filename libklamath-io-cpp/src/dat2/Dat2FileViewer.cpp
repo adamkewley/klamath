@@ -10,7 +10,7 @@ namespace klamath {
 
     Dat2FileViewer Dat2FileViewer::from_file(const std::string &path) {
         Mmap mmap = Mmap::from_file(path);
-        Dat2FileMetadata file_metadata = dat2_parse_file(mmap.get(), mmap.size());
+        Dat2TopLevelHeaders file_metadata = dat2_parse_top_level_headers(mmap.get(), mmap.size());
 
         std::unordered_map<std::string, klamath::Dat2EntryMetadata> entries;
 
