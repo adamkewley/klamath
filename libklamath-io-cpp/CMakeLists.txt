@@ -8,7 +8,7 @@ add_library(${PROJECT_NAME} SHARED
         src/lib/Mmap.cpp
         src/lib/ZlibHelpers.cpp
         src/aaf/AafParser.cpp
-        src/lib/stream.cpp)
+        src/lib/stream.cpp src/pal/PalParser.cpp src/pal/PalParser.h src/pal/RgbTriple.h src/pal/PalFile.h)
 
 find_package( ZLIB REQUIRED )
 if ( ZLIB_FOUND )

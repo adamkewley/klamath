@@ -58,6 +58,6 @@ namespace klamath {
             }
         }
 
-        return std::move(ret);
+        return ret;
     }
 }

@@ -30,7 +30,7 @@ std::vector<uint8_t> klamath::Stream::read_n_bytes(size_t n) {
         ret.push_back(data[i]);
     }
 
-    return std::move(ret);
+    return ret;
 }
 
 size_t klamath::Stream::remaining() const {

@@ -5,6 +5,7 @@
 
 #include <dat2/Dat2FileViewer.h>
 #include <aaf/AafParser.h>
+#include <pal/PalParser.h>
 
 namespace klamath {
     void print_glyph(const AafGlyph& g) {
@@ -53,6 +54,23 @@ namespace klamath {
         std::cout << std::endl;
     }
 
+
+    void print_font(Dat2FileViewer& d2f) {
+        auto data = d2f.read_entry(R"(FONT1.AAF)");
+        AafFile f = aaf_parse(data.value().data(), data.value().size());
+        for (uint8_t c = 97; c <123; ++c) {
+            print_glyph(f.glyphs[c]);
+        }
+    }
+
+    void parse_pal(Dat2FileViewer& d2f) {
+        auto pal_data = d2f.read_entry("art\\intrface\\EG_MOD01.PAL");
+        PalFile pf = pal_parse(pal_data.value().data(), pal_data.value().size());
+        for (const RgbTriple& color : pf.palette) {
+            printf("%u %u %u\n", color.r, color.g, color.b);
+        }
+    }
+
     int dat2_main(int argc, const char **argv) {
         if (argc == 0) {
             std::cerr << "provide dat file as arg" << std::endl;
@@ -63,13 +81,10 @@ namespace klamath {
             for (const auto& name : d2f.entry_names()) {
                 std::cout << name << std::endl;
             }
-            auto data = d2f.read_entry(R"(FONT1.AAF)");
-            AafFile f = aaf_parse(data.value().data(), data.value().size());
-            for (uint8_t c = 97; c <123; ++c) {
-                print_glyph(f.glyphs[c]);
-            }
 
-            print_glyph(f.glyphs['z']);
+            print_font(d2f);
+            parse_pal(d2f);
+
             return 0;
         }
     }
