@@ -32,3 +32,4 @@ Used to store all game images (incl. animation frames). The only exception is sp
 TODO
 
 ```
+art\tiles\head003.frm

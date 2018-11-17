@@ -6,6 +6,8 @@
 #include <dat2/Dat2FileViewer.h>
 #include <aaf/AafParser.h>
 #include <pal/PalParser.h>
+#include <frm/FrmHeader.h>
+#include <frm/FrmParser.h>
 
 namespace klamath {
     void print_glyph(const AafGlyph& g) {
@@ -71,6 +73,12 @@ namespace klamath {
         }
     }
 
+    void print_header(Dat2FileViewer& d2f) {
+        auto frm_data = d2f.read_entry("art\\items\\GEIGER.FRM");
+        FrmHeader h = frm_parse_header(frm_data.value().data(), frm_data.value().size());
+        std::cout << h.version_number << std::endl;
+    }
+
     int dat2_main(int argc, const char **argv) {
         if (argc == 0) {
             std::cerr << "provide dat file as arg" << std::endl;
@@ -84,6 +92,7 @@ namespace klamath {
 
             print_font(d2f);
             parse_pal(d2f);
+            print_header(d2f);
 
             return 0;
         }

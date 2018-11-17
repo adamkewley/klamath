@@ -1,6 +1,7 @@
+#include "PalParser.h"
+
 #include <lib/stream.h>
 #include <stdexcept>
-#include "PalParser.h"
 
 namespace {
     const size_t MIN_PAL_FILE_SIZE = 0x00008300;  // effectively, up to Additional table #1
