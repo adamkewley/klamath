@@ -14,6 +14,8 @@ namespace klamath {
         uint32_t read_little_endian_u32();
         uint32_t read_big_endian_u32();
         uint16_t read_big_endian_u16();
+        int32_t read_big_endian_i32();
+        int16_t read_big_endian_i16();
         std::vector<uint8_t> read_n_bytes(size_t n);
 
         size_t remaining() const;

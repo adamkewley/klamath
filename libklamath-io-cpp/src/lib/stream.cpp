@@ -21,6 +21,14 @@ uint16_t klamath::Stream::read_big_endian_u16() {
     return (ptrr[0] << 8) | (ptrr[1] << 0);
 }
 
+int32_t klamath::Stream::read_big_endian_i32() {
+    return read_big_endian_u32();  // TODO: assuming 2's complement?
+}
+
+int16_t klamath::Stream::read_big_endian_i16() {
+    return read_big_endian_u16(); // TODO: assuming 2's complement?
+}
+
 std::vector<uint8_t> klamath::Stream::read_n_bytes(size_t n) {
     const uint8_t* data = read_then_advance(n);
 

@@ -8,7 +8,9 @@ add_library(${PROJECT_NAME} SHARED
         src/lib/Mmap.cpp
         src/lib/ZlibHelpers.cpp
         src/aaf/AafParser.cpp
-        src/lib/stream.cpp src/pal/PalParser.cpp src/pal/PalParser.h src/pal/RgbTriple.h src/pal/PalFile.h src/frm/FrmHeader.h src/frm/FrmOrientations.h src/frm/FrmParser.cpp src/frm/FrmParser.h src/frm/FrmFrame.h)
+        src/lib/stream.cpp
+        src/pal/PalParser.cpp
+        src/frm/FrmParser.cpp)
 
 find_package( ZLIB REQUIRED )
 if ( ZLIB_FOUND )
@@ -19,7 +21,6 @@ endif( ZLIB_FOUND )
 target_include_directories(${PROJECT_NAME}
         PUBLIC
         src)
-
 
 set_target_properties(${PROJECT_NAME} PROPERTIES
         POSITION_INDEPENDENT_CODE ON
