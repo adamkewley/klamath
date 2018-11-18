@@ -45,15 +45,17 @@ namespace klamath {
             const Dat2EntryMetadata& entry = this->_entries.at(path);
             const uint8_t* data_ptr = this->_mmap.get() + entry.offset;
 
-            std::vector<uint8_t> data =
-                    ZlibHelpers::inflate_all(data_ptr, entry.packed_size, entry.decompressed_size);
+            std::vector<uint8_t> data = (entry.packed_size > 2 && data_ptr[0] == 0x78 && data_ptr[1] == 0xda) ?
+                    ZlibHelpers::inflate_all(data_ptr, entry.packed_size, entry.decompressed_size) :
+                    std::vector<uint8_t>(data_ptr, data_ptr + entry.packed_size);
 
             return {std::move(data)};
         }
     }
 
     std::vector<std::string> Dat2FileViewer::entry_names() const {
-        std::vector<std::string> ret(this->_entries.size());
+        std::vector<std::string> ret;
+        ret.reserve(this->_entries.size());
         for (const auto& e : this->_entries) {
             ret.push_back(e.first);
         }
