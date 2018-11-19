@@ -49,7 +49,7 @@ namespace {
         // Second step: create static texture from surface, to be stored in VRAM
 
         SDL_Texture *texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_STATIC, w, h);
-        SDL_UpdateTexture(texture, NULL, sdl_surface->pixels, sdl_surface->pitch);  // upload to VRAM
+        SDL_UpdateTexture(texture, NULL, sdl_surface->pixels, sdl_surface->pitch);
         SDL_FreeSurface(sdl_surface);  // no need for software pixels anymore
 
         SDL_RenderClear(renderer);
@@ -61,7 +61,7 @@ namespace {
             if (e.type == SDL_QUIT || (e.type == SDL_KEYDOWN && e.key.keysym.sym == SDLK_ESCAPE)) {
                 SDL_DestroyWindow(window);
                 SDL_DestroyRenderer(renderer);
-                //SDL_DestroyTexture(texture);
+                SDL_DestroyTexture(texture);
                 SDL_Quit();
             }
         }
@@ -77,15 +77,14 @@ int klamath::frm_dump_first_frame_main(int argc, const char **argv) {
         Mmap m = Mmap::from_file(filename);
 
         FrmHeader frm_header = frm_parse_header(m.get(), m.size());
-        uint32_t offset = frm_header.offsets_in_frame_data.at(0);
 
-        FrmFrame frm_frame = frm_parse_frame(m.get() + 0x003e, m.size() - 0x003e);
-
-
-        Mmap pal_mmap = Mmap::from_file("/tmp/tmp.8YNyk2HKsB/color.pal");
+        Mmap pal_mmap = Mmap::from_file("color.pal");
         PalFile pal_file = pal_parse(pal_mmap.get(), pal_mmap.size());
 
-        show_bitmap(frm_frame.color_indices, pal_file, frm_frame.width, frm_frame.height);
+        for (uint32_t offset : frm_header.offsets_in_frame_data) {
+            FrmFrame frm_frame = frm_parse_frame(m.get() + 0x003e + offset, m.size() + offset - 0x003e);
+            show_bitmap(frm_frame.color_indices, pal_file, frm_frame.width, frm_frame.height);
+        }
 
         return 0;
     }

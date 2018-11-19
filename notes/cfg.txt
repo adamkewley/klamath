@@ -1,0 +1,141 @@
+The format of the configuration file fallout2.cfg
+
+The paper describes the main configuration file format ''Fallout 2'', which is located in the main directory of the game.
+
+==Description format fallout2.cfg==
+{| border="1"
+! [sound] !! [system] !! [debug] !! [preferences]
+ |-
+ | music_path1 = path || critter_dat path = || mode = string || brightness = N
+ |-
+ | music_path2 = path  || critter_patches path = || output_map_data_info = N || combat_difficulty = N
+ |-
+ | cache_size = N || master_dat path = || show_load_info = N || combat_looks = N
+ |-
+ | initialize = N || master_patches path = || show_script_messages = N || combat_messages = N
+ |-
+ | device = N || art_cache_size = N || show_tile_num = N || combat_speed = N
+ |-
+ | dma = N || color_cycling = N || || combat_taunts = N
+ |-
+ | irq = N || cycle_speed_factor = N || || game_difficulty = N
+ |-
+ | port = N || executable string = || || item_highlight = N
+ |-
+ | master_volume = N || free_space = N || || mouse_sensitivity = N
+ |-
+ | music_volume = N || hashing = N || || player_speedup = N
+ |-
+ | sndfx_volume = N || interrupt_walk = N || || running = N
+ |-
+ | speech_volume = N || language = string || || subtitles = N
+ |-
+ | N = music || scroll_lock = N || || target_highlight = N
+ |-
+ | sounds = N || splash N = || || text_base_delay = N
+ |-
+ | speech = N || times_run = N || || text_line_delay = N
+ |-
+ |  ||  ||  || violence_level = N
+ |}	
+ 	
+==The main structure of the configuration file fallout2.cfg==
+Fallout2.cfg is a plain text file in the root directory of ''Fallout 2'' and consists of several sections, separated by empty strings and specifying the general configuration of the game. Immediately after installation the file consists of two sections, [sound] and [system]. They keep track of sound and other game resource files. After starting the game these sections are expanded, adding [debug] and [preferences], which contain debugging output settings and preferences for the game, respectively.
+
+===[sound]===
+Prior to the launch of the game has only two options:
+ music_path1 = path 
+ music_path2 = path
+In the music_path1 sets the path for the loading music and audio ACM files, which will be copied as needed from the specified file path music_path2. For example, the game was set in minimal- version (about 2 MB) in the C:\Fallout2, with a CD-ROM game is D:. Then the section will look like this:
+ [sound] 
+ music_path1 = C:\Fallout2\data\sound, music, 
+ music_path2 = D:\data\sound, music,
+ cache_size = N (448)
+Presumably, the buffer size for DirectX audio output.
+ initialize = N (1)
+Indicates whether it is necessary to initialize the sound card when running the game.
+ device = N (-1) 
+ dma = N (-1) 
+ irq = N (-1) 
+ port = N (-1)
+Technical parameters sound card, or -1 if you use default DirectSound device.
+ master_volume = N (22281) 
+ music_volume = N (22281) 
+ sndfx_volume = N (22281) 
+ speech_volume = N (22281)
+Loudness. Used values from 0 to 0x7FFF (32767). The larger the value, the louder the sound. Variables used for controlling the general level of volume, volume of music, sound effects and speech, respectively.
+ music = N (1) 
+ sounds = N (1) 
+ speech = N (1)
+Variables determine whether any music in the game, and it sounds appropriate: 0, if banned, and 1 if allowed. These installations have priority over volume variables.
+
+===[system]===
+This section is information on the location and patch-file DAT- files, as well as some useful information.
+ critter_dat path = 
+ critter_patches path = 
+ master_dat path = 
+ master_patches path =
+These variables defined the paths to critter.dat, possible patch files for critter.dat, then the path to master.dat, and to patch files for master.dat. Continuing the previous example, this section will look like this:
+ [system] 
+ critter_dat = D:\critter.dat 
+ critter_patches = C:\Fallout2\data 
+ master_dat = D:\master.dat 
+ master_patches = C:\Fallout2\data 
+ ........ 
+ ........
+(which, it is interesting that ''Fallout 2'' patch v1.02d (patch000.dat), if available, is not established on the path master_patches but in the main directory Fallout)
+ art_cache_size = N (32)
+Variable seemed to indicate the size of the cache art- files.
+ color_cycling = N (1) 
+ cycle_speed_factor = N (1)
+Variable parameters for storing visual effect "transfusion" sites around the contour line of attack. Variable color_cycling determine whether the spill contour altogether (1 = yes, 0 = no). If a spill, it sets the variable speed cycle_speed_factor overflowing. The higher the value, the slower happening transfusions. That is just not clear why this should have been placed in fallout2.cfg, yes, and even in such an important section.
+ executable = string (game)
+Rather, there must set the type that gets this game, either, or even something. Perhaps the debugger. This variable, combined with Section[debug] makes tightly think ...
+ free_space = N (20480)
+Rather, the amount of free disk space (in kilobytes) necessary for the game. Default-20 mb. Changing it hasn't been tested.
+ hashing = N (1)
+Unknown.
+ interrupt_walk = N (1)
+Takes two meanings. If interrupt_walk = 0, then you can not set the place (which move) to suspend the movement of the hero or force him to flee a second click. If interrupt_walk = 1, it becomes feasible.
+ language = string (english)
+Specify language version of the game. In fact, it is the name of the folder from which the text of a game should be used. For example, if there indicates "russian", the text will be taken from "<code>text\russian\</code>".
+ scroll_lock = N (1)
+The effect is not known (no effect on the ScrollLock key to the clipboard and has not).
+ splash N = (auto)
+Number of the splashscreen which will appear the next time you start the game. Perhaps chosen at random. There are 6 screens (see the description of the file format and RIX converter rix2bmp).
+ times_run = N (5)
+Frankly, I do not know%) Maybe, the number of launches ''Fallout'' succeeded before a final proposal on the registration of the game.
+
+===[debug]===
+The section consists of variables, specifying debugging treatment plants for the game. (yet to know how it is included%)
+ mode = string (environment)
+Unknown. Perhaps the type of debugging.
+ output_map_data_info = N (0)
+Presumably, allowing extraction of map information.
+ show_load_info = N (1)
+Same, but in relation to loading games.
+ show_script_messages = N (1)
+Probably, taking debugging information from scripts
+ show_tile_num = N (1)
+Perhaps taking the tile numbers of floors and walls.
+
+===[preferences]===
+This section is fully duplicated options menu (Preferences Menu) in the game, so I will simply list the variables here, and the defaults.
+ brightness N = (1.000000) 
+ combat_difficulty = N (1) 
+ combat_looks = N (0) 
+ combat_messages = N (1) 
+ combat_speed = N (0) 
+ combat_taunts = N (1) 
+ game_difficulty = N (1) 
+ item_highlight = N (1) 
+ language_filter = N (0) 
+ mouse_sensitivity N = (1.000000) 
+ player_speedup = N (0) 
+ running = N (0) 
+ subtitles = N (0) 
+ target_highlight = N (2) 
+ text_base_delay N = (3.500000) 
+ text_line_delay N = (1.000000) 
+ violence_level = N (3)
+[[Category:Fallout and Fallout 2 file formats]]
