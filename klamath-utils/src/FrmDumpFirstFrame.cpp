@@ -1,12 +1,14 @@
+#include "FrmDumpFirstFrame.h"
+
 #include <iostream>
-#include <lib/Mmap.h>
+#include "lib/Mmap.h"
 #include <frm/FrmFrame.h>
 #include <frm/FrmHeader.h>
 #include <frm/FrmParser.h>
-#include "FrmDumpFirstFrame.h"
 #include <pal/PalFile.h>
 #include <pal/PalParser.h>
 #include <SDL2/SDL.h>
+#include <utils/MemoryStream.h>
 
 
 namespace {
@@ -40,7 +42,7 @@ namespace {
         SDL_LockSurface(sdl_surface);
         for (size_t i = 0; i < num_pixels; i++) {
             uint8_t color_index = color_indices.at(i);
-            RgbTriple rgb = pal_file.palette.at(color_index);
+            PalRgbTriple rgb = pal_file.palette.at(color_index);
             ((Uint32*)sdl_surface->pixels)[i] = SDL_MapRGB(sdl_surface->format, rgb.r * 4 , rgb.g * 4, rgb.b * 4);
         }
         SDL_UnlockSurface(sdl_surface);
@@ -75,16 +77,17 @@ int klamath::frm_dump_first_frame_main(int argc, const char **argv) {
     } else {
         std::string filename(argv[0]);
         Mmap m = Mmap::from_file(filename);
+        MemoryStream s(m.get(), m.size());
 
-        FrmHeader frm_header = frm_parse_header(m.get(), m.size());
+        FrmHeader frm_header = frm_parse_header(s);
 
         Mmap pal_mmap = Mmap::from_file("color.pal");
-        PalFile pal_file = pal_parse(pal_mmap.get(), pal_mmap.size());
+        MemoryStream pal_s(pal_mmap.get(), pal_mmap.size());
+        PalFile pal_file = pal_parse(pal_s);
 
-        for (uint32_t offset : frm_header.offsets_in_frame_data) {
-            FrmFrame frm_frame = frm_parse_frame(m.get() + 0x003e + offset, m.size() + offset - 0x003e);
-            show_bitmap(frm_frame.color_indices, pal_file, frm_frame.width, frm_frame.height);
-        }
+        s.seekg(0x003e + frm_header.offsets_in_frame_data.at(0));
+        FrmFrame frm_frame = frm_parse_frame(s);
+        show_bitmap(frm_frame.color_indices, pal_file, frm_frame.width, frm_frame.height);
 
         return 0;
     }

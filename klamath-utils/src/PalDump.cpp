@@ -2,10 +2,11 @@
 
 #include <iostream>
 
-#include <lib/Mmap.h>
-#include <pal/RgbTriple.h>
+#include "lib/Mmap.h"
+#include <pal/PalRgbTriple.h>
 #include <pal/PalFile.h>
 #include <pal/PalParser.h>
+#include <utils/MemoryStream.h>
 
 int klamath::pal_dump_main(int argc, const char **argv) {
     if (argc == 0) {
@@ -14,9 +15,10 @@ int klamath::pal_dump_main(int argc, const char **argv) {
     } else {
         std::string filename(argv[0]);
         Mmap m = Mmap::from_file(filename);
+        MemoryStream s(m.get(), m.size());
 
-        PalFile pf = pal_parse(m.get(), m.size());
-        for (const RgbTriple& color : pf.palette) {
+        PalFile pf = pal_parse(s);
+        for (const PalRgbTriple& color : pf.palette) {
             printf("%u %u %u\n", color.r, color.g, color.b);
         }
 

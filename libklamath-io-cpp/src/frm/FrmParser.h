@@ -1,15 +1,13 @@
-#ifndef PROJECT_FRMPARSER_H
-#define PROJECT_FRMPARSER_H
+#pragma once
 
 #include <cstddef>
 #include <cstdint>
 
+#include "../utils/Stream.h"
 #include "FrmHeader.h"
 #include "FrmFrame.h"
 
 namespace klamath {
-    FrmHeader frm_parse_header(const uint8_t* data, size_t size);
-    FrmFrame frm_parse_frame(const uint8_t* data, size_t size);
+    FrmHeader frm_parse_header(Stream& s);
+    FrmFrame frm_parse_frame(Stream& s);
 }
-
-#endif //PROJECT_FRMPARSER_H

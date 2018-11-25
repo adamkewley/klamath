@@ -2,14 +2,22 @@
 
 #include <iostream>
 #include <fstream>
-
-#include <dat2/Dat2FileViewer.h>
 #include <sstream>
 #include <sys/stat.h>
 #include <cstring>
 #include <algorithm>
+#include <vector>
+
+#include <utils/MemoryStream.h>
+#include <utils/RandomAccessStream.h>
+#include <dat2/Dat2Parser.h>
+#include "lib/Mmap.h"
+#include "ZlibHelpers.h"
+#include "lib/ZlibStream.h"
 
 namespace {
+    using namespace klamath;
+
     bool file_exists(const std::string& filename) {
         struct stat st = {0};
         return stat(filename.c_str(), &st) != -1;
@@ -41,19 +49,45 @@ namespace {
         }
     }
 
-    void dat2_write_entry(const std::string& filename, const std::vector<uint8_t>& data) {
-        std::string platform_filename = filename;
-        std::replace(platform_filename.begin(), platform_filename.end(), '\\', '/');
+    void dat2_extract_entry(const std::string& entry_name, ZlibStream& s) {
+        dat2_extract_mkdir(entry_name);
+
+        std::replace(entry_name.begin(), entry_name.end(), '\\', '/');
 
         std::ofstream out;
-        out.open(platform_filename, std::ios::out | std::ios::binary);
-        out.write((const char*)data.data(), data.size());
+        out.open(entry_name, std::ios::out | std::ios::binary);
+
+        uint8_t outbuf[256];
+        size_t n = 0;
+        while ((n = s.read(outbuf, 256)) != 0) {
+            for (size_t i = 0; i < n; ++i) {
+
+            }
+        }
+
+        size_t rem = s.remaining();
+        for (size_t i = 0; i < rem; i++) {
+            out << s.read_u8();
+        }
+
         out.close();
     }
 
-    void dat2_extract_entry(const std::string& entry_name, const std::vector<uint8_t>& data) {
-        dat2_extract_mkdir(entry_name);
-        dat2_write_entry(entry_name, data);
+    void dat2_extract(MemoryStream& s) {
+        Dat2TopLevelHeaders h = dat2_parse_top_level_headers(s);
+
+        std::vector<Dat2TreeEntry> entries;
+        entries.reserve(h.num_files);
+
+        for (size_t i = 0; i < h.num_files; ++i) {
+            entries.push_back(dat2_parse_tree_entry(s));
+        }
+
+        for (const Dat2TreeEntry& e : entries) {
+            MemoryStream entry_stream = s.substream(e.offset, e.packed_size);
+            ZlibStream zls(entry_stream);
+            dat2_extract_entry(e.filename, zls);
+        }
     }
 }
 
@@ -63,17 +97,9 @@ int klamath::dat2_extract_main(int argc, const char **argv) {
         return 1;
     } else {
         std::string filename(argv[0]);
-
-        Dat2FileViewer d2f = Dat2FileViewer::from_file(filename);
-        for (const auto& name : d2f.entry_names()) {
-            tl::optional<std::vector<uint8_t>> maybe_data = d2f.read_entry(name);
-            if (maybe_data.has_value()) {
-                std::vector<uint8_t> data = d2f.read_entry(name).value();
-                dat2_extract_entry(name, data);
-            } else {
-                std::cerr << std::string("missing") + name << std::endl;
-            }
-        }
+        Mmap m = Mmap::from_file(filename);
+        MemoryStream s(m.get(), m.size());
+        dat2_extract(s);
 
         return 0;
     }

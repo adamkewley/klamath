@@ -1,6 +1,6 @@
 #include <iostream>
 
-#include "dat2/Dat2FileViewer.h"
+#include "../../tmp/Dat2FileViewer.h"
 
 #include "Dat2Extract.h"
 #include "AafPrintGlyphs.h"
@@ -19,9 +19,7 @@ int main(int argc, const char * argv[]) {
         int sub_argc = argc - 2;
         const char** sub_argv = argv + 2;
 
-        if (arg1 == "dat2-extract") {
-            return dat2_extract_main(sub_argc, sub_argv);
-        } else if (arg1 == "aaf-print-glyphs") {
+        if (arg1 == "aaf-print-glyphs") {
             return aaf_print_glyphs_main(sub_argc, sub_argv);
         } else if (arg1 == "frm-print-header") {
             return frm_print_header_main(sub_argc, sub_argv);

@@ -1,5 +1,4 @@
-#ifndef PROJECT_AAFFILE_H
-#define PROJECT_AAFFILE_H
+#pragma once
 
 #include <cstdint>
 #include <vector>
@@ -15,5 +14,3 @@ namespace klamath {
         std::vector<AafGlyph> glyphs;
     };
 }
-
-#endif //PROJECT_AAFFILE_H

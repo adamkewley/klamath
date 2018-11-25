@@ -1,5 +1,4 @@
-#ifndef PROJECT_ORIENTATIONS_H
-#define PROJECT_ORIENTATIONS_H
+#pragma once
 
 #include <cstddef>
 
@@ -15,5 +14,3 @@ namespace klamath {
         NORTH_WEST = 5,
     };
 }
-
-#endif //PROJECT_ORIENTATIONS_H

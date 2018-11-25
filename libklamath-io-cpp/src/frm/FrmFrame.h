@@ -1,5 +1,4 @@
-#ifndef PROJECT_FRMFRAME_H
-#define PROJECT_FRMFRAME_H
+#pragma once
 
 #include <cstdint>
 #include <vector>
@@ -14,5 +13,3 @@ namespace klamath {
         std::vector<uint8_t> color_indices;
     };
 }
-
-#endif //PROJECT_FRMFRAME_H

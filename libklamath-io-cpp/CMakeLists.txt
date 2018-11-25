@@ -3,14 +3,12 @@ cmake_minimum_required(VERSION 3.9)
 project(libklamath-io-cpp)
 
 add_library(${PROJECT_NAME} SHARED
-        src/dat2/Dat2FileViewer.cpp
-        src/dat2/Dat2Parser.cpp
-        src/lib/Mmap.cpp
-        src/lib/ZlibHelpers.cpp
         src/aaf/AafParser.cpp
-        src/lib/stream.cpp
+        src/dat2/Dat2Parser.cpp
+        src/frm/FrmParser.cpp
         src/pal/PalParser.cpp
-        src/frm/FrmParser.cpp)
+        src/utils/Stream.cpp
+        src/utils/MemoryStream.cpp)
 
 find_package( ZLIB REQUIRED )
 if ( ZLIB_FOUND )

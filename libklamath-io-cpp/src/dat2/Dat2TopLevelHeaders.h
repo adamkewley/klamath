@@ -1,5 +1,4 @@
-#ifndef PROJECT_DAT2TOPLEVELSTRUCTURE_H
-#define PROJECT_DAT2TOPLEVELSTRUCTURE_H
+#pragma once
 
 #include <cstdint>
 
@@ -11,5 +10,3 @@ namespace klamath {
         uint32_t tree_size;
     };
 }
-
-#endif //PROJECT_DAT2TOPLEVELSTRUCTURE_H

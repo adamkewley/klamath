@@ -2,8 +2,9 @@
 
 #include <iostream>
 
-#include <lib/Mmap.h>
+#include "lib/Mmap.h"
 #include <frm/FrmParser.h>
+#include <utils/MemoryStream.h>
 
 int klamath::frm_print_header_main(int argc, const char **argv) {
     if (argc == 0) {
@@ -12,7 +13,8 @@ int klamath::frm_print_header_main(int argc, const char **argv) {
     } else {
         std::string filename(argv[0]);
         Mmap m = Mmap::from_file(filename);
-        FrmHeader h = frm_parse_header(m.get(), m.size());
+        MemoryStream s(m.get(), m.size());
+        FrmHeader h = frm_parse_header(s);
 
         std::cout << "version: " << h.version_number << std::endl;
         std::cout << "fps: " << h.fps << std::endl;

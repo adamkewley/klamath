@@ -1,5 +1,4 @@
-#ifndef PROJECT_FRMHEADER_H
-#define PROJECT_FRMHEADER_H
+#pragma once
 
 #include <cstdint>
 #include <array>
@@ -18,5 +17,3 @@ namespace klamath {
         uint32_t size_of_frame_data;
     };
 }
-
-#endif //PROJECT_FRMHEADER_H

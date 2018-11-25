@@ -12,11 +12,12 @@ include_directories(${SDL2_INCLUDE_DIR})
 
 add_executable(${PROJECT_NAME}
         src/klamath_utils.cpp
-        src/Dat2Extract.cpp
         src/FrmPrintHeader.cpp
         src/AafPrintGlyphs.cpp
         src/PalDump.cpp
-        src/FrmDumpFirstFrame.cpp)
+        src/FrmDumpFirstFrame.cpp
+        src/lib/Mmap.cpp
+        src/Dat2Extract.cpp src/lib/ZlibStream.cpp src/lib/ZlibStream.h)
 
 target_link_libraries(${PROJECT_NAME}
         libklamath-io-cpp

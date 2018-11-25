@@ -1,12 +1,12 @@
-#ifndef PROJECT_PALPARSER_H
-#define PROJECT_PALPARSER_H
+#pragma once
 
 #include <cstddef>
+
+#include "../utils/Stream.h"
 #include "PalFile.h"
 
 namespace klamath {
+    const size_t MIN_PAL_FILE_SIZE = 0x00008300;  // effectively, up to Additional table #1
 
-    PalFile pal_parse(const uint8_t* data, size_t size);
+    PalFile pal_parse(Stream& s);
 }
-
-#endif //PROJECT_PALPARSER_H

@@ -2,10 +2,11 @@
 
 #include <iostream>
 
-#include <lib/Mmap.h>
+#include "lib/Mmap.h"
 #include <aaf/AafFile.h>
 #include <aaf/AafParser.h>
 #include <aaf/AafGlyph.h>
+#include <utils/MemoryStream.h>
 
 namespace {
     using namespace klamath;
@@ -64,8 +65,9 @@ int klamath::aaf_print_glyphs_main(int argc, const char **argv) {
     } else {
         std::string filename(argv[0]);
         Mmap m = Mmap::from_file(filename);
+        MemoryStream s(m.get(), m.size());
 
-        AafFile f = aaf_parse(m.get(), m.size());
+        AafFile f = aaf_parse(s);
         for (uint8_t c = 97; c <123; ++c) {
             print_glyph(f.glyphs[c]);
         }

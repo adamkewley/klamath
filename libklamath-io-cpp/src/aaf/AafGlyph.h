@@ -1,5 +1,4 @@
-#ifndef PROJECT_AAFGLYPH_H
-#define PROJECT_AAFGLYPH_H
+#pragma once
 
 #include <cstdint>
 #include <vector>
@@ -11,5 +10,3 @@ namespace klamath {
         std::vector<uint8_t> opacities;
     };
 }
-
-#endif //PROJECT_AAFGLYPH_H
