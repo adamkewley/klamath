@@ -52,22 +52,16 @@ namespace {
     void dat2_extract_entry(const std::string& entry_name, ZlibStream& s) {
         dat2_extract_mkdir(entry_name);
 
-        std::replace(entry_name.begin(), entry_name.end(), '\\', '/');
+        std::string unix_name = entry_name;
+        std::replace(unix_name.begin(), unix_name.end(), '\\', '/');
 
         std::ofstream out;
-        out.open(entry_name, std::ios::out | std::ios::binary);
+        out.open(unix_name, std::ios::out | std::ios::binary);
 
         uint8_t outbuf[256];
         size_t n = 0;
         while ((n = s.read(outbuf, 256)) != 0) {
-            for (size_t i = 0; i < n; ++i) {
-
-            }
-        }
-
-        size_t rem = s.remaining();
-        for (size_t i = 0; i < rem; i++) {
-            out << s.read_u8();
+            out.write((char *)outbuf, n);
         }
 
         out.close();

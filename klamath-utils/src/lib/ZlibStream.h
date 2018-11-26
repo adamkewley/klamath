@@ -16,8 +16,9 @@ namespace klamath {
     private:
         Stream& _source;
         uint8_t _buf[ZLIB_BUFFER_SIZE];
-        size_t _buf_pos;
-        size_t _buf_rem;
+        size_t _pos;
+        size_t _remaining;
+        bool _finished;
     };
 }
 
