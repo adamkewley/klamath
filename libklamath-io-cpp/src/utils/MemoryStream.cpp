@@ -19,7 +19,7 @@ void klamath::MemoryStream::seekg(size_t pos) {
 }
 
 void klamath::MemoryStream::assert_has_remaining(size_t num_bytes) const {
-    if (num_bytes + _pos >= _len) {
+    if (num_bytes + _pos > _len) {
         throw std::runtime_error("tried to read from an empty stream");
     }
 }
