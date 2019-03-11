@@ -1,7 +1,11 @@
-cmake_minimum_required(VERSION 3.7)
+cmake_minimum_required(VERSION 3.7.2)
 
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS_RELEASE} -Wall -Werror -Wpedantic")
+set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD_REQUIRED YES)
+set(CMAKE_CXX_EXTENSIONS NO)
 set(CMAKE_VERBOSE_MAKEFILE ON)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR}/cmake/modules)
 
-add_subdirectory(libklamath-io-cpp)
+add_subdirectory(libklamath)
 add_subdirectory(klamath-utils)

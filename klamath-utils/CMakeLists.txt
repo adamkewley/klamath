@@ -9,19 +9,20 @@ include_directories(${SDL2_INCLUDE_DIR})
 
 
 add_executable(${PROJECT_NAME}
-        src/klamath_utils.cpp
-        src/FrmPrintHeader.cpp
-        src/AafPrintGlyphs.cpp
-        src/PalDump.cpp
-        src/FrmDumpFirstFrame.cpp
-        src/lib/Mmap.cpp
-        src/Dat2Extract.cpp src/lib/ZlibStream.cpp src/lib/ZlibStream.h)
+  src/dat2extract.cpp
+  src/aafprint.cpp
+  src/paldump.cpp
+  src/frmshow.cpp
+  src/frmheader.cpp
+
+  src/klamath_utils.cpp
+  )
+
+target_include_directories(${PROJECT_NAME} PUBLIC
+  ./
+)
 
 target_link_libraries(${PROJECT_NAME}
-        libklamath-io-cpp
-        ${SDL2_LIBRARY})
-
-set_target_properties(${PROJECT_NAME} PROPERTIES
-        CXX_STANDARD 14
-        CXX_STANDARD_REQUIRED YES
-        CXX_EXTENSIONS NO)
+  libklamath
+  ${SDL2_LIBRARY}
+)
