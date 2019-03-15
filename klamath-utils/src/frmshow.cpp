@@ -2,18 +2,17 @@
 
 #include <iostream>
 #include <fstream>
-
-#include <SDL2/SDL.h>
+#include <memory>
 
 #include "klamath/pal.hpp"
 #include "klamath/frm.hpp"
+#include "src/sdl.hpp"
 
 
 namespace {
   using namespace klmth;
 
   const std::string stdin_senteniel = "-";
-
 
   pal::File load_palette(const std::string& source) {
     std::ifstream pal_in;
@@ -30,9 +29,48 @@ namespace {
     }
   }
 
+  sdl::Texture create_texture(sdl::Window& w, const pal::File& palette, const frm::Frame& frame) {
+    size_t num_pixels = frame.width * frame.height;
+    std::vector<klmth::Rgb> pixels;
+    pixels.resize(num_pixels);
+    for (size_t i = 0; i < num_pixels; ++i) {
+      uint8_t idx = frame.color_indices[i];
+      pixels[i] = palette.palette[idx] * 4;
+    }
+
+    return w.create_texture(pixels, frame.width, frame.height);
+  }
+
+  void show_frame(const pal::File& palette, const frm::Frame& frame) {
+    sdl::Context c;
+    sdl::Window w = c.create_window(frame.width, frame.height);
+    
+    sdl::Texture t = create_texture(w, palette, frame);
+
+    w.render_clear();
+    w.render_copy_fullscreen(t);
+    w.render_present();
+
+    SDL_Event e;    
+    while (c.wait_for_event(&e)) {
+      if (e.type == SDL_QUIT || (e.type == SDL_KEYDOWN && e.key.keysym.sym == SDLK_ESCAPE)) {
+	break;
+      }
+    }
+  }
+
   void show_frm(const pal::File& palette, std::istream& frm_in, const std::string& in_name) {
     try {
-      frm::parse_header(frm_in);
+      frm::read_header(frm_in);
+      frm::read_frame(frm_in);
+            frm::read_frame(frm_in);
+	          frm::read_frame(frm_in);
+		        frm::read_frame(frm_in);
+
+			      frm::read_frame(frm_in);
+			            frm::read_frame(frm_in);
+      frm::Frame f = frm::read_frame(frm_in);
+      show_frame(palette, f);
     } catch (const std::exception& ex) {
       throw std::runtime_error(in_name + ": error showing frm: " + ex.what());
     }

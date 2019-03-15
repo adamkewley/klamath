@@ -5,6 +5,7 @@
 #include <vector>
 #include <iosfwd>
 
+
 namespace klmth {
   namespace frm {
     
@@ -29,6 +30,9 @@ namespace klmth {
       uint32_t size_of_frame_data;
     };
 
+    Header read_header(std::istream& in);
+    
+
     struct Frame {
       uint16_t width;
       uint16_t height;
@@ -38,8 +42,57 @@ namespace klmth {
       std::vector<uint8_t> color_indices;
     };
 
-    void parse_header(const uint8_t* buf, size_t n, Header& out);
-    Header parse_header(std::istream& in);
-    void parse_frame(const uint8_t* buf, size_t n, Frame& out);
+    Frame read_frame(std::istream& in);
+    
+    /*
+    struct PixelShift {
+      int16_t x;
+      int16_t y;
+    };
+
+    enum class Type {
+      image;
+      animated_image;
+      orientable;
+      animated_orientable;
+    };
+
+    class Image {
+      PixelShift pixel_shift;
+      frm::Frame frame;
+    };
+    
+    class AnimatedImage {
+      uint16_t fps;
+      uint16_t action_frame;
+      PixelShift pixel_shift;
+      std::vector<frm::Frame> frames;
+    };
+
+    class Orientable {
+      
+      std::array<PixelShift, num_orientations> _pixel_shifts;
+      std::array<Frame, num_orientations> _frames;
+    };
+
+    class AnimatedOrientable {
+    };
+    
+
+    class File {
+    public:
+      uint16_t fps;
+      uint16_t action_frame;
+      
+      PixelShift pixel_shift(Orientation o) const noexcept;
+      const std::vector<frm::Frame>& frames(Orientation o) const noexcept;
+    private:
+      std::array<PixelShift, num_orientations> _pixel_shifts;
+      std::array<uint8_t, num_orientations> _frame_data_idxs;
+      std::array<std::unique_ptr<std::vector<Frame>>, num_orientations> _frame_data;
+    };
+    
+    File read_file(std::istream& in);
+    */
   }
 }

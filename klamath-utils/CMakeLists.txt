@@ -13,6 +13,7 @@ add_executable(${PROJECT_NAME}
   src/aafprint.cpp
   src/paldump.cpp
   src/frmshow.cpp
+  src/sdl.cpp
   src/frmheader.cpp
 
   src/klamath_utils.cpp

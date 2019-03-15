@@ -5,16 +5,12 @@
 #include <cstdint>
 #include <iosfwd>
 
+#include "klamath/rgb.hpp"
+
 namespace klmth {
   namespace pal {
     const unsigned num_palette_colors = 256;
     const unsigned num_conversion_values = 32768;
-    
-    struct Rgb {
-      uint8_t r;
-      uint8_t g;
-      uint8_t b;
-    };
 
     struct File {
       std::array<Rgb, num_palette_colors> palette;
