@@ -29,23 +29,24 @@ namespace {
     }
   }
 
-  sdl::Texture create_texture(sdl::Window& w, const pal::File& palette, const frm::Frame& frame) {
-    size_t num_pixels = frame.width * frame.height;
+  sdl::Texture create_texture(sdl::Window& w, const pal::File& palette, const frm::Image& img) {
+    auto& color_indices = img.color_indices();
+    size_t num_pixels = color_indices.size();
     std::vector<klmth::Rgb> pixels;
     pixels.resize(num_pixels);
     for (size_t i = 0; i < num_pixels; ++i) {
-      uint8_t idx = frame.color_indices[i];
+      uint8_t idx = color_indices[i];
       pixels[i] = palette.palette[idx] * 4;
     }
 
-    return w.create_texture(pixels, frame.width, frame.height);
+    return w.create_texture(pixels, img.width(), img.height());
   }
 
-  void show_frame(const pal::File& palette, const frm::Frame& frame) {
+  void show_frame(const pal::File& palette, const frm::Image& img) {
     sdl::Context c;
-    sdl::Window w = c.create_window(frame.width, frame.height);
+    sdl::Window w = c.create_window(img.width(), img.height());
     
-    sdl::Texture t = create_texture(w, palette, frame);
+    sdl::Texture t = create_texture(w, palette, img);
 
     w.render_clear();
     w.render_copy_fullscreen(t);
@@ -61,16 +62,14 @@ namespace {
 
   void show_frm(const pal::File& palette, std::istream& frm_in, const std::string& in_name) {
     try {
-      frm::read_header(frm_in);
-      frm::read_frame(frm_in);
-            frm::read_frame(frm_in);
-	          frm::read_frame(frm_in);
-		        frm::read_frame(frm_in);
-
-			      frm::read_frame(frm_in);
-			            frm::read_frame(frm_in);
-      frm::Frame f = frm::read_frame(frm_in);
-      show_frame(palette, f);
+      frm::Any any = frm::read_any(frm_in);
+      switch (any.type()) {
+      case frm::AnyType::image:
+	show_frame(palette, any.image_unpack());
+	break;
+      default:
+	throw std::runtime_error("cannot unpack non-image data: not yet implemented");
+      }
     } catch (const std::exception& ex) {
       throw std::runtime_error(in_name + ": error showing frm: " + ex.what());
     }
