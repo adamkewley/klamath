@@ -1,8 +1,11 @@
 project(libklamath)
 
+find_package(ZLIB REQUIRED)
+if(NOT ZLIB_FOUND)
+  message(FATAL_ERROR "zlib library not found: probably not installed (e.g. try `apt install zlib-dev`)")
+endif()
+
 add_library(${PROJECT_NAME} SHARED
-  ../vendor/miniz/miniz.c
-  
   src/ioutils.cpp
   
   src/dat2.cpp
@@ -19,6 +22,11 @@ target_include_directories(${PROJECT_NAME} PUBLIC
   include/
   ./
   ../
+  ZLIB_INCLUDE_DIRS
+)
+
+target_link_libraries(${PROJECT_NAME} PUBLIC
+  ${ZLIB_LIBRARIES}
 )
 
 set_target_properties(${PROJECT_NAME} PROPERTIES

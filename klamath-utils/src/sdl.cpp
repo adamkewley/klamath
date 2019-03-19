@@ -1,5 +1,6 @@
 #include "src/sdl.hpp"
 
+#include <stdexcept>
 #include <SDL2/SDL.h>
 
 namespace {
@@ -49,10 +50,10 @@ namespace {
 
   class Surface {
   public:
-    Surface(uint32_t width, uint32_t height) {
+    Surface(klmth::sdl::Dimensions dimensions) {
       s = SDL_CreateRGBSurface(0,
-			       width,
-			       height,
+			       dimensions.width,
+			       dimensions.height,
 			       32,
 			       0xff000000,  // rgba
 			       0x00ff0000,
@@ -91,12 +92,12 @@ namespace {
   };
 
 
-  klmth::sdl::Texture mk_texture(SDL_Renderer* r, size_t width, size_t height) {
+  klmth::sdl::Texture mk_texture(SDL_Renderer* r, klmth::sdl::Dimensions dimensions) {
     SDL_Texture* t = SDL_CreateTexture(r,
 				       SDL_PIXELFORMAT_RGBA8888,
 				       SDL_TEXTUREACCESS_STATIC,
-				       width,
-				       height);
+				       dimensions.width,
+				       dimensions.height);
       
     if (t == NULL) {
       throw std::runtime_error("cannot create texture");
@@ -123,9 +124,14 @@ klmth::sdl::Texture::~Texture() noexcept {
 }
 
 
+uint64_t klmth::sdl::Dimensions::area() const noexcept {
+  return this->width * this->height;
+}
 
-klmth::sdl::Window::Window(uint32_t width, uint32_t height) {
-  if (SDL_CreateWindowAndRenderer(width, height, SDL_WINDOW_SHOWN, &w, &r) == -1) {
+
+
+klmth::sdl::Window::Window(Dimensions dimensions) {
+  if (SDL_CreateWindowAndRenderer(dimensions.width, dimensions.height, SDL_WINDOW_SHOWN, &w, &r) == -1) {
     throw std::runtime_error(std::string("error creating window: ") + SDL_GetError());
   }
 }
@@ -163,17 +169,20 @@ klmth::sdl::Window::~Window() noexcept {
 }
 
 klmth::sdl::Texture klmth::sdl::Window::create_texture(const std::vector<klmth::Rgb>& pixels,
-						       size_t width,
-						       size_t height) {
-  Surface s(width, height);
+						       Dimensions dimensions) {
+  if (dimensions.area() < pixels.size()) {
+    throw std::runtime_error("tried to create a texture with a vector that doesnt contain enough pixels");
+  }
+  
+  Surface s(dimensions);
   {
     SurfaceLock l = s.lock();
-    l.assign_pixel_range(0, width * height, [&](size_t i) {
+    l.assign_pixel_range(0, pixels.size(), [&](size_t i) {
 	return s.to_pixel(pixels[i]);
       });
   }
 
-  Texture t = mk_texture(r, width, height);
+  Texture t = mk_texture(r, dimensions);
   SDL_UpdateTexture(t._t, NULL, s.get_pixels(), s.get_pitch());
 
   return t;
@@ -185,8 +194,8 @@ klmth::sdl::Context::Context() {
   SDL_Init(SDL_INIT_VIDEO);
 }
 
-klmth::sdl::Window klmth::sdl::Context::create_window(uint32_t width, uint32_t height) {
-  return klmth::sdl::Window(width, height);
+klmth::sdl::Window klmth::sdl::Context::create_window(Dimensions dimensions) {
+  return klmth::sdl::Window(dimensions);
 }
 
 bool klmth::sdl::Context::wait_for_event(SDL_Event* out) {

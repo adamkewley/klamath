@@ -55,6 +55,7 @@ namespace klmth {
       int16_t x;
       int16_t y;
 
+      PixelShift() noexcept;
       PixelShift(int16_t _x, int16_t _y) noexcept;
 
       PixelShift operator+(const PixelShift& other) const noexcept;
@@ -74,9 +75,10 @@ namespace klmth {
     
     class Image {
     public:
+      Image() noexcept;
       Image(Dimensions dimensions,
 	    PixelShift pixel_shift,
-	    std::vector<uint8_t> color_indices);
+	    std::vector<uint8_t> color_indices) noexcept;
 
       Dimensions dimensions() const noexcept;
       uint16_t width() const noexcept;
@@ -88,8 +90,6 @@ namespace klmth {
       PixelShift _pixel_shift;
       std::vector<uint8_t> _color_indices;
     };
-
-    Image read_image(std::istream& in);
 
 
     class Animation {
@@ -110,13 +110,11 @@ namespace klmth {
       std::vector<Image> _frames;
     };
 
-    Animation read_animation(std::istream& in);
-
 
     class Orientable {
     public:
       Orientable(Dimensions dimensions,
-		 std::array<Image, num_orientations> orientations);
+		 std::array<Image, num_orientations> orientations) noexcept;
 
       Dimensions dimensions() const noexcept;
       const Image& image_at(const Orientation& o) const noexcept;
@@ -125,8 +123,6 @@ namespace klmth {
       Dimensions _dimensions;
       std::array<Image, num_orientations> _orientations;
     };
-
-    Orientable read_orientable(std::istream& in);
 
     
     class AnimatedOrientable {
@@ -140,8 +136,6 @@ namespace klmth {
       Dimensions _dimensions;
       std::array<Animation, num_orientations> _orientations;
     };
-
-    AnimatedOrientable read_animated_orientable(std::istream& in);
     
 
     // For when the caller doesn't know what type the FRM file is and
@@ -155,10 +149,10 @@ namespace klmth {
     
     class Any {
     public:
-      Any(Image image);
-      Any(Animation animation);
-      Any(Orientable orientable);
-      Any(AnimatedOrientable animated_orientable);
+      Any(Image image) noexcept;
+      Any(Animation animation) noexcept;
+      Any(Orientable orientable) noexcept;
+      Any(AnimatedOrientable animated_orientable) noexcept;
       Any(Any&& tmp) noexcept;
       ~Any() noexcept;
       

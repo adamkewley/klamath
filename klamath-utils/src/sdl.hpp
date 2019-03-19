@@ -3,15 +3,14 @@
 #include <cstdint>
 #include <cstddef>
 #include <vector>
-#include <stdexcept>
 #include <chrono>
-#include <SDL2/SDL_events.h>
 
 #include "klamath/rgb.hpp"
 
 struct SDL_Texture;
 struct SDL_Window;
 struct SDL_Renderer;
+union SDL_Event;
 
 namespace klmth {
   namespace sdl {
@@ -26,17 +25,23 @@ namespace klmth {
       SDL_Texture* _t;  // todo: make private
     };
 
+    struct Dimensions {
+      uint32_t width;
+      uint32_t height;
+
+      uint64_t area() const noexcept;
+    };
+
     class Window {
     public:
-      Window(uint32_t width, uint32_t height);
+      Window(Dimensions dimensions);
       Window(const Window& other) = delete;
       Window operator=(const Window& other) = delete;
       Window(Window&& tmp);
       ~Window() noexcept;
       
       Texture create_texture(const std::vector<klmth::Rgb>& pixels,
-			     size_t width,
-			     size_t height);
+			     Dimensions dimensions);
 
       void render_clear();
       void render_copy_fullscreen(const Texture& tex);
@@ -52,7 +57,7 @@ namespace klmth {
       Context();
       ~Context() noexcept;
 
-      Window create_window(uint32_t width, uint32_t height);
+      Window create_window(Dimensions dimensions);
       bool wait_for_event(SDL_Event* out);
       bool poll_event(SDL_Event* out);
     };

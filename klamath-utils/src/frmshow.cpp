@@ -3,6 +3,7 @@
 #include <iostream>
 #include <fstream>
 #include <memory>
+#include <SDL2/SDL_events.h>
 
 #include "klamath/pal.hpp"
 #include "klamath/frm.hpp"
@@ -39,12 +40,12 @@ namespace {
       pixels[i] = palette.palette[idx] * 4;
     }
 
-    return w.create_texture(pixels, img.width(), img.height());
+    return w.create_texture(pixels, { img.width(), img.height() });
   }
 
   void show_image(const pal::File& palette, const frm::Image& img) {
     sdl::Context c;
-    sdl::Window w = c.create_window(img.width(), img.height());
+    sdl::Window w = c.create_window({ img.width(), img.height() });
     
     sdl::Texture t = create_texture(w, palette, img);
 
@@ -62,7 +63,7 @@ namespace {
 
   void show_animation(const pal::File& palette, const frm::Animation& animation) {
     sdl::Context c;
-    sdl::Window w = c.create_window(animation.width(), animation.height());
+    sdl::Window w = c.create_window({ animation.width(), animation.height() });
 
     std::vector<sdl::Texture> frame_textures;
     frame_textures.reserve(animation.num_frames());
@@ -70,9 +71,12 @@ namespace {
       frame_textures.emplace_back(create_texture(w, palette, frame));
     }
 
+    const std::chrono::milliseconds sleep_dur(1000/animation.fps());
+    const size_t num_frames = animation.num_frames();
+
     SDL_Event e;
-    size_t num_frames = animation.num_frames();
     int frame = 0;
+
     while (true) {
       while (c.poll_event(&e)) {
 	if (e.type == SDL_QUIT || (e.type == SDL_KEYDOWN && e.key.keysym.sym == SDLK_ESCAPE)) {
@@ -82,8 +86,16 @@ namespace {
       w.render_clear();
       w.render_copy_fullscreen(frame_textures[frame++ % num_frames]);
       w.render_present();
-      sdl::sleep(std::chrono::milliseconds(50));
+      sdl::sleep(sleep_dur);
     }
+  }
+
+  void show_orientable(const pal::File& palette, const frm::Orientable& orientable) {
+    throw std::runtime_error("showing orientables NYI");
+  }
+
+  void show_animated_orientable(const pal::File& palette, const frm::AnimatedOrientable& anim_orientable) {
+    throw std::runtime_error("showing animated orientables NYI");
   }
 
   void show_frm(const pal::File& palette, std::istream& frm_in, const std::string& in_name) {
@@ -96,8 +108,12 @@ namespace {
       case frm::AnyType::animation:
 	show_animation(palette, any.animation_unpack());
 	break;
-      default:
-	throw std::runtime_error("cannot unpack non-image data: not yet implemented");
+      case frm::AnyType::orientable:
+	show_orientable(palette, any.orientable_unpack());
+	break;
+      case frm::AnyType::animated_orientable:
+	show_animated_orientable(palette, any.animated_orientable_unpack());
+	break;
       }
     } catch (const std::exception& ex) {
       throw std::runtime_error(in_name + ": error showing frm: " + ex.what());

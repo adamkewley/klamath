@@ -3,8 +3,7 @@
 #include <stdexcept>
 #include <iostream>
 #include <array>
-
-#include "vendor/miniz/miniz.h"
+#include <zlib.h>
 
 
 namespace {
@@ -16,7 +15,7 @@ namespace {
       zalloc = Z_NULL;
       zfree = Z_NULL;
       opaque = Z_NULL;
-      next_in = _next_in;
+      next_in = const_cast<uint8_t*>(_next_in);
       avail_in = _avail_in;
       next_out = _next_out;
       avail_out = _avail_out;
@@ -82,8 +81,8 @@ klmth::zlib::StreamDecompressor::StreamDecompressor() {
 void klmth::zlib::StreamDecompressor::decompress(std::istream& in,
 						 size_t n,
 						 std::ostream& out) {
-  std::array<uint8_t, 1 << 16> inbuf;
-  std::array<uint8_t, 1 << 16> outbuf;
+  std::array<uint8_t, 65536> inbuf;
+  std::array<uint8_t, 65536> outbuf;
   InflateStream s(inbuf.data(), 0, outbuf.data(), outbuf.size());
   
   while (n != 0) {

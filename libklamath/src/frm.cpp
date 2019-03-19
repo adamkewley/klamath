@@ -53,9 +53,13 @@ namespace {
   }
 
   bool all_data_offsets_equal(const frm::Header& header) {
-    return std::equal(header.offsets_in_frame_data.begin(),
-		      header.offsets_in_frame_data.end(),
-		      header.offsets_in_frame_data.begin());
+    auto first = header.offsets_in_frame_data[0];
+    for (size_t i = 1; i < header.offsets_in_frame_data.size(); ++i) {
+      if (header.offsets_in_frame_data[i] != first) {
+	return false;
+      }
+    }
+    return true;
   }
 
   frm::Image read_frame_as_img(std::istream& in, frm::PixelShift shift) {
@@ -124,6 +128,8 @@ klmth::frm::Frame klmth::frm::read_frame(std::istream& in) {
 }
 
 
+klmth::frm::PixelShift::PixelShift() noexcept {
+}
 
 klmth::frm::PixelShift::PixelShift(int16_t _x, int16_t _y) noexcept: x(_x), y(_y) {
 }
@@ -150,9 +156,13 @@ klmth::frm::Dimensions klmth::frm::Dimensions::union_with(const Dimensions& othe
 }
 
 
+
+klmth::frm::Image::Image() noexcept {
+}
+
 klmth::frm::Image::Image(Dimensions dimensions,
 			 PixelShift pixel_shift,
-			 std::vector<uint8_t> color_indices) :
+			 std::vector<uint8_t> color_indices) noexcept :
   _dimensions(dimensions),
   _pixel_shift(pixel_shift),
   _color_indices(std::move(color_indices)) {
@@ -178,22 +188,6 @@ const std::vector<uint8_t>& klmth::frm::Image::color_indices() const noexcept {
   return _color_indices;
 }
 
-klmth::frm::Image klmth::frm::read_image(std::istream& in) {  
-  Header header = read_header(in);
-
-  if (header.fps > 1) {
-    throw std::runtime_error("frm header invalid for image: its 'fps' field is >1, which means the header is for an animation, rather than an image");
-  } else if (header.frames_per_direction > 1) {
-    throw std::runtime_error("frm header invalid for image: its 'number_of_frames_per_direction' field is >1, which means the header is for an animation, rather than an image");
-  } else if (!all_data_offsets_equal(header)) {
-    throw std::runtime_error("frm header invalid for image: its 'offsets_into_data' are not all equal, which means the header is for something with multiple orientations (images only have one orientation)");
-  }
-
-  PixelShift header_pixel_shift{ header.pixel_shifts_x[0], header.pixel_shifts_y[0] };
-
-  return read_frame_as_img(in, header_pixel_shift);
-}
-
 
 
 klmth::frm::Animation::Animation(Dimensions dimensions,
@@ -212,6 +206,10 @@ uint16_t klmth::frm::Animation::height() const noexcept {
   return this->_dimensions.height;
 }
 
+uint16_t klmth::frm::Animation::fps() const noexcept {
+  return this->_fps;
+}
+
 size_t klmth::frm::Animation::num_frames() const noexcept {
   return this->_frames.size();
 }
@@ -220,28 +218,31 @@ const std::vector<klmth::frm::Image>& klmth::frm::Animation::frames() const noex
   return this->_frames;
 }
 
-klmth::frm::Animation klmth::frm::read_animation(std::istream& in) {
-  Header header = read_header(in);
 
-  if (header.fps == 1) {
-    throw std::runtime_error("frm header invalid for an animation: its 'fps' field is == 1, which means the header is for a static image, rather than an animation");
-  } else if (header.frames_per_direction == 1) {
-    throw std::runtime_error("frm header invalid for an animation: its 'number_of_frames_per_direction' field is == 1, which means the header is for a static image, rather than an animation");
-  } else if (!all_data_offsets_equal(header)) {
-    throw std::runtime_error("frm header invalid for an animation: its 'offsets_into_data' are not all equal, which means thie header is for someting with multiple orientations (standard animations only have one orientation)");
-  }
-
-  return read_frames_as_animation(in, std::move(header));
+klmth::frm::Orientable::Orientable(Dimensions dimensions,
+				   std::array<Image, num_orientations> orientations) noexcept :
+  _dimensions(std::move(dimensions)),
+  _orientations(std::move(orientations)) {
 }
 
-klmth::frm::Any::Any(Image image) :
+klmth::frm::Dimensions klmth::frm::Orientable::dimensions() const noexcept {
+  return this->_dimensions;
+}
+
+
+klmth::frm::Any::Any(Image image) noexcept :
   _type(AnyType::image),
   _image(std::move(image)) {
 }
 
-klmth::frm::Any::Any(Animation animation) :
+klmth::frm::Any::Any(Animation animation) noexcept :
   _type(AnyType::animation),
   _animation(std::move(animation)) {
+}
+
+klmth::frm::Any::Any(Orientable orientable) noexcept :
+  _type(AnyType::orientable),
+  _orientable(std::move(orientable)) {
 }
 
 klmth::frm::Any::Any(Any&& tmp) noexcept {
@@ -300,21 +301,48 @@ const klmth::frm::Animation& klmth::frm::Any::animation_unpack() const {
   return _animation;
 }
 
+const klmth::frm::Orientable& klmth::frm::Any::orientable_unpack() const {
+  if (_type != AnyType::orientable) {
+    throw std::runtime_error("attempted to unpack non-orientable FRM 'any' as an orientable");
+  }
+
+  return _orientable;
+}
+
+const klmth::frm::AnimatedOrientable& klmth::frm::Any::animated_orientable_unpack() const {
+  if (_type != AnyType::animated_orientable) {
+    throw std::runtime_error("attempted to unpack non-animated-orientable FRM 'any' as an animated orientable");
+  }
+
+  return _animated_orientable;
+}
+
 klmth::frm::Any klmth::frm::read_any(std::istream& in) {
   Header header = read_header(in);
 
-  if (header.fps == 1) {
+  if (header.fps >= 1) {
     if (all_data_offsets_equal(header)) {
-      return read_frame_as_img(in, { header.pixel_shifts_x[0], header.pixel_shifts_y[0] });
+      return read_frames_as_animation(in, std::move(header));
     } else {
-      throw std::runtime_error("parsing orientable images nyi");
+      throw std::runtime_error("parsing orientable animations nyi");
     }
   } else {
     if (all_data_offsets_equal(header)) {
-      return read_frames_as_animation(in, std::move(header));
-      throw std::runtime_error("animations nyi");
+      return read_frame_as_img(in, { header.pixel_shifts_x[0], header.pixel_shifts_y[0] });
     } else {
-      throw std::runtime_error("parsing orientable animations nyi");
+      std::array<Image, num_orientations> orientations{};
+      Dimensions dimensions;
+      PixelShift pixel_shift{ header.pixel_shifts_x[0], header.pixel_shifts_y[0] };
+
+      for (int o = 0; o < num_orientations; ++o) {
+	frm::Image img = read_frame_as_img(in, pixel_shift);
+	
+	pixel_shift = pixel_shift + img.pixel_shift();
+	dimensions = dimensions.union_with(img.dimensions());
+	orientations[o] = std::move(img);
+      }
+      
+      return Orientable(dimensions, std::move(orientations));
     }
   }
 }
