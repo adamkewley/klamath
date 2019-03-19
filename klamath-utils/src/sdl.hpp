@@ -4,6 +4,7 @@
 #include <cstddef>
 #include <vector>
 #include <stdexcept>
+#include <chrono>
 #include <SDL2/SDL_events.h>
 
 #include "klamath/rgb.hpp"
@@ -53,6 +54,9 @@ namespace klmth {
 
       Window create_window(uint32_t width, uint32_t height);
       bool wait_for_event(SDL_Event* out);
+      bool poll_event(SDL_Event* out);
     };
+
+    void sleep(std::chrono::milliseconds duration);
   }
 }

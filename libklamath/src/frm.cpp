@@ -58,15 +58,30 @@ namespace {
 		      header.offsets_in_frame_data.begin());
   }
 
-  frm::Image read_frame_as_img(std::istream& in, const frm::PixelShift& shift) {
+  frm::Image read_frame_as_img(std::istream& in, frm::PixelShift shift) {
     frm::Frame frame = frm::read_frame(in);
 
     frm::PixelShift frame_pixel_shift{ frame.pixel_shift_x, frame.pixel_shift_y };
     frm::PixelShift img_pixel_shift = shift + frame_pixel_shift;
 
-    frm::Rect rect = { frame.width, frame.height };
+    frm::Dimensions dimensions = { frame.width, frame.height };
 
-    return { rect, img_pixel_shift, std::move(frame.color_indices) };
+    return { dimensions, img_pixel_shift, std::move(frame.color_indices) };
+  }
+
+  frm::Animation read_frames_as_animation(std::istream& in, frm::Header header) {  
+    frm::PixelShift pixel_shift{ header.pixel_shifts_x[0], header.pixel_shifts_y[0] };
+    frm::Dimensions anim_dimensions;  // assumed to be the smallest rect that can contain all frames' rects
+    std::vector<frm::Image> frames;
+  
+    for (uint16_t frame = 0; frame < header.frames_per_direction; ++frame) {
+      frm::Image img = read_frame_as_img(in, pixel_shift);
+      pixel_shift = img.pixel_shift();  // accumulate pixel shifts
+      anim_dimensions = anim_dimensions.union_with(img.dimensions());
+      frames.push_back(std::move(img));
+    }
+
+    return { anim_dimensions, header.fps, std::move(frames) };
   }
 }
 
@@ -110,24 +125,49 @@ klmth::frm::Frame klmth::frm::read_frame(std::istream& in) {
 
 
 
-klmth::frm::Image::Image(Rect rect,
+klmth::frm::PixelShift::PixelShift(int16_t _x, int16_t _y) noexcept: x(_x), y(_y) {
+}
+
+klmth::frm::PixelShift klmth::frm::PixelShift::operator+(const PixelShift& other) const noexcept {
+  return {
+    static_cast<int16_t>(this->x + other.x),
+      static_cast<int16_t>(this->y + other.y),
+      };
+}
+
+
+
+klmth::frm::Dimensions::Dimensions() noexcept : width(0), height(0) {
+}
+
+klmth::frm::Dimensions::Dimensions(uint16_t _width, uint16_t _height) noexcept : width(_width), height(_height) {
+}
+
+klmth::frm::Dimensions klmth::frm::Dimensions::union_with(const Dimensions& other) const noexcept {
+  uint16_t width = std::max(this->width, other.width);
+  uint16_t height = std::max(this->height, other.height);
+  return { width, height };
+}
+
+
+klmth::frm::Image::Image(Dimensions dimensions,
 			 PixelShift pixel_shift,
 			 std::vector<uint8_t> color_indices) :
-  _rect(rect),
+  _dimensions(dimensions),
   _pixel_shift(pixel_shift),
   _color_indices(std::move(color_indices)) {
 }
 
-klmth::frm::Rect klmth::frm::Image::rect() const noexcept {
-  return _rect;
+klmth::frm::Dimensions klmth::frm::Image::dimensions() const noexcept {
+  return _dimensions;
 }
 
 uint16_t klmth::frm::Image::width() const noexcept {
-  return _rect.width;
+  return this->_dimensions.width;
 }
 
 uint16_t klmth::frm::Image::height() const noexcept {
-  return _rect.height;
+  return this->_dimensions.height;
 }
 
 klmth::frm::PixelShift klmth::frm::Image::pixel_shift() const noexcept {
@@ -156,12 +196,28 @@ klmth::frm::Image klmth::frm::read_image(std::istream& in) {
 
 
 
-klmth::frm::Animation::Animation(klmth::frm::Rect rect,
+klmth::frm::Animation::Animation(Dimensions dimensions,
 				 uint16_t fps,
 				 std::vector<Image> frames) :
-  _rect(rect),
+  _dimensions(dimensions),
   _fps(fps),
   _frames(frames) {
+}
+
+uint16_t klmth::frm::Animation::width() const noexcept {
+  return this->_dimensions.width;
+}
+
+uint16_t klmth::frm::Animation::height() const noexcept {
+  return this->_dimensions.height;
+}
+
+size_t klmth::frm::Animation::num_frames() const noexcept {
+  return this->_frames.size();
+}
+
+const std::vector<klmth::frm::Image>& klmth::frm::Animation::frames() const noexcept {
+  return this->_frames;
 }
 
 klmth::frm::Animation klmth::frm::read_animation(std::istream& in) {
@@ -175,34 +231,34 @@ klmth::frm::Animation klmth::frm::read_animation(std::istream& in) {
     throw std::runtime_error("frm header invalid for an animation: its 'offsets_into_data' are not all equal, which means thie header is for someting with multiple orientations (standard animations only have one orientation)");
   }
 
-  
-  PixelShift pixel_shift{ header.pixel_shifts_x[0], header.pixel_shifts_y[0] };
-  Rect anim_rect;  // assumed to be the smallest rect that can contain all frames' rects
-  std::vector<Image> frames;
-  
-  for (uint16_t frame = 0; frame < header.frames_per_direction; ++frame) {
-    Image img = read_frame_as_img(in, pixel_shift);
-    pixel_shift = img.pixel_shift();  // accumulate pixel shifts
-    anim_rect.merge(img.rect());
-    frames.push_back(std::move(img));
-  }
-
-  return { anim_rect, header.fps, std::move(frames) };
+  return read_frames_as_animation(in, std::move(header));
 }
 
 klmth::frm::Any::Any(Image image) :
-  _type(klmth::frm::AnyType::image),
+  _type(AnyType::image),
   _image(std::move(image)) {
+}
+
+klmth::frm::Any::Any(Animation animation) :
+  _type(AnyType::animation),
+  _animation(std::move(animation)) {
 }
 
 klmth::frm::Any::Any(Any&& tmp) noexcept {
   this->_type = tmp._type;
+  
   switch (tmp._type) {
   case AnyType::image:
-    _image = std::move(tmp._image);
+    this->_image = std::move(tmp._image);
     break;
   case AnyType::animation:
-    _animation = std::move(tmp._animation);
+    this->_animation = std::move(tmp._animation);
+    break;
+  case AnyType::orientable:
+    this->_orientable = std::move(tmp._orientable);
+    break;
+  case AnyType::animated_orientable:
+    this->_animated_orientable = std::move(tmp._animated_orientable);
     break;
   }
 }
@@ -214,6 +270,12 @@ klmth::frm::Any::~Any() noexcept {
     break;
   case AnyType::animation:
     _animation.~Animation();
+    break;
+  case AnyType::orientable:
+    _orientable.~Orientable();
+    break;
+  case AnyType::animated_orientable:
+    _animated_orientable.~AnimatedOrientable();
     break;
   }
 }
@@ -245,13 +307,14 @@ klmth::frm::Any klmth::frm::read_any(std::istream& in) {
     if (all_data_offsets_equal(header)) {
       return read_frame_as_img(in, { header.pixel_shifts_x[0], header.pixel_shifts_y[0] });
     } else {
-      throw std::runtime_error("orientable images nyi");
+      throw std::runtime_error("parsing orientable images nyi");
     }
   } else {
     if (all_data_offsets_equal(header)) {
+      return read_frames_as_animation(in, std::move(header));
       throw std::runtime_error("animations nyi");
     } else {
-      throw std::runtime_error("orientable animations nyi");
+      throw std::runtime_error("parsing orientable animations nyi");
     }
   }
 }

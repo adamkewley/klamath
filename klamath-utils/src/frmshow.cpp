@@ -42,7 +42,7 @@ namespace {
     return w.create_texture(pixels, img.width(), img.height());
   }
 
-  void show_frame(const pal::File& palette, const frm::Image& img) {
+  void show_image(const pal::File& palette, const frm::Image& img) {
     sdl::Context c;
     sdl::Window w = c.create_window(img.width(), img.height());
     
@@ -60,12 +60,41 @@ namespace {
     }
   }
 
+  void show_animation(const pal::File& palette, const frm::Animation& animation) {
+    sdl::Context c;
+    sdl::Window w = c.create_window(animation.width(), animation.height());
+
+    std::vector<sdl::Texture> frame_textures;
+    frame_textures.reserve(animation.num_frames());
+    for (const frm::Image& frame : animation.frames()) {
+      frame_textures.emplace_back(create_texture(w, palette, frame));
+    }
+
+    SDL_Event e;
+    size_t num_frames = animation.num_frames();
+    int frame = 0;
+    while (true) {
+      while (c.poll_event(&e)) {
+	if (e.type == SDL_QUIT || (e.type == SDL_KEYDOWN && e.key.keysym.sym == SDLK_ESCAPE)) {
+	  return;
+	}
+      }
+      w.render_clear();
+      w.render_copy_fullscreen(frame_textures[frame++ % num_frames]);
+      w.render_present();
+      sdl::sleep(std::chrono::milliseconds(50));
+    }
+  }
+
   void show_frm(const pal::File& palette, std::istream& frm_in, const std::string& in_name) {
     try {
       frm::Any any = frm::read_any(frm_in);
       switch (any.type()) {
       case frm::AnyType::image:
-	show_frame(palette, any.image_unpack());
+	show_image(palette, any.image_unpack());
+	break;
+      case frm::AnyType::animation:
+	show_animation(palette, any.animation_unpack());
 	break;
       default:
 	throw std::runtime_error("cannot unpack non-image data: not yet implemented");

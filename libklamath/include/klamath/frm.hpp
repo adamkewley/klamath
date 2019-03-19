@@ -48,52 +48,43 @@ namespace klmth {
     Frame read_frame(std::istream& in);
 
 
-    // high-level API: used when clients want to load FRM files into
-    // abstractions such as images, animations, etc.
+    // high-level API: used when clients just want to load FRM files
+    // into abstractions such as images, animations, etc.
 
     struct PixelShift {
       int16_t x;
       int16_t y;
 
-      PixelShift(int16_t _x, int16_t _y) : x(_x), y(_y) {
-      }
+      PixelShift(int16_t _x, int16_t _y) noexcept;
 
-      PixelShift operator+(const PixelShift& other) const noexcept {
-	return {
-	  static_cast<int16_t>(this->x + other.x),
-	  static_cast<int16_t>(this->y + other.y),
-	};
-      }
+      PixelShift operator+(const PixelShift& other) const noexcept;
     };
 
-    struct Rect {
+    
+    struct Dimensions {
       uint16_t width;
       uint16_t height;
 
-      Rect() : width(0), height(0) {
-      }
-      
-      Rect(uint16_t _width, uint16_t _height) : width(_width), height(_height) {
-      }
+      Dimensions() noexcept;
+      Dimensions(uint16_t _width, uint16_t _height) noexcept;
 
-      Rect merge(const Rect& other) {
-	return { std::max(this->width, other.width), std::max(this->height, other.height) };
-      }
+      Dimensions union_with(const Dimensions& other) const noexcept;
     };
+
     
     class Image {
     public:
-      Image(Rect rect,
+      Image(Dimensions dimensions,
 	    PixelShift pixel_shift,
 	    std::vector<uint8_t> color_indices);
 
-      Rect rect() const noexcept;
+      Dimensions dimensions() const noexcept;
       uint16_t width() const noexcept;
       uint16_t height() const noexcept;
       PixelShift pixel_shift() const noexcept;
       const std::vector<uint8_t>& color_indices() const noexcept;
     private:
-      Rect _rect;
+      Dimensions _dimensions;
       PixelShift _pixel_shift;
       std::vector<uint8_t> _color_indices;
     };
@@ -103,15 +94,18 @@ namespace klmth {
 
     class Animation {
     public:
-      Animation(Rect rect,
+      Animation(Dimensions dimensions,
 		uint16_t fps,
 		std::vector<Image> frames);
-		
-      Rect rect() const noexcept;
-      uint16_t fps() const noexcept;      
+
+      Dimensions dimensions() const noexcept;
+      uint16_t width() const noexcept;
+      uint16_t height() const noexcept;
+      uint16_t fps() const noexcept;
+      size_t num_frames() const noexcept;
       const std::vector<Image>& frames() const noexcept;
     private:
-      Rect _rect;
+      Dimensions _dimensions;
       uint16_t _fps;
       std::vector<Image> _frames;
     };
@@ -119,28 +113,67 @@ namespace klmth {
     Animation read_animation(std::istream& in);
 
 
+    class Orientable {
+    public:
+      Orientable(Dimensions dimensions,
+		 std::array<Image, num_orientations> orientations);
+
+      Dimensions dimensions() const noexcept;
+      const Image& image_at(const Orientation& o) const noexcept;
+      
+    private:
+      Dimensions _dimensions;
+      std::array<Image, num_orientations> _orientations;
+    };
+
+    Orientable read_orientable(std::istream& in);
+
+    
+    class AnimatedOrientable {
+    public:
+      AnimatedOrientable(Dimensions dimensions,
+			 std::array<Animation, num_orientations> frames);
+
+      Dimensions dimensions() const noexcept;
+      const Animation& animation_at(const Orientation& o) const noexcept;
+    private:
+      Dimensions _dimensions;
+      std::array<Animation, num_orientations> _orientations;
+    };
+
+    AnimatedOrientable read_animated_orientable(std::istream& in);
+    
+
     // For when the caller doesn't know what type the FRM file is and
     // wants to defer the decision to runtime.
     enum class AnyType {
       image,
       animation,
+      orientable,
+      animated_orientable,
     };
     
     class Any {
     public:
       Any(Image image);
       Any(Animation animation);
+      Any(Orientable orientable);
+      Any(AnimatedOrientable animated_orientable);
       Any(Any&& tmp) noexcept;
       ~Any() noexcept;
       
       AnyType type() const noexcept;
       const Image& image_unpack() const;
       const Animation& animation_unpack() const;
+      const Orientable& orientable_unpack() const;
+      const AnimatedOrientable& animated_orientable_unpack() const;
     private:
       AnyType _type;
       union {
 	Image _image;
 	Animation _animation;
+	Orientable _orientable;
+	AnimatedOrientable _animated_orientable;
       };
     };
 

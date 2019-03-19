@@ -193,6 +193,15 @@ bool klmth::sdl::Context::wait_for_event(SDL_Event* out) {
   return SDL_WaitEvent(out) == 1;
 }
 
+bool klmth::sdl::Context::poll_event(SDL_Event* out) {
+  return SDL_PollEvent(out) == 1;
+}
+
 klmth::sdl::Context::~Context() noexcept {
   SDL_Quit();
+}
+
+
+void klmth::sdl::sleep(std::chrono::milliseconds duration) {
+  SDL_Delay(duration.count());
 }
