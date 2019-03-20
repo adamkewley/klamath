@@ -132,13 +132,6 @@ klmth::sdl::Texture::~Texture() noexcept {
   }
 }
 
-
-uint64_t klmth::sdl::Dimensions::area() const noexcept {
-  return this->width * this->height;
-}
-
-
-
 klmth::sdl::Window::Window(Dimensions dimensions) {
   if (SDL_CreateWindowAndRenderer(dimensions.width, dimensions.height, SDL_WINDOW_SHOWN, &w, &r) == -1) {
     throw std::runtime_error(std::string("error creating window: ") + SDL_GetError());

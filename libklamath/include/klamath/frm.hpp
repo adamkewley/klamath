@@ -5,11 +5,23 @@
 #include <vector>
 #include <iosfwd>
 
+#include "klamath/geometry.hpp"
+
 
 namespace klmth {
   namespace frm {
     
-    enum class Orientation {
+    enum Orientation : unsigned char {
+      north_east = 0,
+      east = 1,
+      south_east = 2,
+      south_west = 3,
+      west = 4,
+      north_west = 5,
+      num_orientations = 6,
+    };
+
+    const std::array<Orientation, num_orientations> orientations {
       north_east,
       east,
       south_east,
@@ -17,40 +29,6 @@ namespace klmth {
       west,
       north_west,
     };
-
-    static const unsigned num_orientations = 6;
-
-    const std::array<Orientation, num_orientations> orientations {
-      Orientation::north_east,
-      Orientation::east,
-      Orientation::south_east,
-      Orientation::south_west,
-      Orientation::west,
-      Orientation::north_west,
-    };
-
-    constexpr unsigned orientation_index(Orientation orientation) {
-      switch (orientation) {
-      case Orientation::north_east:
-	return 0;
-      case Orientation::east:
-	return 1;
-      case Orientation::south_east:
-	return 2;
-      case Orientation::south_west:
-	return 3;
-      case Orientation::west:
-	return 4;
-      case Orientation::north_west:
-	return 5;
-      default:
-	throw std::runtime_error("unknown orientation");
-      }
-    }
-    
-    
-    // low-level API: used when clients want to read particular parts
-    // of an FRM file and deal with the resulting data directly.
     
     struct Header {
       uint32_t version_number;
@@ -63,8 +41,6 @@ namespace klmth {
       uint32_t size_of_frame_data;
     };
 
-    Header read_header(std::istream& in);
-
     struct Frame {
       uint16_t width;
       uint16_t height;
@@ -74,102 +50,62 @@ namespace klmth {
       std::vector<uint8_t> color_indices;
     };
 
-    Frame read_frame(std::istream& in);
-
-
-    // high-level API: used when clients just want to load FRM files
-    // into abstractions such as images, animations, etc.
-
     struct PixelShift {
       int16_t x;
       int16_t y;
 
-      PixelShift() noexcept;
-      PixelShift(int16_t _x, int16_t _y) noexcept;
+      PixelShift operator+(PixelShift other) const noexcept {
+	int16_t x = this->x + other.x;
+	int16_t y = this->y + other.y;
 
-      PixelShift operator+(const PixelShift& other) const noexcept;
-    };
-
-    
-    struct Dimensions {
-      uint16_t width;
-      uint16_t height;
-
-      Dimensions() noexcept;
-      Dimensions(uint16_t _width, uint16_t _height) noexcept;
-
-      Dimensions union_with(const Dimensions& other) const noexcept;
-    };
-
-    
-    class Image {
-    public:
-      Image() noexcept;
-      Image(Dimensions dimensions,
-	    PixelShift pixel_shift,
-	    std::vector<uint8_t> color_indices) noexcept;
-
-      Dimensions dimensions() const noexcept;
-      uint16_t width() const noexcept;
-      uint16_t height() const noexcept;
-      PixelShift pixel_shift() const noexcept;
-      const std::vector<uint8_t>& color_indices() const noexcept;
-    private:
-      Dimensions _dimensions;
-      PixelShift _pixel_shift;
-      std::vector<uint8_t> _color_indices;
-    };
-
-
-    class Animation {
-    public:
-      Animation(Dimensions dimensions,
-		uint16_t fps,
-		std::vector<Image> frames);
-
-      Dimensions dimensions() const noexcept;
-      uint16_t width() const noexcept;
-      uint16_t height() const noexcept;
-      uint16_t fps() const noexcept;
-      size_t num_frames() const noexcept;
-      const std::vector<Image>& frames() const noexcept;
-    private:
-      Dimensions _dimensions;
-      uint16_t _fps;
-      std::vector<Image> _frames;
-    };
-
-
-    class Orientable {
-    public:
-      Orientable(Dimensions dimensions,
-		 std::array<Image, num_orientations> orientations) noexcept;
-      uint16_t width() const noexcept;
-      uint16_t height() const noexcept;
-      Dimensions dimensions() const noexcept;
-      const Image& image_at(const Orientation& o) const noexcept;
+	return { x, y };
+      }
       
-    private:
-      Dimensions _dimensions;
-      std::array<Image, num_orientations> _orientations;
+      PixelShift& operator+=(PixelShift other) noexcept {
+	this->x += other.x;
+	this->y += other.y;
+	return *this;
+      }
     };
 
+    using Dimensions = geometry::Dimensions<uint16_t>;
     
-    class AnimatedOrientable {
-    public:
-      AnimatedOrientable(Dimensions dimensions,
-			 std::array<Animation, num_orientations> frames);
+    struct Image {
+      Dimensions dimensions;
+      PixelShift pixel_shift;
+      std::vector<uint8_t> color_indices;
+    };
 
-      Dimensions dimensions() const noexcept;
-      const Animation& animation_at(const Orientation& o) const noexcept;
-    private:
-      Dimensions _dimensions;
-      std::array<Animation, num_orientations> _orientations;
+    struct Animation {
+      Dimensions dimensions;
+      uint16_t fps;
+      std::vector<Image> frames;
+
+      size_t num_frames() const noexcept {
+	return this->frames.size();
+      }
+    };
+
+    struct Orientable {
+      Dimensions dimensions;
+      std::array<Image, num_orientations> orientations;
+
+      const Image& image_at(Orientation o) const noexcept {
+	return this->orientations[o];
+      }
+    };
+
+    struct AnimatedOrientable {
+      Dimensions dimensions;
+      uint16_t frames_per_direction;
+      uint16_t fps;
+      std::array<Animation, num_orientations> orientations;
+
+      const Animation& animation_at(Orientation o) const noexcept {
+	return this->orientations[o];
+      }
     };
     
-
-    // For when the caller doesn't know what type the FRM file is and
-    // wants to defer the decision to runtime.
     enum class AnyType {
       image,
       animation,
@@ -201,6 +137,8 @@ namespace klmth {
       };
     };
 
+    Frame read_frame(std::istream& in);
+    Header read_header(std::istream& in);
     Any read_any(std::istream& in);
   }
 }

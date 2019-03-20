@@ -32,7 +32,7 @@ namespace {
   }
 
   sdl::Texture create_texture(sdl::Window& w, const pal::File& palette, const frm::Image& img) {
-    auto& color_indices = img.color_indices();
+    const auto& color_indices = img.color_indices;
     size_t num_pixels = color_indices.size();
     std::vector<klmth::Rgb> pixels;
     pixels.resize(num_pixels);
@@ -41,12 +41,12 @@ namespace {
       pixels[i] = palette.palette[idx] * 4;
     }
 
-    return w.create_texture(pixels, { img.width(), img.height() });
+    return w.create_texture(pixels, img.dimensions);
   }
 
   void show_image(const pal::File& palette, const frm::Image& img) {
     sdl::Context c;
-    sdl::Window w = c.create_window({ img.width(), img.height() });
+    sdl::Window w = c.create_window(img.dimensions);
     
     sdl::Texture t = create_texture(w, palette, img);
 
@@ -64,15 +64,15 @@ namespace {
 
   void show_animation(const pal::File& palette, const frm::Animation& animation) {
     sdl::Context c;
-    sdl::Window w = c.create_window({ animation.width(), animation.height() });
+    sdl::Window w = c.create_window(animation.dimensions);
 
     std::vector<sdl::Texture> frame_textures;
     frame_textures.reserve(animation.num_frames());
-    for (const frm::Image& frame : animation.frames()) {
+    for (const frm::Image& frame : animation.frames) {
       frame_textures.emplace_back(create_texture(w, palette, frame));
     }
 
-    const std::chrono::milliseconds sleep_dur(1000/animation.fps());
+    const std::chrono::milliseconds sleep_dur(1000/animation.fps);
     const size_t num_frames = animation.num_frames();
 
     SDL_Event e;
@@ -93,20 +93,15 @@ namespace {
 
   class OrientationsLayout {
   public:
-    OrientationsLayout(const frm::Orientable& orientable) noexcept : _cell_dimensions(orientable.dimensions()) {
-    }
-
-    unsigned rows() const noexcept {
-      return 3;
-    }
-
-    unsigned cols() const noexcept {
-      return 2;
+    OrientationsLayout(const frm::Dimensions dimensions) noexcept : _cell_dimensions(dimensions) {
     }
 
     sdl::Dimensions dimensions() const noexcept {
-      auto width = this->_cell_dimensions.width * cols();
-      auto height = this->_cell_dimensions.height * rows();
+      static const unsigned rows = 3;
+      static const unsigned cols = 2;
+      
+      auto width = this->_cell_dimensions.width * cols;
+      auto height = this->_cell_dimensions.height * rows;
       return { width, height };
     }
 
@@ -134,7 +129,7 @@ namespace {
   };
 
   void show_orientable(const pal::File& palette, const frm::Orientable& orientable) {
-    OrientationsLayout layout{orientable};
+    OrientationsLayout layout{orientable.dimensions};
     
     sdl::Context c;
     sdl::Window w = c.create_window(layout.dimensions());
@@ -144,9 +139,7 @@ namespace {
     for (frm::Orientation orientation : frm::orientations) {
       const frm::Image& img = orientable.image_at(orientation);
       sdl::Texture t = create_texture(w, palette, img);
-      sdl::Point pos = layout.cell_pos(orientation);
-      sdl::Dimensions dimensions = { img.width(), img.height() };
-      sdl::Rect destination = { pos, dimensions };
+      sdl::Rect destination{ layout.cell_pos(orientation), img.dimensions };
       w.render_copy(t, destination);
     }
 
@@ -160,8 +153,27 @@ namespace {
     }
   }
 
-  void show_animated_orientable(const pal::File& palette, const frm::AnimatedOrientable& anim_orientable) {
-    throw std::runtime_error("showing animated orientables NYI");
+  void show_animated_orientable(const pal::File& palette, const frm::AnimatedOrientable& am) {
+    sdl::Context c;
+    OrientationsLayout layout{am.dimensions};
+    sdl::Window w = c.create_window(layout.dimensions());
+
+    // create a composite texture containing all orientations for each
+    // frame.
+    std::vector<sdl::Texture> frames;
+    frames.reserve(am.fps);
+
+    frm::Dimensions frame_dimensions;
+    
+
+    
+    
+    show_animation(palette, am.animation_at(frm::north_east));
+    show_animation(palette, am.animation_at(frm::east));
+    show_animation(palette, am.animation_at(frm::south_east));
+    show_animation(palette, am.animation_at(frm::south_west));
+    show_animation(palette, am.animation_at(frm::west));
+    show_animation(palette, am.animation_at(frm::north_west));
   }
 
   void show_frm(const pal::File& palette, std::istream& frm_in, const std::string& in_name) {
@@ -202,7 +214,7 @@ namespace {
   }
 
   void show_frms(const pal::File& palette, const std::vector<std::string>& sources) {
-    for (auto&& source : sources) {
+    for (const std::string& source : sources) {
       show_frm(palette, source);
     }
   }

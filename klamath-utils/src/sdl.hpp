@@ -6,6 +6,7 @@
 #include <chrono>
 
 #include "klamath/rgb.hpp"
+#include "klamath/geometry.hpp"
 
 struct SDL_Texture;
 struct SDL_Window;
@@ -25,22 +26,9 @@ namespace klmth {
       SDL_Texture* _t;  // todo: make private
     };
 
-    struct Dimensions {
-      uint32_t width;
-      uint32_t height;
-
-      uint64_t area() const noexcept;
-    };
-
-    struct Point {
-      unsigned x;
-      unsigned y;
-    };
-
-    struct Rect {
-      Point location;
-      Dimensions dimensions;
-    };
+    using Dimensions = geometry::Dimensions<uint32_t>;
+    using Point = geometry::Point<unsigned>;
+    using Rect = geometry::Rect<uint32_t, unsigned>;
 
     class Window {
     public:
