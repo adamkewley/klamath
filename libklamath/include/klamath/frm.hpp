@@ -9,15 +9,44 @@
 namespace klmth {
   namespace frm {
     
-    enum Orientation {
-      north_east = 0,
-      east = 1,
-      south_east = 2,
-      south_west = 3,
-      west = 4,
-      north_west = 5,
-      num_orientations = 6,
+    enum class Orientation {
+      north_east,
+      east,
+      south_east,
+      south_west,
+      west,
+      north_west,
     };
+
+    static const unsigned num_orientations = 6;
+
+    const std::array<Orientation, num_orientations> orientations {
+      Orientation::north_east,
+      Orientation::east,
+      Orientation::south_east,
+      Orientation::south_west,
+      Orientation::west,
+      Orientation::north_west,
+    };
+
+    constexpr unsigned orientation_index(Orientation orientation) {
+      switch (orientation) {
+      case Orientation::north_east:
+	return 0;
+      case Orientation::east:
+	return 1;
+      case Orientation::south_east:
+	return 2;
+      case Orientation::south_west:
+	return 3;
+      case Orientation::west:
+	return 4;
+      case Orientation::north_west:
+	return 5;
+      default:
+	throw std::runtime_error("unknown orientation");
+      }
+    }
     
     
     // low-level API: used when clients want to read particular parts
@@ -115,7 +144,8 @@ namespace klmth {
     public:
       Orientable(Dimensions dimensions,
 		 std::array<Image, num_orientations> orientations) noexcept;
-
+      uint16_t width() const noexcept;
+      uint16_t height() const noexcept;
       Dimensions dimensions() const noexcept;
       const Image& image_at(const Orientation& o) const noexcept;
       

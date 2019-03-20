@@ -3,6 +3,7 @@
 #include <iostream>
 #include <fstream>
 #include <memory>
+#include <stdexcept>
 #include <SDL2/SDL_events.h>
 
 #include "klamath/pal.hpp"
@@ -90,8 +91,73 @@ namespace {
     }
   }
 
+  class OrientationsLayout {
+  public:
+    OrientationsLayout(const frm::Orientable& orientable) noexcept : _cell_dimensions(orientable.dimensions()) {
+    }
+
+    unsigned rows() const noexcept {
+      return 3;
+    }
+
+    unsigned cols() const noexcept {
+      return 2;
+    }
+
+    sdl::Dimensions dimensions() const noexcept {
+      auto width = this->_cell_dimensions.width * cols();
+      auto height = this->_cell_dimensions.height * rows();
+      return { width, height };
+    }
+    
+    sdl::Rect rect(frm::Orientation orientation) const noexcept {
+      return { cell_loc(orientation), { _cell_dimensions.width, _cell_dimensions.height } };
+    }
+
+    sdl::Point cell_loc(frm::Orientation orientation) const {
+      switch (orientation) {
+      case frm::Orientation::north_east:
+	return { _cell_dimensions.width, 0 };
+      case frm::Orientation::east:
+	return { _cell_dimensions.width, _cell_dimensions.height };
+      case frm::Orientation::south_east:
+	return { _cell_dimensions.width, _cell_dimensions.height * 2u };
+      case frm::Orientation::south_west:
+	return { 0, _cell_dimensions.height * 2u };
+      case frm::Orientation::west:
+	return { 0, _cell_dimensions.height };
+      case frm::Orientation::north_west:
+	return { 0, 0 };
+      default:
+	throw std::runtime_error("unknown orientation: cannot calculate location for this orientation in the layout");
+      }
+    }
+    
+  private:
+    frm::Dimensions _cell_dimensions;
+  };
+
   void show_orientable(const pal::File& palette, const frm::Orientable& orientable) {
-    throw std::runtime_error("showing orientables NYI");
+    OrientationsLayout layout{orientable};
+    
+    sdl::Context c;
+    sdl::Window w = c.create_window(layout.dimensions());
+
+    w.render_clear();
+
+    for (frm::Orientation orientation : frm::orientations) {
+      sdl::Texture t = create_texture(w, palette, orientable.image_at(orientation));
+      w.render_copy(t, layout.rect(orientation));
+    }
+
+    w.render_present();
+    
+    SDL_Event e;    
+    while (c.wait_for_event(&e)) {
+      if (e.type == SDL_QUIT || (e.type == SDL_KEYDOWN && e.key.keysym.sym == SDLK_ESCAPE)) {
+	break;
+      }
+    }
   }
 
   void show_animated_orientable(const pal::File& palette, const frm::AnimatedOrientable& anim_orientable) {

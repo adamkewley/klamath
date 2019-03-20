@@ -32,6 +32,16 @@ namespace klmth {
       uint64_t area() const noexcept;
     };
 
+    struct Point {
+      unsigned x;
+      unsigned y;
+    };
+
+    struct Rect {
+      Point location;
+      Dimensions dimensions;
+    };
+
     class Window {
     public:
       Window(Dimensions dimensions);
@@ -44,7 +54,8 @@ namespace klmth {
 			     Dimensions dimensions);
 
       void render_clear();
-      void render_copy_fullscreen(const Texture& tex);
+      void render_copy_fullscreen(const Texture& texture);
+      void render_copy(const Texture& texture, const Rect& destination);
       void render_present();
 
     private:

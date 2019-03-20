@@ -104,7 +104,16 @@ namespace {
     } else {
       return {t};
     }
-  }  
+  }
+
+  SDL_Rect to_sdl_rect(const klmth::sdl::Rect& rect) {
+    SDL_Rect ret;
+    ret.x = rect.location.x;
+    ret.y = rect.location.y;
+    ret.w = rect.dimensions.width;
+    ret.h = rect.dimensions.height;
+    return ret;
+  }
 }
 
 
@@ -150,6 +159,13 @@ void klmth::sdl::Window::render_clear() {
 
 void klmth::sdl::Window::render_copy_fullscreen(const Texture& texture) {
   if (SDL_RenderCopy(r, texture._t, NULL, NULL) == -1) {
+    throw std::runtime_error("Error copying texture to render target (i.e. the window)");
+  }
+}
+
+void klmth::sdl::Window::render_copy(const Texture& texture, const Rect& destination) {
+  SDL_Rect sdl_dest = to_sdl_rect(destination);
+  if (SDL_RenderCopy(r, texture._t, NULL, &sdl_dest) == -1) {
     throw std::runtime_error("Error copying texture to render target (i.e. the window)");
   }
 }

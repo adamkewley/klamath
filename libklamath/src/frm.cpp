@@ -229,6 +229,10 @@ klmth::frm::Dimensions klmth::frm::Orientable::dimensions() const noexcept {
   return this->_dimensions;
 }
 
+const klmth::frm::Image& klmth::frm::Orientable::image_at(const Orientation& o) const noexcept {
+  return this->_orientations[orientation_index(o)];
+}
+
 
 klmth::frm::Any::Any(Image image) noexcept :
   _type(AnyType::image),
@@ -330,19 +334,19 @@ klmth::frm::Any klmth::frm::read_any(std::istream& in) {
     if (all_data_offsets_equal(header)) {
       return read_frame_as_img(in, { header.pixel_shifts_x[0], header.pixel_shifts_y[0] });
     } else {
-      std::array<Image, num_orientations> orientations{};
+      std::array<Image, num_orientations> _orientations{};
       Dimensions dimensions;
       PixelShift pixel_shift{ header.pixel_shifts_x[0], header.pixel_shifts_y[0] };
 
-      for (int o = 0; o < num_orientations; ++o) {
+      for (Orientation o : orientations) {
 	frm::Image img = read_frame_as_img(in, pixel_shift);
 	
 	pixel_shift = pixel_shift + img.pixel_shift();
 	dimensions = dimensions.union_with(img.dimensions());
-	orientations[o] = std::move(img);
+	_orientations[orientation_index(o)] = std::move(img);
       }
       
-      return Orientable(dimensions, std::move(orientations));
+      return Orientable(dimensions, std::move(_orientations));
     }
   }
 }
