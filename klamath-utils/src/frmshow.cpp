@@ -109,12 +109,8 @@ namespace {
       auto height = this->_cell_dimensions.height * rows();
       return { width, height };
     }
-    
-    sdl::Rect rect(frm::Orientation orientation) const noexcept {
-      return { cell_loc(orientation), { _cell_dimensions.width, _cell_dimensions.height } };
-    }
 
-    sdl::Point cell_loc(frm::Orientation orientation) const {
+    sdl::Point cell_pos(frm::Orientation orientation) const {
       switch (orientation) {
       case frm::Orientation::north_east:
 	return { _cell_dimensions.width, 0 };
@@ -146,8 +142,12 @@ namespace {
     w.render_clear();
 
     for (frm::Orientation orientation : frm::orientations) {
-      sdl::Texture t = create_texture(w, palette, orientable.image_at(orientation));
-      w.render_copy(t, layout.rect(orientation));
+      const frm::Image& img = orientable.image_at(orientation);
+      sdl::Texture t = create_texture(w, palette, img);
+      sdl::Point pos = layout.cell_pos(orientation);
+      sdl::Dimensions dimensions = { img.width(), img.height() };
+      sdl::Rect destination = { pos, dimensions };
+      w.render_copy(t, destination);
     }
 
     w.render_present();
