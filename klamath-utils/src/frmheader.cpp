@@ -14,9 +14,9 @@ namespace {
 
   void write_frmheader(const frm::Header& h, std::ostream& out) {
     out << "version number = " << h.version_number << std::endl
-	<< "fps = " << h.fps << std::endl
-	<< "action frame = " << h.action_frame << std::endl
-	<< "frames per direction = " << h.frames_per_direction << std::endl;
+        << "fps = " << h.fps << std::endl
+        << "action frame = " << h.action_frame << std::endl
+        << "frames per direction = " << h.frames_per_direction << std::endl;
 
     out << "pixel shifts (x) = ";
     for (auto&& pixel_shift : h.pixel_shifts_x) {
@@ -61,7 +61,7 @@ namespace {
       frm_in.open(path, std::ios::in | std::ios::binary);
 
       if (!frm_in.good()) {
-	throw std::runtime_error(std::string(path) + ": error when opening frm file");
+        throw std::runtime_error(std::string(path) + ": error when opening frm file");
       }
 
       print_stream(frm_in, std::cout, path);
@@ -79,7 +79,7 @@ int klmth::frmheader_main(int argc, const char** argv) {
       print_stream(std::cin, std::cout, "stdin");
     } else {
       for (int i = 1; i < argc; ++i) {
-	print_path(argv[i]);
+        print_path(argv[i]);
       }
     }
 

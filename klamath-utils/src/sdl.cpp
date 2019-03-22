@@ -9,10 +9,10 @@ namespace {
   public:
     SurfaceLock(SDL_Surface* s) {
       if (SDL_LockSurface(s) == -1) {
-	throw std::runtime_error("could not acquire SDL surface lock");
+        throw std::runtime_error("could not acquire SDL surface lock");
       } else {
-	_s = s;
-	_n_pix = static_cast<size_t>(s->w * s->h);
+        _s = s;
+        _n_pix = static_cast<size_t>(s->w * s->h);
       }
     }
 
@@ -28,40 +28,40 @@ namespace {
     void assign_pixel_range(size_t offset, size_t n, ValueGetter f) {
       size_t end = n + offset;
       if (end > _n_pix) {
-	throw std::runtime_error("tried to assign outside pixel buffer boundaries");
+        throw std::runtime_error("tried to assign outside pixel buffer boundaries");
       } else {
-	Uint32* pixels = reinterpret_cast<Uint32*>(_s->pixels);
-	for (size_t i = offset; i < end; ++i) {
-	  pixels[i] = f(i);
-	}
+        Uint32* pixels = reinterpret_cast<Uint32*>(_s->pixels);
+        for (size_t i = offset; i < end; ++i) {
+          pixels[i] = f(i);
+        }
       }
     }
-    
+
     ~SurfaceLock() noexcept {
       if (_s != nullptr) {
-	SDL_UnlockSurface(_s);
+        SDL_UnlockSurface(_s);
       }
     }
   private:
     SDL_Surface* _s;
     size_t _n_pix;
   };
-  
+
 
   class Surface {
   public:
     Surface(klmth::sdl::Dimensions dimensions) {
       s = SDL_CreateRGBSurface(0,
-			       dimensions.width,
-			       dimensions.height,
-			       32,
-			       0xff000000,  // rgba
-			       0x00ff0000,
-			       0x0000ff00,
-			       0x000000ff);
+                               dimensions.width,
+                               dimensions.height,
+                               32,
+                               0xff000000,  // rgba
+                               0x00ff0000,
+                               0x0000ff00,
+                               0x000000ff);
 
       if (s == NULL) {
-	throw std::runtime_error("null returned when creating SDL surface: out of memory?");
+        throw std::runtime_error("null returned when creating SDL surface: out of memory?");
       }
     }
 
@@ -80,10 +80,10 @@ namespace {
     int get_pitch() const {
       return s->pitch;
     }
-    
+
     ~Surface() noexcept {
       if (s != NULL) {
-	SDL_FreeSurface(s);
+        SDL_FreeSurface(s);
       }
     }
 
@@ -94,11 +94,11 @@ namespace {
 
   klmth::sdl::Texture mk_texture(SDL_Renderer* r, klmth::sdl::Dimensions dimensions) {
     SDL_Texture* t = SDL_CreateTexture(r,
-				       SDL_PIXELFORMAT_RGBA8888,
-				       SDL_TEXTUREACCESS_STATIC,
-				       dimensions.width,
-				       dimensions.height);
-      
+                                       SDL_PIXELFORMAT_RGBA8888,
+                                       SDL_TEXTUREACCESS_STATIC,
+                                       dimensions.width,
+                                       dimensions.height);
+
     if (t == NULL) {
       throw std::runtime_error("cannot create texture");
     } else {
@@ -178,16 +178,16 @@ klmth::sdl::Window::~Window() noexcept {
 }
 
 klmth::sdl::Texture klmth::sdl::Window::create_texture(const std::vector<klmth::Rgb>& pixels,
-						       Dimensions dimensions) {
+                                                       Dimensions dimensions) {
   if (dimensions.area() < pixels.size()) {
     throw std::runtime_error("tried to create a texture with a vector that doesnt contain enough pixels");
   }
-  
+
   Surface s(dimensions);
   {
     SurfaceLock l = s.lock();
     l.assign_pixel_range(0, pixels.size(), [&](size_t i) {
-	return s.to_pixel(pixels[i]);
+        return s.to_pixel(pixels[i]);
       });
   }
 

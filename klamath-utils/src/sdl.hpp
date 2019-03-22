@@ -37,9 +37,9 @@ namespace klmth {
       Window operator=(const Window& other) = delete;
       Window(Window&& tmp);
       ~Window() noexcept;
-      
+
       Texture create_texture(const std::vector<klmth::Rgb>& pixels,
-			     Dimensions dimensions);
+                             Dimensions dimensions);
 
       void render_clear();
       void render_copy_fullscreen(const Texture& texture);

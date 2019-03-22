@@ -8,7 +8,7 @@
 
 namespace {
   using namespace klmth;
-  
+
   class AafReader {
   public:
     aaf::File& read(std::istream& in) {
@@ -18,12 +18,12 @@ namespace {
       in.read(reinterpret_cast<char*>(buf.data()), buf.size());
 
       if (in.gcount() == max_aaf_size && in.eof()) {
-	throw std::runtime_error("input data too big for an aaf file");
+        throw std::runtime_error("input data too big for an aaf file");
       } else {
-	buf.resize(in.gcount());
-	aaf::read(buf.data(), buf.size(), aaf);
+        buf.resize(in.gcount());
+        aaf::read(buf.data(), buf.size(), aaf);
 
-	return aaf;
+        return aaf;
       }
     }
   private:
@@ -60,17 +60,17 @@ namespace {
 
   void print_aaf_glyph(const aaf::Glyph& g, std::ostream& out) {
     size_t row_base_idx = 0;
-    
+
     for (size_t row = 0; row < g.height; ++row) {
       for (size_t col = 0; col < g.width; ++col) {
-	uint8_t opacity = g.opacities[row_base_idx + col];
-	out << opacity_to_char(opacity);
+        uint8_t opacity = g.opacities[row_base_idx + col];
+        out << opacity_to_char(opacity);
       }
       out << std::endl;
       row_base_idx += g.width;
     }
   }
-  
+
   void print_aaf_file(const aaf::File& in, std::ostream& out) {
     for (char c =  97; c < 123; ++c) {
       out << c << ":" << std::endl;
@@ -83,7 +83,7 @@ namespace {
 
 int klmth::aaf_print_main(int argc, const char** argv) {
   AafReader reader;
-  
+
   if (argc == 1) {
     try {
       aaf::File& aaf_file = reader.read(std::cin);
@@ -95,21 +95,21 @@ int klmth::aaf_print_main(int argc, const char** argv) {
   } else {
     for (int i = 1; i < argc; ++i) {
       const char* aaf_pth = argv[i];
-      
+
       std::fstream in;
       in.open(aaf_pth, std::ios::in | std::ios::binary);
-      
+
       if (!in.good()) {
-	std::cerr << argv[0] << ": " << aaf_pth << ": error opening aaf" << std::endl;
-	return 1;
+        std::cerr << argv[0] << ": " << aaf_pth << ": error opening aaf" << std::endl;
+        return 1;
       }
 
       try {
-	aaf::File& f = reader.read(in);
-	print_aaf_file(f, std::cout);
+        aaf::File& f = reader.read(in);
+        print_aaf_file(f, std::cout);
       } catch (const std::exception& ex) {
-	std::cerr << argv[0] << ": " << aaf_pth << ": error reading aaf file: " << ex.what() << std::endl;
-	return 1;
+        std::cerr << argv[0] << ": " << aaf_pth << ": error reading aaf file: " << ex.what() << std::endl;
+        return 1;
       }
     }
   }

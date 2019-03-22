@@ -24,9 +24,9 @@ namespace {
 int main(int argc, const char** argv) {
   if (argc < 2) {
     std::cerr << "usage: " << argv[0] << " <command>" << std::endl
-	      << std::endl
-	      << "<command> can be one of:" << std::endl;
-    
+              << std::endl
+              << "<command> can be one of:" << std::endl;
+
     for (const auto& subcommand : subcommands) {
       std::cerr << subcommand.first << std::endl;
     }
@@ -45,7 +45,6 @@ int main(int argc, const char** argv) {
 
     return 1;
   }
-
 
   return subcommands[subcommand](argc - 1, argv + 1);
 }

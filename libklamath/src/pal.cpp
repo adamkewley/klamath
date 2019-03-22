@@ -18,7 +18,7 @@ namespace {
       rgb.g = buf[offset++];
       rgb.b = buf[offset++];
     }
-    
+
     for (uint8_t& conversion : out.rgb_conversion_table) {
       conversion = buf[offset++];
     }
@@ -31,7 +31,7 @@ klmth::pal::File klmth::pal::parse(std::istream& in) {
 
   if (in.gcount() != buf.size()) {
     throw std::runtime_error("insufficient data in palette (.pal) source: required size is " + std::to_string(filesize) + " bytes");
-    }
+  }
 
   klmth::pal::File palette;
   ::parse(buf.data(), buf.size(), palette);

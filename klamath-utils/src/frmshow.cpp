@@ -47,17 +47,17 @@ namespace {
   void show_image(const pal::File& palette, const frm::Image& img) {
     sdl::Context c;
     sdl::Window w = c.create_window(img.dimensions);
-    
+
     sdl::Texture t = create_texture(w, palette, img);
 
     w.render_clear();
     w.render_copy_fullscreen(t);
     w.render_present();
 
-    SDL_Event e;    
+    SDL_Event e;
     while (c.wait_for_event(&e)) {
       if (e.type == SDL_QUIT || (e.type == SDL_KEYDOWN && e.key.keysym.sym == SDLK_ESCAPE)) {
-	break;
+        break;
       }
     }
   }
@@ -80,9 +80,9 @@ namespace {
 
     while (true) {
       while (c.poll_event(&e)) {
-	if (e.type == SDL_QUIT || (e.type == SDL_KEYDOWN && e.key.keysym.sym == SDLK_ESCAPE)) {
-	  return;
-	}
+        if (e.type == SDL_QUIT || (e.type == SDL_KEYDOWN && e.key.keysym.sym == SDLK_ESCAPE)) {
+          return;
+        }
       }
       w.render_clear();
       w.render_copy_fullscreen(frame_textures[frame++ % num_frames]);
@@ -99,7 +99,7 @@ namespace {
     sdl::Dimensions dimensions() const noexcept {
       static const unsigned rows = 3;
       static const unsigned cols = 2;
-      
+
       auto width = this->_cell_dimensions.width * cols;
       auto height = this->_cell_dimensions.height * rows;
       return { width, height };
@@ -108,29 +108,29 @@ namespace {
     sdl::Point cell_pos(frm::Orientation orientation) const {
       switch (orientation) {
       case frm::Orientation::north_east:
-	return { _cell_dimensions.width, 0 };
+        return { _cell_dimensions.width, 0 };
       case frm::Orientation::east:
-	return { _cell_dimensions.width, _cell_dimensions.height };
+        return { _cell_dimensions.width, _cell_dimensions.height };
       case frm::Orientation::south_east:
-	return { _cell_dimensions.width, _cell_dimensions.height * 2u };
+        return { _cell_dimensions.width, _cell_dimensions.height * 2u };
       case frm::Orientation::south_west:
-	return { 0, _cell_dimensions.height * 2u };
+        return { 0, _cell_dimensions.height * 2u };
       case frm::Orientation::west:
-	return { 0, _cell_dimensions.height };
+        return { 0, _cell_dimensions.height };
       case frm::Orientation::north_west:
-	return { 0, 0 };
+        return { 0, 0 };
       default:
-	throw std::runtime_error("unknown orientation: cannot calculate location for this orientation in the layout");
+        throw std::runtime_error("unknown orientation: cannot calculate location for this orientation in the layout");
       }
     }
-    
+
   private:
     frm::Dimensions _cell_dimensions;
   };
 
   void show_orientable(const pal::File& palette, const frm::Orientable& orientable) {
     OrientationsLayout layout{orientable.dimensions};
-    
+
     sdl::Context c;
     sdl::Window w = c.create_window(layout.dimensions());
 
@@ -144,11 +144,11 @@ namespace {
     }
 
     w.render_present();
-    
-    SDL_Event e;    
+
+    SDL_Event e;
     while (c.wait_for_event(&e)) {
       if (e.type == SDL_QUIT || (e.type == SDL_KEYDOWN && e.key.keysym.sym == SDLK_ESCAPE)) {
-	break;
+        break;
       }
     }
   }
@@ -164,10 +164,10 @@ namespace {
     frames.reserve(am.fps);
 
     frm::Dimensions frame_dimensions;
-    
 
-    
-    
+
+
+
     show_animation(palette, am.animation_at(frm::north_east));
     show_animation(palette, am.animation_at(frm::east));
     show_animation(palette, am.animation_at(frm::south_east));
@@ -181,17 +181,17 @@ namespace {
       frm::Any any = frm::read_any(frm_in);
       switch (any.type()) {
       case frm::AnyType::image:
-	show_image(palette, any.image_unpack());
-	break;
+        show_image(palette, any.image_unpack());
+        break;
       case frm::AnyType::animation:
-	show_animation(palette, any.animation_unpack());
-	break;
+        show_animation(palette, any.animation_unpack());
+        break;
       case frm::AnyType::orientable:
-	show_orientable(palette, any.orientable_unpack());
-	break;
+        show_orientable(palette, any.orientable_unpack());
+        break;
       case frm::AnyType::animated_orientable:
-	show_animated_orientable(palette, any.animated_orientable_unpack());
-	break;
+        show_animated_orientable(palette, any.animated_orientable_unpack());
+        break;
       }
     } catch (const std::exception& ex) {
       throw std::runtime_error(in_name + ": error showing frm: " + ex.what());
@@ -204,11 +204,11 @@ namespace {
     } else {
       std::fstream frm_in;
       frm_in.open(source, std::ios::in | std::ios::binary);
-      
+
       if (!frm_in.good()) {
-	throw std::runtime_error(std::string(source) + ": error when opening frm file");
+        throw std::runtime_error(std::string(source) + ": error when opening frm file");
       }
-      
+
       show_frm(palette, frm_in, source);
     }
   }
@@ -226,12 +226,12 @@ int klmth::frm_show_main(int argc, const char** argv) {
     throw std::runtime_error("too few arguments provided to `frm_show_main`: this is a developer error");
   } else if (argc < 2) {
     const std::string usage = std::string("usage: ") + argv[0] + " <pal_file> [frm_file]...";
-    
+
     std::cerr << argv[0] << ": too few arguments" << std::endl;
     std::cerr << usage << std::endl;
     return 1;
   }
-  
+
 
   try {
     pal::File palette = load_palette(argv[1]);
@@ -241,7 +241,7 @@ int klmth::frm_show_main(int argc, const char** argv) {
     } else {
       show_frms(palette, { argv + 2, argv + argc });
     }
-    
+
     return 0;
   } catch (const std::exception& ex) {
     std::cerr << argv[0] << ": " << ex.what() << std::endl;

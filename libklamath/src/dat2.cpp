@@ -7,16 +7,16 @@
 
 
 klmth::dat2::Sections::Sections(uint32_t _data_section_size,
-				uint32_t _num_files,
-				uint32_t _tree_offset,
-				uint32_t _tree_size,
-				uint32_t _file_size) :
+                                uint32_t _num_files,
+                                uint32_t _tree_offset,
+                                uint32_t _tree_size,
+                                uint32_t _file_size) :
   data_section_size(_data_section_size),
   num_files(_num_files),
   tree_offset(_tree_offset),
   tree_size(_tree_size),
   file_size(_file_size) {
-}
+  }
 
 
 
@@ -25,8 +25,8 @@ klmth::dat2::Sections klmth::dat2::read_sections(std::istream& in) {
   static const unsigned tree_size_field_len = 4;
   static const unsigned file_size_field_len = 4;
   static const unsigned footer_field_len = tree_size_field_len + file_size_field_len;
-  
-  in.seekg(-static_cast<int>(footer_field_len), in.end); 
+
+  in.seekg(-static_cast<int>(footer_field_len), in.end);
 
   if (in.bad()) {
     throw std::runtime_error("could not seek to the end of a dat2 file");
@@ -46,17 +46,11 @@ klmth::dat2::Sections klmth::dat2::read_sections(std::istream& in) {
   uint32_t tree_offset = file_size - file_size_field_len - tree_size;
   uint32_t num_files_offset = tree_offset - num_files_field_len;
   uint32_t data_section_size = num_files_offset;
-  
+
   in.seekg(num_files_offset);
   uint32_t num_files = klmth::read_le_u32(in);
 
-  return {
-    data_section_size,
-    num_files,
-    tree_offset,
-    tree_size,
-    file_size,
-  };
+  return { data_section_size, num_files, tree_offset, tree_size, file_size };
 }
 
 void klmth::dat2::read_tree_entry(std::istream& in, TreeEntry& out) {
@@ -67,7 +61,7 @@ void klmth::dat2::read_tree_entry(std::istream& in, TreeEntry& out) {
   static const unsigned fixed_fields_len =
     is_compressed_len + decompressed_size_len + packed_size_len + offset_len;
 
-  
+
   uint32_t filename_len = klmth::read_le_u32(in);
 
   std::vector<uint8_t> filename_buf;
