@@ -9,28 +9,6 @@
 namespace {
   using namespace klmth;
 
-  class AafReader {
-  public:
-    aaf::File& read(std::istream& in) {
-      static const size_t max_aaf_size = 1 << 16;
-
-      buf.resize(max_aaf_size);
-      in.read(reinterpret_cast<char*>(buf.data()), buf.size());
-
-      if (in.gcount() == max_aaf_size && in.eof()) {
-        throw std::runtime_error("input data too big for an aaf file");
-      } else {
-        buf.resize(in.gcount());
-        aaf::read(buf.data(), buf.size(), aaf);
-
-        return aaf;
-      }
-    }
-  private:
-    std::vector<uint8_t> buf;
-    aaf::File aaf;
-  };
-
   char opacity_to_char(uint8_t opacity) {
     switch (opacity) {
     case 0:
@@ -82,11 +60,9 @@ namespace {
 
 
 int klmth::aaf_print_main(int argc, const char** argv) {
-  AafReader reader;
-
   if (argc == 1) {
     try {
-      aaf::File& aaf_file = reader.read(std::cin);
+      aaf::File aaf_file = aaf::read_file(std::cin);
       print_aaf_file(aaf_file, std::cout);
     } catch (const std::exception& ex) {
       std::cerr << argv[0] << ": error reading aaf from stdin: " << ex.what() << std::endl;
@@ -105,7 +81,7 @@ int klmth::aaf_print_main(int argc, const char** argv) {
       }
 
       try {
-        aaf::File& f = reader.read(in);
+        aaf::File f = aaf::read_file(in);
         print_aaf_file(f, std::cout);
       } catch (const std::exception& ex) {
         std::cerr << argv[0] << ": " << aaf_pth << ": error reading aaf file: " << ex.what() << std::endl;

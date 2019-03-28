@@ -1,6 +1,7 @@
 #include "klamath/aaf.hpp"
 
 #include <stdexcept>
+#include <istream>
 
 #include "ioutils.hpp"
 
@@ -38,36 +39,51 @@ namespace {
     out.space_width = klmth::read_be_u16(buf, offset);
     out.line_spacing = klmth::read_be_u16(buf, offset);
   }
+
+  klmth::aaf::File read(const uint8_t* buf, size_t n) {
+    klmth::aaf::File out;
+    size_t offset = 0;
+    read_header(buf, n, out, offset);
+
+    // Read glyph headers
+    for (size_t i = 0; i < out.glyphs.size(); ++i) {
+      if (n < (offset + glyph_min_len)) {
+        throw std::runtime_error("ran out of data when reading an aaf glyph header");
+      }
+
+      klmth::aaf::Glyph& g = out.glyphs[i];
+      g.width = klmth::read_be_u16(buf, offset);
+      g.height = klmth::read_be_u16(buf, offset);
+      // glyph offset: not needed because the entire file is parsed
+      klmth::read_be_u32(buf, offset);
+    }
+
+    // Read opacities
+    for (klmth::aaf::Glyph& g : out.glyphs) {
+      size_t num_opacities = g.width * g.height;
+
+      if (n < (offset + num_opacities)) {
+        throw std::runtime_error("ran out of data when reading aaf opacities");
+      }
+
+      g.opacities.resize(num_opacities);
+      g.opacities.insert(g.opacities.begin(), buf + offset, buf + offset + num_opacities);
+      offset += num_opacities;
+    }
+
+    return out;
+  }
 }
 
+klmth::aaf::File klmth::aaf::read_file(std::istream& in) {
+  static const size_t max_aaf_size = 1 << 16;
 
-void klmth::aaf::read(const uint8_t* buf, size_t n, aaf::File& out) {
-  size_t offset = 0;
-  read_header(buf, n, out, offset);
+  std::array<uint8_t, max_aaf_size> buf;
+  in.read(reinterpret_cast<char*>(buf.data()), buf.size());
 
-  // Read glyph headers
-  for (size_t i = 0; i < out.glyphs.size(); ++i) {
-    if (n < (offset + glyph_min_len)) {
-      throw std::runtime_error("ran out of data when reading an aaf glyph header");
-    }
-
-    Glyph& g = out.glyphs[i];
-    g.width = klmth::read_be_u16(buf, offset);
-    g.height = klmth::read_be_u16(buf, offset);
-    // glyph offset: not needed because the entire file is parsed
-    klmth::read_be_u32(buf, offset);
-  }
-
-  // Read opacities
-  for (Glyph& g : out.glyphs) {
-    size_t num_opacities = g.width * g.height;
-
-    if (n < (offset + num_opacities)) {
-      throw std::runtime_error("ran out of data when reading aaf opacities");
-    }
-
-    g.opacities.resize(num_opacities);
-    g.opacities.insert(g.opacities.begin(), buf + offset, buf + offset + num_opacities);
-    offset += num_opacities;
+  if (in.gcount() == max_aaf_size && in.eof()) {
+    throw std::runtime_error("input data too big for an aaf file");
+  } else {
+    return ::read(buf.data(), in.gcount());
   }
 }

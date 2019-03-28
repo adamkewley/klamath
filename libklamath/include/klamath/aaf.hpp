@@ -2,7 +2,6 @@
 
 #include <iosfwd>
 #include <cstdint>
-#include <cstddef>
 #include <vector>
 #include <array>
 
@@ -23,7 +22,7 @@ namespace klmth {
       uint16_t line_spacing;
       std::array<Glyph, num_glyphs> glyphs;
     };
-	
-    void read(const uint8_t* buf, size_t n, aaf::File& out);
+
+    aaf::File read_file(std::istream& in);
   }
 }
