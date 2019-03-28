@@ -12,16 +12,16 @@ namespace klmth {
   namespace frm {
     
     enum Orientation : unsigned char {
-      north_east = 0,
-      east = 1,
-      south_east = 2,
-      south_west = 3,
-      west = 4,
-      north_west = 5,
-      num_orientations = 6,
+      north_east,
+      east,
+      south_east,
+      south_west,
+      west,
+      north_west,
+      num_orientations,
     };
 
-    const std::array<Orientation, num_orientations> orientations {
+    static const std::array<Orientation, num_orientations> orientations {
       north_east,
       east,
       south_east,
@@ -29,115 +29,207 @@ namespace klmth {
       west,
       north_west,
     };
+
+    using PixelShift = geometry::Point<int16_t>;
     
     struct Header {
       uint32_t version_number;
       uint16_t fps;
       uint16_t action_frame;
       uint16_t frames_per_direction;
-      std::array<int16_t, num_orientations> pixel_shifts_x;
-      std::array<int16_t, num_orientations> pixel_shifts_y;
+      std::array<PixelShift, num_orientations> pixel_shifts;
       std::array<uint32_t, num_orientations> offsets_in_frame_data;
       uint32_t size_of_frame_data;
     };
 
-    struct Frame {
-      uint16_t width;
-      uint16_t height;
-      uint32_t size;
-      int16_t pixel_shift_x;
-      int16_t pixel_shift_y;
-      std::vector<uint8_t> color_indices;
-    };
-
-    struct PixelShift {
-      int16_t x;
-      int16_t y;
-
-      PixelShift operator+(PixelShift other) const noexcept {
-	int16_t x = this->x + other.x;
-	int16_t y = this->y + other.y;
-
-	return { x, y };
-      }
-      
-      PixelShift& operator+=(PixelShift other) noexcept {
-	this->x += other.x;
-	this->y += other.y;
-	return *this;
-      }
-    };
-
     using Dimensions = geometry::Dimensions<uint16_t>;
     
-    struct Image {
-      Dimensions dimensions;
-      PixelShift pixel_shift;
-      std::vector<uint8_t> color_indices;
+    class FrameHeader {
+    public:
+      FrameHeader(Dimensions dimensions,
+                  PixelShift pixel_shift) noexcept :
+        _dimensions(std::move(dimensions)),
+        _pixel_shift(std::move(pixel_shift)) {
+      }
+      
+      Dimensions dimensions() const noexcept {
+        return this->_dimensions;
+      }
+
+      PixelShift pixel_shift() const noexcept {
+        return this->_pixel_shift;
+      }
+
+      void apply_pixel_shift(PixelShift pixel_shift) noexcept {
+        _pixel_shift += pixel_shift;
+      }
+      
+    private:
+      Dimensions _dimensions;
+      PixelShift _pixel_shift;
     };
 
-    struct Animation {
-      Dimensions dimensions;
-      uint16_t fps;
-      std::vector<Image> frames;
+    class Frame {
+    public:
+      Frame(FrameHeader header,
+            std::vector<uint8_t> color_indices) noexcept :
+        _header(std::move(header)),
+        _color_indices(std::move(color_indices)) {
+      }
+      
+      Dimensions dimensions() const noexcept {
+        return this->_header.dimensions();
+      }
+
+      PixelShift pixel_shift() const noexcept {
+        return this->_header.pixel_shift();
+      }
+
+      void apply_pixel_shift(PixelShift pixel_shift) noexcept {
+        this->_header.apply_pixel_shift(pixel_shift);
+      }
+
+      const std::vector<uint8_t>& color_indices() const noexcept {
+        return this->_color_indices;
+      }
+      
+    private:
+      FrameHeader _header;
+      std::vector<uint8_t> _color_indices;
+    };
+
+    class Animation {
+    public:
+      Animation(std::vector<Frame> frames,
+                uint16_t fps,
+                uint16_t action_frame) :
+        _frames(std::move(frames)),
+        _fps(fps),
+        _action_frame(action_frame) {
+      }
+      
+      const std::vector<Frame>& frames() const noexcept {
+        return this->_frames;
+      }
+
+      Dimensions dimensions() const noexcept {
+        Dimensions ret{0, 0};
+        for (const Frame& frame : this->frames()) {
+          ret = geometry::union_of(ret, frame.dimensions());
+        }
+        return ret;
+      }
+      
+      uint16_t fps() const noexcept {
+        return this->_fps;
+      }
+
+      uint16_t action_frame() const noexcept {
+        return this->_action_frame;
+      }
 
       size_t num_frames() const noexcept {
-	return this->frames.size();
+        return this->_frames.size();
       }
+
+    private:
+      std::vector<Frame> _frames;
+      uint16_t _fps;
+      uint16_t _action_frame;
     };
 
-    struct Orientable {
-      Dimensions dimensions;
-      std::array<Image, num_orientations> orientations;
-
-      const Image& image_at(Orientation o) const noexcept {
-	return this->orientations[o];
+    class Orientable {
+    public:
+      Orientable(std::array<Frame, num_orientations> orientations) :
+        _orientations(std::move(orientations)) {
       }
+
+      Dimensions max_dimensions() const noexcept {
+        Dimensions ret{0, 0};
+        for (Orientation o : orientations) {
+          ret = geometry::union_of(ret, this->frame_at(o).dimensions());
+        }
+        return ret;
+      }
+
+      const Frame& frame_at(Orientation o) const noexcept {
+	return this->_orientations[o];
+      }
+    private:
+      std::array<Frame, num_orientations> _orientations;
     };
 
-    struct AnimatedOrientable {
-      Dimensions dimensions;
-      uint16_t frames_per_direction;
-      uint16_t fps;
-      std::array<Animation, num_orientations> orientations;
+    class OrientableAnimation {
+    public:
+      OrientableAnimation(std::array<Animation, num_orientations> orientations,
+                          uint16_t fps,
+                          uint16_t action_frame) :
+        _orientations(std::move(orientations)),
+        _fps(fps),
+        _action_frame(action_frame) {
+      }
 
+      Dimensions max_dimensions() const noexcept {
+        Dimensions ret{0, 0};
+        for (Orientation o : orientations) {
+          ret = geometry::union_of(ret, this->animation_at(o).dimensions());
+        }
+        return ret;
+      }
+      
       const Animation& animation_at(Orientation o) const noexcept {
-	return this->orientations[o];
+        return this->_orientations[o];
       }
+      
+      uint16_t fps() const noexcept {
+        return this->_fps;
+      }
+
+      uint16_t action_frame() const noexcept {
+        return this->_action_frame;
+      }
+
+      size_t num_frames_per_orientation() const noexcept {
+        return this->_orientations[0].num_frames();
+      }
+      
+    private:
+      std::array<Animation, num_orientations> _orientations;
+      uint16_t _fps;
+      uint16_t _action_frame;
     };
     
     enum class AnyType {
-      image,
+      frame,
       animation,
       orientable,
-      animated_orientable,
+      orientable_animation,
     };
     
     class Any {
     public:
-      Any(Image image) noexcept;
+      Any(Frame frame) noexcept;
       Any(Animation animation) noexcept;
       Any(Orientable orientable) noexcept;
-      Any(AnimatedOrientable animated_orientable) noexcept;
+      Any(OrientableAnimation orientable_animation) noexcept;
       Any(Any&& tmp) noexcept;
       ~Any() noexcept;
       
       AnyType type() const noexcept;
-      const Image& image_unpack() const;
+      const Frame& frame_unpack() const;
       const Animation& animation_unpack() const;
       const Orientable& orientable_unpack() const;
-      const AnimatedOrientable& animated_orientable_unpack() const;
+      const OrientableAnimation& orientable_animation_unpack() const;
     private:
       AnyType _type;
       union {
-	Image _image;
+	Frame _frame;
 	Animation _animation;
 	Orientable _orientable;
-	AnimatedOrientable _animated_orientable;
+	OrientableAnimation _orientable_animation;
       };
     };
 
-    Frame read_frame(std::istream& in);
     Header read_header(std::istream& in);
     Any read_any(std::istream& in);
   }

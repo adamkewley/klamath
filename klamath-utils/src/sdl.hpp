@@ -11,24 +11,59 @@
 struct SDL_Texture;
 struct SDL_Window;
 struct SDL_Renderer;
+struct SDL_Surface;
 union SDL_Event;
 
 namespace klmth {
   namespace sdl {
 
-    class Texture {
-    public:
-      Texture(SDL_Texture* t);
-      Texture(const Texture& other) = delete;
-      Texture(Texture&& tmp);
-      ~Texture() noexcept;
-
-      SDL_Texture* _t;  // todo: make private
-    };
-
     using Dimensions = geometry::Dimensions<uint32_t>;
     using Point = geometry::Point<unsigned>;
     using Rect = geometry::Rect<uint32_t, unsigned>;
+    
+    class PixelBuf {
+    public:
+      PixelBuf(Dimensions dimensions) : _dimensions(dimensions) {
+        this->pixels.resize(geometry::area(dimensions));
+      }
+
+      const klmth::Rgb& operator[](size_t idx) const {
+        return this->pixels[idx];
+      }
+
+      klmth::Rgb& operator[](size_t idx) {
+        return this->pixels[idx];
+      }
+
+      Dimensions dimensions() const noexcept {
+        return this->_dimensions;
+      }
+
+      size_t size() const noexcept {
+        return this->pixels.size();
+      }
+
+      void resize(Dimensions new_dimensions) {
+        this->pixels.resize(geometry::area(new_dimensions));
+        this->_dimensions = new_dimensions;
+      }
+      
+    private:
+      std::vector<klmth::Rgb> pixels;
+      Dimensions _dimensions;
+    };
+
+    class StaticTexture {
+    public:
+      StaticTexture(SDL_Texture* t) noexcept;
+      StaticTexture(const StaticTexture& other) = delete;
+      StaticTexture(StaticTexture&& tmp) noexcept;
+      ~StaticTexture() noexcept;
+
+    private:
+      SDL_Texture* _t;
+      friend class Window;
+    };
 
     class Window {
     public:
@@ -38,15 +73,14 @@ namespace klmth {
       Window(Window&& tmp);
       ~Window() noexcept;
 
-      Texture create_texture(const std::vector<klmth::Rgb>& pixels,
-                             Dimensions dimensions);
+      StaticTexture mk_static_texture(const PixelBuf& pixel_buf);
 
       void render_clear();
-      void render_copy_fullscreen(const Texture& texture);
-      void render_copy(const Texture& texture, const Rect& destination);
+      void render_copy_fullscreen(const StaticTexture& texture);
+      void render_copy(const StaticTexture& texture, const Rect& destination);
       void render_present();
 
-    private:
+    private:      
       SDL_Window* w;
       SDL_Renderer* r;
     };

@@ -73,11 +73,11 @@ namespace {
       return SDL_MapRGB(s->format, rgb.r, rgb.g, rgb.b);
     }
 
-    const void* get_pixels() const {
+    const void* pixels() const {
       return s->pixels;
     }
 
-    int get_pitch() const {
+    int pitch() const {
       return s->pitch;
     }
 
@@ -92,7 +92,7 @@ namespace {
   };
 
 
-  klmth::sdl::Texture mk_texture(SDL_Renderer* r, klmth::sdl::Dimensions dimensions) {
+  klmth::sdl::StaticTexture mk_texture(SDL_Renderer* r, klmth::sdl::Dimensions dimensions) {
     SDL_Texture* t = SDL_CreateTexture(r,
                                        SDL_PIXELFORMAT_RGBA8888,
                                        SDL_TEXTUREACCESS_STATIC,
@@ -118,15 +118,15 @@ namespace {
 
 
 
-klmth::sdl::Texture::Texture(SDL_Texture* t) : _t(t) {
+klmth::sdl::StaticTexture::StaticTexture(SDL_Texture* t) noexcept : _t(t) {
 }
 
-klmth::sdl::Texture::Texture(Texture&& tmp) {
+klmth::sdl::StaticTexture::StaticTexture(StaticTexture&& tmp) noexcept {
   this->_t = tmp._t;
   tmp._t = nullptr;
 }
 
-klmth::sdl::Texture::~Texture() noexcept {
+klmth::sdl::StaticTexture::~StaticTexture() noexcept {
   if (_t != nullptr) {
     SDL_DestroyTexture(_t);
   }
@@ -150,13 +150,13 @@ void klmth::sdl::Window::render_clear() {
   SDL_RenderClear(r);
 }
 
-void klmth::sdl::Window::render_copy_fullscreen(const Texture& texture) {
+void klmth::sdl::Window::render_copy_fullscreen(const StaticTexture& texture) {
   if (SDL_RenderCopy(r, texture._t, NULL, NULL) == -1) {
     throw std::runtime_error("Error copying texture to render target (i.e. the window)");
   }
 }
 
-void klmth::sdl::Window::render_copy(const Texture& texture, const Rect& destination) {
+void klmth::sdl::Window::render_copy(const StaticTexture& texture, const Rect& destination) {
   SDL_Rect sdl_dest = to_sdl_rect(destination);
   if (SDL_RenderCopy(r, texture._t, NULL, &sdl_dest) == -1) {
     throw std::runtime_error("Error copying texture to render target (i.e. the window)");
@@ -177,22 +177,17 @@ klmth::sdl::Window::~Window() noexcept {
   }
 }
 
-klmth::sdl::Texture klmth::sdl::Window::create_texture(const std::vector<klmth::Rgb>& pixels,
-                                                       Dimensions dimensions) {
-  if (dimensions.area() < pixels.size()) {
-    throw std::runtime_error("tried to create a texture with a vector that doesnt contain enough pixels");
-  }
-
-  Surface s(dimensions);
+klmth::sdl::StaticTexture klmth::sdl::Window::mk_static_texture(const PixelBuf& pixelbuf) {
+  Surface s(pixelbuf.dimensions());
   {
     SurfaceLock l = s.lock();
-    l.assign_pixel_range(0, pixels.size(), [&](size_t i) {
-        return s.to_pixel(pixels[i]);
+    l.assign_pixel_range(0, pixelbuf.size(), [&](size_t i) {
+        return s.to_pixel(pixelbuf[i]);
       });
   }
 
-  Texture t = mk_texture(r, dimensions);
-  SDL_UpdateTexture(t._t, NULL, s.get_pixels(), s.get_pitch());
+  StaticTexture t = mk_texture(r, pixelbuf.dimensions());
+  SDL_UpdateTexture(t._t, NULL, s.pixels(), s.pitch());
 
   return t;
 }

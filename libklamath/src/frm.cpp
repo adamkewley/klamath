@@ -8,149 +8,153 @@
 using namespace klmth;
 
 namespace {  
-  const size_t file_header_size =
-    4 + 2 + 2 + 2 + (2 * frm::num_orientations) + (2 * frm::num_orientations) + (4 * frm::num_orientations) + 4;
-  const size_t frame_header_size = 2 + 2 + 4 + 2 + 2;
-  
+  frm::FrameHeader read_frame_header(std::istream& in) {
+    static const size_t frame_header_size = 2 + 2 + 4 + 2 + 2;
+    
+    std::array<uint8_t, frame_header_size> buf;
 
-  void parse_header(const uint8_t* buf, size_t n, frm::Header& out) {
-    if (n < file_header_size) {
-      throw std::runtime_error("ran out of data when reading an frm header");
+    in.read(reinterpret_cast<char*>(buf.data()), buf.size());
+    if (in.gcount() != buf.size()) {
+      throw std::runtime_error("ran out of data while reading frm frame header");
     }
 
     size_t offset = 0;
-    out.version_number = klmth::read_be_u32(buf, offset);
-    out.fps = klmth::read_be_u16(buf, offset);
-    out.action_frame = klmth::read_be_u16(buf, offset);
-    out.frames_per_direction = klmth::read_be_u16(buf, offset);
+    uint16_t width = klmth::read_be_u16(buf.data(), offset);
+    uint16_t height = klmth::read_be_u16(buf.data(), offset);
 
-    for (int16_t& pixel_shift_x : out.pixel_shifts_x) {
-      pixel_shift_x = klmth::read_be_i16(buf, offset);
+    if (klmth::read_be_u32(buf.data(), offset) != width*height) {
+      throw std::runtime_error("frame header size field does not match the dimensions of the frame");
     }
 
-    for (int16_t& pixel_shift_y : out.pixel_shifts_y) {
-      pixel_shift_y = klmth::read_be_i16(buf, offset);
-    }
+    int16_t shift_x = klmth::read_be_i16(buf.data(), offset);
+    int16_t shift_y = klmth::read_be_i16(buf.data(), offset);
 
-    for (uint32_t& offset_in_frame_data : out.offsets_in_frame_data) {
-      offset_in_frame_data = klmth::read_be_u32(buf, offset);
-    }
-
-    out.size_of_frame_data = klmth::read_be_u32(buf, offset);
+    return { frm::Dimensions{width, height}, frm::PixelShift{shift_x, shift_y} };
   }
 
-  void parse_frame_header(const uint8_t* buf, size_t n, frm::Frame& out) {
-    if (n < frame_header_size) {
-      throw std::runtime_error("ran out of data when reading frm data");
+  frm::Frame read_frame_raw(std::istream& in) {
+    frm::FrameHeader header = read_frame_header(in);
+
+    std::vector<uint8_t> color_indices(geometry::area(header.dimensions()));
+
+    in.read(reinterpret_cast<char*>(color_indices.data()), color_indices.size());
+    if (in.gcount() < 0) {
+      throw std::runtime_error("read error when reading frm color indices");
+    } else if (static_cast<unsigned>(in.gcount()) != color_indices.size()) {
+      throw std::runtime_error("ran out of data when reading color indices: needed = " +
+                               std::to_string(color_indices.size()) + " bytes, got = " +
+                               std::to_string(in.gcount()) + " bytes");
     }
 
-    size_t offset = 0;
-    out.width = klmth::read_be_u16(buf, offset);
-    out.height = klmth::read_be_u16(buf, offset);
-    out.size = klmth::read_be_u32(buf, offset);
-    out.pixel_shift_x = klmth::read_be_i16(buf, offset);
-    out.pixel_shift_y = klmth::read_be_i16(buf, offset);
+    return { header, std::move(color_indices) };
+  }
+
+  void seek_to_frame_data(std::istream& in, const frm::Header& header, frm::Orientation orient) {
+    static const size_t frame_data_start = 0x003e;
+    
+    in.seekg(frame_data_start + header.offsets_in_frame_data[orient]);
+    if (!in.good()) {
+      throw std::runtime_error("stream in bad state after seeking to an orientation");
+    }
+  }
+
+  frm::Frame read_frame(std::istream& in, const frm::PixelShift& shift) {
+    frm::Frame frame = read_frame_raw(in);
+    frame.apply_pixel_shift(shift);
+    return frame;
+  }
+
+  frm::Frame seek_and_read_frame(std::istream& in,
+                                 const frm::Header& header,
+                                 frm::Orientation orient) {
+    
+    seek_to_frame_data(in, header, orient);
+    return read_frame(in, header.pixel_shifts[orient]);
+  }
+
+  frm::Animation read_animation(std::istream& in,
+                                const frm::Header& header,
+                                frm::PixelShift shift) {
+    const auto num_frames = header.frames_per_direction;
+
+    std::vector<frm::Frame> frames;
+    frames.reserve(num_frames);
+    
+    for (auto i = 0; i < num_frames; ++i) {
+      frm::Frame frame = read_frame(in, shift);
+      shift = frame.pixel_shift();
+      frames.emplace_back(std::move(frame));
+    }
+
+    return { std::move(frames), header.fps, header.action_frame };
+  }
+
+  frm::Animation seek_and_read_animation(std::istream& in,
+                                         const frm::Header& header,
+                                         frm::Orientation orient) {
+    seek_to_frame_data(in, header, orient);
+    return read_animation(in, header, header.pixel_shifts[orient]);
+  }
+
+  frm::Orientable seek_and_read_orientable(std::istream& in, const frm::Header& header) {
+    std::array<frm::Frame, frm::num_orientations> _orientations{
+      seek_and_read_frame(in, header, frm::north_east),
+        seek_and_read_frame(in, header, frm::east),
+        seek_and_read_frame(in, header, frm::south_east),
+        seek_and_read_frame(in, header, frm::south_west),
+        seek_and_read_frame(in, header, frm::west),
+        seek_and_read_frame(in, header, frm::north_west),
+    };
+
+    return { std::move(_orientations) };    
+  }
+
+  frm::OrientableAnimation seek_and_read_orientable_anim(std::istream& in, const frm::Header& header) {
+    std::array<frm::Animation, frm::num_orientations> _orientations{
+      seek_and_read_animation(in, header, frm::north_east),
+        seek_and_read_animation(in, header, frm::east),
+        seek_and_read_animation(in, header, frm::south_east),
+        seek_and_read_animation(in, header, frm::south_west),
+        seek_and_read_animation(in, header, frm::west),
+        seek_and_read_animation(in, header, frm::north_west),
+    };
+
+    return { std::move(_orientations), header.fps, header.action_frame };
   }
 
   bool all_data_offsets_equal(const frm::Header& header) {
-    auto first = header.offsets_in_frame_data[0];
-    for (size_t i = 1; i < header.offsets_in_frame_data.size(); ++i) {
-      if (header.offsets_in_frame_data[i] != first) {
-	return false;
-      }
-    }
-    return true;
-  }
-
-  frm::Image read_frame_as_img(std::istream& in, frm::PixelShift shift) {
-    frm::Frame frame = frm::read_frame(in);
-
-    frm::PixelShift frame_pixel_shift{ frame.pixel_shift_x, frame.pixel_shift_y };
-    frm::PixelShift img_pixel_shift = shift + frame_pixel_shift;
-
-    frm::Dimensions dimensions{ frame.width, frame.height };
-
-    return { dimensions, img_pixel_shift, std::move(frame.color_indices) };
-  }
-
-  frm::Animation read_frames_as_animation(std::istream& in, frm::Header header) {  
-    frm::PixelShift pixel_shift{ header.pixel_shifts_x[0], header.pixel_shifts_y[0] };
-    frm::Dimensions anim_dimensions;
-    std::vector<frm::Image> frames;
-    frames.reserve(header.frames_per_direction);
-  
-    for (uint16_t frame = 0; frame < header.frames_per_direction; ++frame) {
-      frm::Image img = read_frame_as_img(in, pixel_shift);
-      pixel_shift += img.pixel_shift;
-      anim_dimensions = union_of(anim_dimensions, img.dimensions);
-      frames.push_back(std::move(img));
-    }
-
-    return { anim_dimensions, header.fps, std::move(frames) };
-  }
-
-  frm::Orientable read_frame_data_as_orientable(std::istream& in, frm::Header header) {
-    std::array<frm::Image, frm::num_orientations> _orientations{};
-    frm::Dimensions dimensions;
-    frm::PixelShift pixel_shift{ header.pixel_shifts_x[0], header.pixel_shifts_y[0] };
-
-    for (frm::Orientation o : frm::orientations) {
-      frm::Image img = read_frame_as_img(in, pixel_shift);
-	
-      pixel_shift += img.pixel_shift;
-      dimensions = geometry::union_of(dimensions, img.dimensions);
-      _orientations[o] = std::move(img);
-    }
-      
-    return { dimensions, std::move(_orientations) };
-  }
-
-  frm::AnimatedOrientable read_frame_data_as_anim_orientable(std::istream& in, frm::Header header) {
-    std::array<frm::Animation, frm::num_orientations> _orientations{
-      read_frames_as_animation(in, header),
-	read_frames_as_animation(in, header),
-	read_frames_as_animation(in, header),
-	read_frames_as_animation(in, header),
-	read_frames_as_animation(in, header),
-	read_frames_as_animation(in, header),
-    };
-
-    frm::Dimensions d;
-    for (const frm::Animation& anim : _orientations) {
-      d = geometry::union_of(d, anim.dimensions);
-    }
-
-    return { d, header.frames_per_direction, header.fps, std::move(_orientations) };
+    const auto& offsets = header.offsets_in_frame_data;
+    return std::equal(offsets.begin() + 1, offsets.end(), offsets.begin());
   }
 }
 
 
-frm::Any::Any(Image image) noexcept :
-  _type(AnyType::image),
-  _image(std::move(image)) {
+frm::Any::Any(Frame frame) noexcept :
+_type(AnyType::frame),
+  _frame(std::move(frame)) {
 }
 
 frm::Any::Any(Animation animation) noexcept :
-  _type(AnyType::animation),
+_type(AnyType::animation),
   _animation(std::move(animation)) {
 }
 
 frm::Any::Any(Orientable orientable) noexcept :
-  _type(AnyType::orientable),
+_type(AnyType::orientable),
   _orientable(std::move(orientable)) {
 }
 
-frm::Any::Any(AnimatedOrientable animated_orientable) noexcept :
-  _type(AnyType::animated_orientable),
-  _animated_orientable(std::move(animated_orientable)) {
-  }
+frm::Any::Any(OrientableAnimation orientable_animation) noexcept :
+_type(AnyType::orientable_animation),
+  _orientable_animation(std::move(orientable_animation)) {
+}
 
 frm::Any::Any(Any&& tmp) noexcept {
   this->_type = tmp._type;
-  
+
   switch (tmp._type) {
-  case AnyType::image:
-    this->_image = std::move(tmp._image);
+  case AnyType::frame:
+    this->_frame = std::move(tmp._frame);
     break;
   case AnyType::animation:
     this->_animation = std::move(tmp._animation);
@@ -158,47 +162,47 @@ frm::Any::Any(Any&& tmp) noexcept {
   case AnyType::orientable:
     this->_orientable = std::move(tmp._orientable);
     break;
-  case AnyType::animated_orientable:
-    this->_animated_orientable = std::move(tmp._animated_orientable);
+  case AnyType::orientable_animation:
+    this->_orientable_animation = std::move(tmp._orientable_animation);
     break;
   }
 }
 
 frm::Any::~Any() noexcept {
   switch (_type) {
-  case AnyType::image:
-    _image.~Image();
+  case AnyType::frame:
+    this->_frame.~Frame();
     break;
   case AnyType::animation:
-    _animation.~Animation();
+    this->_animation.~Animation();
     break;
   case AnyType::orientable:
-    _orientable.~Orientable();
+    this->_orientable.~Orientable();
     break;
-  case AnyType::animated_orientable:
-    _animated_orientable.~AnimatedOrientable();
+  case AnyType::orientable_animation:
+    this->_orientable_animation.~OrientableAnimation();
     break;
   }
 }
 
 frm::AnyType frm::Any::type() const noexcept {
-  return _type;
+  return this->_type;
 }
 
-const frm::Image& frm::Any::image_unpack() const {
-  if (_type != AnyType::image) {
-    throw std::runtime_error("attempted to unpack a non-image FRM 'any' as an image");
+const frm::Frame& frm::Any::frame_unpack() const {
+  if (this->_type != AnyType::frame) {
+    throw std::runtime_error("attempted to unpack a non-frame FRM 'any' as a single frame");
   }
 
-  return _image;
+  return this->_frame;
 }
 
 const frm::Animation& frm::Any::animation_unpack() const {
-  if (_type != AnyType::animation) {
+  if (this->_type != AnyType::animation) {
     throw std::runtime_error("attempted to unpack a non-animation FRM 'any' as an animation");
   }
 
-  return _animation;
+  return this->_animation;
 }
 
 const frm::Orientable& frm::Any::orientable_unpack() const {
@@ -206,68 +210,69 @@ const frm::Orientable& frm::Any::orientable_unpack() const {
     throw std::runtime_error("attempted to unpack non-orientable FRM 'any' as an orientable");
   }
 
-  return _orientable;
+  return this->_orientable;
 }
 
-const frm::AnimatedOrientable& frm::Any::animated_orientable_unpack() const {
-  if (_type != AnyType::animated_orientable) {
+const frm::OrientableAnimation& frm::Any::orientable_animation_unpack() const {
+  if (this->_type != AnyType::orientable_animation) {
     throw std::runtime_error("attempted to unpack non-animated-orientable FRM 'any' as an animated orientable");
   }
 
-  return _animated_orientable;
+  return _orientable_animation;
 }
 
 frm::Header frm::read_header(std::istream& in) {
-  std::array<uint8_t, file_header_size> buf;
-    
-  in.read(reinterpret_cast<char*>(buf.data()), buf.size());
-  if (in.gcount() != buf.size()) {
-    throw std::runtime_error("ran out of data while reading frm header");
-  }
+  static const size_t file_header_size =
+    4 + 2 + 2 + 2 + (2 * frm::num_orientations) + (2 * frm::num_orientations) + (4 * frm::num_orientations) + 4;
   
-  frm::Header ret;
-  parse_header(buf.data(), buf.size(), ret);
-  return ret;
-}
-
-frm::Frame frm::read_frame(std::istream& in) {
-  std::array<uint8_t, frame_header_size> buf;
+  std::array<uint8_t, file_header_size> buf;
 
   in.read(reinterpret_cast<char*>(buf.data()), buf.size());
   if (in.gcount() != buf.size()) {
-    throw std::runtime_error("ran out of data while reading frm frame");
+    throw std::runtime_error("ran out of data while reading an frm header");
   }
 
-  frm::Frame out;
-  parse_frame_header(buf.data(), buf.size(), out);
+  frm::Header out;
 
-  out.color_indices.resize(out.size);
-  in.read(reinterpret_cast<char*>(out.color_indices.data()), out.color_indices.size());
-  if (in.gcount() < 0) {
-    throw std::runtime_error("read error when reading frm color indices");
-  } else if (static_cast<unsigned>(in.gcount()) != out.color_indices.size()) {
-    throw std::runtime_error("ran out of data when reading color indices: needed = " +
-			     std::to_string(out.color_indices.size()) + " bytes, got = " +
-			     std::to_string(in.gcount()) + " bytes");
+  size_t offset = 0;
+  out.version_number = klmth::read_be_u32(buf.data(), offset);
+  out.fps = klmth::read_be_u16(buf.data(), offset);
+  out.action_frame = klmth::read_be_u16(buf.data(), offset);
+  out.frames_per_direction = klmth::read_be_u16(buf.data(), offset);
+    
+  for (auto& pixel_shift : out.pixel_shifts) {
+    pixel_shift.x = klmth::read_be_i16(buf.data(), offset);
   }
+
+  for (auto& pixel_shift : out.pixel_shifts) {
+    pixel_shift.y = klmth::read_be_i16(buf.data(), offset);
+  }
+
+  for (uint32_t& offset_in_frame_data : out.offsets_in_frame_data) {
+    offset_in_frame_data = klmth::read_be_u32(buf.data(), offset);
+  }
+
+  out.size_of_frame_data = klmth::read_be_u32(buf.data(), offset);
 
   return out;
 }
+
+
 
 frm::Any frm::read_any(std::istream& in) {
   Header header = read_header(in);
 
   if (header.fps > 1) {
     if (all_data_offsets_equal(header)) {
-      return read_frames_as_animation(in, std::move(header));
+      return seek_and_read_animation(in, header, north_east);
     } else {
-      return read_frame_data_as_anim_orientable(in, std::move(header));
+      return seek_and_read_orientable_anim(in, header);
     }
   } else {
     if (all_data_offsets_equal(header)) {
-      return read_frame_as_img(in, { header.pixel_shifts_x[0], header.pixel_shifts_y[0] });
+      return seek_and_read_frame(in, header, north_east);
     } else {
-      return read_frame_data_as_orientable(in, std::move(header));
+      return seek_and_read_orientable(in, header);
     }
   }
 }

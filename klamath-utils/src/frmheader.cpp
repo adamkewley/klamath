@@ -19,14 +19,14 @@ namespace {
         << "frames per direction = " << h.frames_per_direction << std::endl;
 
     out << "pixel shifts (x) = ";
-    for (auto&& pixel_shift : h.pixel_shifts_x) {
-      out << " " << std::to_string(pixel_shift);
+    for (auto&& pixel_shift : h.pixel_shifts) {
+      out << " " << std::to_string(pixel_shift.x);
     }
     out << std::endl;
 
     out << "pixel shifts (y) = ";
-    for (auto&& pixel_shift : h.pixel_shifts_y) {
-      out << " " << std::to_string(pixel_shift);
+    for (auto&& pixel_shift : h.pixel_shifts) {
+      out << " " << std::to_string(pixel_shift.y);
     }
     out << std::endl;
 

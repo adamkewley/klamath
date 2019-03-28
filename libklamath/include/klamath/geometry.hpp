@@ -20,24 +20,29 @@ namespace klmth {
 	width(static_cast<T>(d.width)),
 	height(static_cast<T>(d.height)) {
       }
-      
-      T area() const noexcept {
-	return this->width * this->height;
+
+      Dimensions<T>& operator+=(Dimensions other) noexcept {
+        this->width += other.width;
+        this->height += other.height;
+        return *this;
       }
     };
 
     template<typename T>
-    Dimensions<T> union_of(Dimensions<T> a, Dimensions<T> b) {
+    Dimensions<T> union_of(Dimensions<T> a, Dimensions<T> b) noexcept {
       T width = std::max(a.width, b.width);
       T height = std::max(a.height, b.height);
       return { width, height };
     }
 
-    template<typename TOut, typename TIn>
-    Dimensions<TOut> cast(Dimensions<TIn> d) {
-      TOut width = static_cast<TOut>(d.width);
-      TOut height = static_cast<TOut>(d.height);
-      return { width, height };
+    template<typename T>
+    T area(Dimensions<T> d) noexcept {
+      return d.width * d.height;
+    }
+
+    template<typename T>
+    auto area(T in) -> decltype(area(in.dimensions())) {
+      return area(in.dimensions());
     }
 
     template<
@@ -46,6 +51,19 @@ namespace klmth {
     struct Point {
       T x;
       T y;
+
+      Point<T> operator+(Point<T> other) const noexcept {
+	T x = this->x + other.x;
+	T y = this->y + other.y;
+
+	return { x, y };
+      }
+      
+      Point<T>& operator+=(Point<T> other) noexcept {
+	this->x += other.x;
+	this->y += other.y;
+	return *this;
+      }
     };
 
     template<
