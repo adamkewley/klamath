@@ -1,14 +1,15 @@
-#include "src/frmshow.hpp"
+#include "src/commands/frmshow.hpp"
 
 #include <iostream>
 #include <fstream>
 #include <memory>
 #include <stdexcept>
+
 #include <SDL2/SDL_events.h>
 
-#include "klamath/pal.hpp"
-#include "klamath/frm.hpp"
-#include "src/sdl.hpp"
+#include "src/parsers/pal.hpp"
+#include "src/parsers/frm.hpp"
+#include "src/utils/sdl.hpp"
 
 
 namespace {
@@ -75,7 +76,7 @@ namespace {
     const auto& color_indices = frame.color_indices();
     for (size_t pixel = 0; pixel < color_indices.size(); ++pixel) {
       uint8_t palette_idx = color_indices[pixel];
-      pixelbuf[pixel] = palette.palette[palette_idx] * 4;
+      pixelbuf[pixel] = scale_brightness(palette.palette[palette_idx], 4);
     }
 
     return w.mk_static_texture(pixelbuf);

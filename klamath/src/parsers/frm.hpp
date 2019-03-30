@@ -5,7 +5,7 @@
 #include <vector>
 #include <iosfwd>
 
-#include "klamath/geometry.hpp"
+#include "src/utils/geometry.hpp"
 
 
 namespace klmth {

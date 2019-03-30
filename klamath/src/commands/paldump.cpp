@@ -1,9 +1,9 @@
-#include "src/paldump.hpp"
+#include "src/commands/paldump.hpp"
 
 #include <iostream>
 #include <fstream>
 
-#include "klamath/pal.hpp"
+#include "src/parsers/pal.hpp"
 
 
 namespace {

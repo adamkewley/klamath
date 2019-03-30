@@ -2,10 +2,9 @@
 
 #include <cstdint>
 #include <array>
-#include <cstdint>
 #include <iosfwd>
 
-#include "klamath/rgb.hpp"
+#include "src/utils/color.hpp"
 
 namespace klmth {
   namespace pal {

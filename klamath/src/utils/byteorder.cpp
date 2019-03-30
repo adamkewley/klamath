@@ -1,24 +1,16 @@
-#include "ioutils.hpp"
+#include "src/utils/byteorder.hpp"
 
 #include <istream>
 
 
-void klmth::read(std::istream& in, uint8_t* buf, size_t n) {
+namespace {
+  void read(std::istream& in, uint8_t* buf, size_t n) {
   in.read(reinterpret_cast<char*>(buf), n);
 
   if (static_cast<size_t>(in.gcount()) != n) {
     throw std::runtime_error("ran out of data when trying to read a stream");
   }
 }
-
-uint8_t klmth::read_u8(std::istream& in) {
-  int ret = in.get();
-
-  if (in.eof()) {
-    throw std::runtime_error("ran out of data when reading a u8");
-  }
-
-  return static_cast<uint8_t>(ret);
 }
 
 uint32_t klmth::read_le_u32(const uint8_t* buf) {

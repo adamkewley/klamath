@@ -1,4 +1,4 @@
-#include "klamath/pal.hpp"
+#include "src/parsers/pal.hpp"
 
 #include <stdexcept>
 #include <istream>

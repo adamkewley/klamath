@@ -2,11 +2,11 @@
 #include <string>
 #include <map>
 
-#include "dat2extract.hpp"
-#include "aafprint.hpp"
-#include "paldump.hpp"
-#include "frmshow.hpp"
-#include "frmheader.hpp"
+#include "src/commands/dat2extract.hpp"
+#include "src/commands/aafprint.hpp"
+#include "src/commands/paldump.hpp"
+#include "src/commands/frmshow.hpp"
+#include "src/commands/frmheader.hpp"
 
 
 namespace {
@@ -48,3 +48,4 @@ int main(int argc, const char** argv) {
 
   return subcommands[subcommand](argc - 1, argv + 1);
 }
+

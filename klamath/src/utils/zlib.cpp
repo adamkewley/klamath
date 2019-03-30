@@ -1,8 +1,9 @@
-#include "klamath/zlib.hpp"
+#include "src/utils/zlib.hpp"
 
 #include <stdexcept>
 #include <iostream>
 #include <array>
+
 #include <zlib.h>
 
 
@@ -52,35 +53,43 @@ namespace {
     ~InflateStream() {
       inflateEnd(this);
     }
+  };  
+    
+  class BufferDecompressor {
+  public:
+    BufferDecompressor() {
+    }
+    
+    BufferDecompressor(const BufferDecompressor& other) = delete;
+
+    void decompress_in_one_step(const uint8_t* in,
+                                size_t in_size,
+                                uint8_t* out,
+                                size_t out_capacity) {
+      InflateStream s(in, in_size, out, out_capacity);
+
+      switch (s.inflate(Z_FINISH)) {
+      case Z_STREAM_END:
+        return;  // all data inflated into outbuf
+      case Z_OK:
+        throw std::runtime_error("could not decompress data in one step");
+      }
+    }
   };
 }
 
-
-klmth::zlib::BufferDecompressor::BufferDecompressor() {
+void klmth::zlib::decompress(const uint8_t* in,
+                             size_t in_size,
+                             uint8_t* out,
+                             size_t out_capacity) {
+  BufferDecompressor d;
+  d.decompress_in_one_step(in, in_size, out, out_capacity);
 }
 
-void klmth::zlib::BufferDecompressor::decompress_in_one_step(const uint8_t* in,
-                                                             size_t in_size,
-                                                             uint8_t* out,
-                                                             size_t out_capacity) {
-  InflateStream s(in, in_size, out, out_capacity);
-
-  switch (s.inflate(Z_FINISH)) {
-  case Z_STREAM_END:
-    return;  // all data inflated into outbuf
-  case Z_OK:
-    throw std::runtime_error("could not decompress data in one step");
-  }
-}
-
-
-klmth::zlib::StreamDecompressor::StreamDecompressor() {
-}
-
-
-void klmth::zlib::StreamDecompressor::decompress(std::istream& in,
-                                                 size_t n,
-                                                 std::ostream& out) {
+void klmth::zlib::decompress(std::istream& in,
+                             size_t n,
+                             std::ostream& out) {
+  
   std::array<uint8_t, 65536> inbuf;
   std::array<uint8_t, 65536> outbuf;
   InflateStream s(inbuf.data(), 0, outbuf.data(), outbuf.size());

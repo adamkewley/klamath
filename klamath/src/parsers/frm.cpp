@@ -1,8 +1,8 @@
-#include "klamath/frm.hpp"
+#include "src/parsers/frm.hpp"
 
 #include <istream>
 
-#include "src/ioutils.hpp"
+#include "src/utils/byteorder.hpp"
 
 
 using namespace klmth;
@@ -19,17 +19,21 @@ namespace {
     }
 
     size_t offset = 0;
-    uint16_t width = klmth::read_be_u16(buf.data(), offset);
-    uint16_t height = klmth::read_be_u16(buf.data(), offset);
+    frm::Dimensions dimensions{
+        klmth::read_be_u16(buf.data(), offset), 
+        klmth::read_be_u16(buf.data(), offset),
+    };
 
-    if (klmth::read_be_u32(buf.data(), offset) != width*height) {
+    if (klmth::read_be_u32(buf.data(), offset) != geometry::area(dimensions)) {
       throw std::runtime_error("frame header size field does not match the dimensions of the frame");
     }
 
-    int16_t shift_x = klmth::read_be_i16(buf.data(), offset);
-    int16_t shift_y = klmth::read_be_i16(buf.data(), offset);
+    frm::PixelShift pixel_shift{
+        klmth::read_be_i16(buf.data(), offset),
+        klmth::read_be_i16(buf.data(), offset),
+    };
 
-    return { frm::Dimensions{width, height}, frm::PixelShift{shift_x, shift_y} };
+    return { dimensions, pixel_shift };
   }
 
   frm::Frame read_frame_raw(std::istream& in) {

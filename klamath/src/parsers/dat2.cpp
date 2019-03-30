@@ -1,9 +1,10 @@
-#include "klamath/dat2.hpp"
+#include "src/parsers/dat2.hpp"
 
 #include <istream>
 #include <vector>
+#include <array>
 
-#include "ioutils.hpp"
+#include "src/utils/byteorder.hpp"
 
 
 klmth::dat2::Sections::Sections(uint32_t _data_section_size,
@@ -66,16 +67,27 @@ void klmth::dat2::read_tree_entry(std::istream& in, TreeEntry& out) {
 
   std::vector<uint8_t> filename_buf;
   filename_buf.resize(filename_len);
-  klmth::read(in, filename_buf.data(), filename_buf.size());
+
+  in.read(reinterpret_cast<char*>(filename_buf.data()), filename_buf.size());
+  if (!in.good()) {
+    throw std::runtime_error("input stream in bad state after reading dat2 entry filename");
+  } else if (static_cast<unsigned>(in.gcount()) != filename_buf.size()) {
+    throw std::runtime_error("ran out of data when trying to read a dat2 entry filename");
+  }
 
   out.filename.assign(reinterpret_cast<char*>(filename_buf.data()), filename_buf.size());
 
-  uint8_t buf[fixed_fields_len];
-  klmth::read(in, buf, sizeof(buf));
+  std::array<uint8_t, fixed_fields_len> buf;
+  in.read(reinterpret_cast<char*>(buf.data()), buf.size());
+  if (!in.good()) {
+    throw std::runtime_error("input stream in bad state after reading dat2 entry fields");
+  } else if (static_cast<unsigned>(in.gcount() != buf.size())) {
+    throw std::runtime_error("ran out of data when trying to read dat2 entry fields");
+  }
 
   size_t offset = 0;
   out.is_compressed = buf[offset++] != 0;
-  out.decompressed_size = klmth::read_le_u32(buf, offset);
-  out.packed_size = klmth::read_le_u32(buf, offset);
-  out.offset = klmth::read_le_u32(buf, offset);
+  out.decompressed_size = klmth::read_le_u32(buf.data(), offset);
+  out.packed_size = klmth::read_le_u32(buf.data(), offset);
+  out.offset = klmth::read_le_u32(buf.data(), offset);
 }

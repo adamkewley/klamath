@@ -5,8 +5,8 @@
 #include <vector>
 #include <chrono>
 
-#include "klamath/rgb.hpp"
-#include "klamath/geometry.hpp"
+#include "src/utils/color.hpp"
+#include "src/utils/geometry.hpp"
 
 struct SDL_Texture;
 struct SDL_Window;

@@ -1,9 +1,9 @@
-#include "src/aafprint.hpp"
+#include "src/commands/aafprint.hpp"
 
 #include <iostream>
 #include <fstream>
 
-#include "klamath/aaf.hpp"
+#include "src/parsers/aaf.hpp"
 
 
 namespace {

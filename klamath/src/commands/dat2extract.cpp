@@ -1,4 +1,4 @@
-#include "src/dat2extract.hpp"
+#include "src/commands/dat2extract.hpp"
 
 #include <iostream>
 #include <fstream>
@@ -6,8 +6,8 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 
-#include "klamath/dat2.hpp"
-#include "klamath/zlib.hpp"
+#include "src/parsers/dat2.hpp"
+#include "src/utils/zlib.hpp"
 
 
 namespace {
@@ -60,7 +60,7 @@ namespace {
       in.seekg(entry.offset, std::ios::beg);
 
       if (entry.is_compressed) {
-        decompressor.decompress(in, entry.packed_size, out);
+        zlib::decompress(in, entry.packed_size, out);
       } else {
         // TODO: raw entries
       }
@@ -72,7 +72,6 @@ namespace {
     std::istream& in;
     Config cfg;
 
-    zlib::StreamDecompressor decompressor;
     std::string pth_el;
   };
 

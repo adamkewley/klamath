@@ -1,6 +1,7 @@
-#include "src/sdl.hpp"
+#include "src/utils/sdl.hpp"
 
 #include <stdexcept>
+
 #include <SDL2/SDL.h>
 
 namespace {
