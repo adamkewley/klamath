@@ -2,7 +2,7 @@
 
 OUT_DIR=target/
 BUILD_TYPE?=Debug
-VERSION=0.0.1
+VERSION?=0.0.1
 
 .PHONY: compile clean package all
 .DEFAULT_GOAL := compile
@@ -26,7 +26,7 @@ package-deb: compile
 	    --input-type dir \
 	    --output-type deb \
             --force \
-	    target/klamath/klamath=/usr/local/bin/klamath
+	    ${OUT_DIR}klamath/klamath=/usr/local/bin/klamath
 
 package: package-deb
 

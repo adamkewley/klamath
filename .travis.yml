@@ -8,4 +8,14 @@ before_install:
 - sudo apt-get update
 - sudo apt-get install -fy libegl1-mesa-dev libsdl2-dev zlib1g-dev
 - gem install fpm --version 1.11.0
-script: make package
+script: make VERSION=${TRAVIS_TAG} BUILD_TYPE=Release package
+deploy:
+  provider: releases
+  on:
+    repo: adamkewley/klamath
+    tags: true
+  skip_cleanup: true
+  file:
+  - klamath_${TRAVIS_TAG}_amd64.deb
+  api-key:
+    secure: Bq1/PjIqqISmOgS3ItFX2H8q6WSN0GHOHfrRoPHOk2qLYeXiNWxKKfd7T88eCFY4LADI9w4XpKKbPm80ld/EwWEOhmYXhxSCgIQXTwnpVQtLzzB5LSq98mLTMDuV4Knk351AM9x9/TCMr41VFJCLYQ8TlObpZp5eUnRIXoAOViLVEA/P7EFhTXnbhy9Kvqc19SBueYTM1EkGAYOmVPaVXNKGaFPeJqgOaZjzcPkDuFk+s7IW4ZIYbIkg3TPHKkMWAX+C/WidK+KDCKMYgSLyM5hhjva1CEVqsv7p6N8EcnhuA0qS2LJv2pp731BKfhlo0BXRmgdhHSyT+8DYoG77EDFI4pVDcmGMg+PSgTebk0stfCrSStk7qiQx8uymihYLTP1PXj4ZzEmI7Rn9n0T9XAraqaCcyw7rVe3jXRIgh5a/TSSnQJn70/DVMUsMP+KwPP/isZYJQ9riK0wMFY9ZA4iQmfLoNzz1e5NMlcNtO0TJ+Egy0IGuCTz52ORmMdSugJSgf+W2tqO3w+RWjLW0UMv9TmMWkvFQfe8pqZx94S8KbebRRI1VS7pcAKRRUa2cnUCoVEtcEhZxTFMKrGTagvS8z8OTkD+HOVpnDtr4Ae5gMysqzHn1CBe7bey2VRPCluPebsPJG9kcYLpwolWyQOBIdq41zyyM+L0pA6ymrfY=
