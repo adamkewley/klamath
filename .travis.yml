@@ -1,0 +1,9 @@
+dist: trusty
+language: c++
+branches:
+  only:
+  - master
+  - feature
+before_install:
+- gem install fpm --version 1.11.0
+script: make package
