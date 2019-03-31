@@ -2,7 +2,7 @@
 
 OUT_DIR=target/
 BUILD_TYPE?=Debug
-VERSION?=0.0.1
+VERSION?=0.0.3
 
 .PHONY: compile clean package all
 .DEFAULT_GOAL := compile
