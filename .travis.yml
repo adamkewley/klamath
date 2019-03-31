@@ -1,9 +1,5 @@
 dist: trusty
 language: c++
-branches:
-  only:
-  - master
-  - feature
 before_install:
 - sudo apt-get update
 - sudo apt-get install -fy libegl1-mesa-dev libsdl2-dev zlib1g-dev
