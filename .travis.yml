@@ -6,6 +6,6 @@ branches:
   - feature
 before_install:
 - sudo apt-get update
-- sudo apt-get install -y libsdl2-dev zlib1g-dev
+- sudo apt-get install -fy libsdl2-dev zlib1g-dev
 - gem install fpm --version 1.11.0
 script: make package
