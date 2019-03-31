@@ -1,6 +1,7 @@
 #include "src/utils/byteorder.hpp"
 
 #include <istream>
+#include <stdexcept>
 
 
 namespace {

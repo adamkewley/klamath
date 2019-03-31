@@ -2,6 +2,7 @@
 
 #include <iostream>
 #include <fstream>
+#include <stdexcept>
 
 #include <sys/stat.h>
 #include <sys/types.h>
