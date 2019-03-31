@@ -8,7 +8,7 @@ before_install:
 - sudo apt-get update
 - sudo apt-get install -fy libegl1-mesa-dev libsdl2-dev zlib1g-dev
 - gem install fpm --version 1.11.0
-script: make VERSION=${TRAVIS_TAG} BUILD_TYPE=Release package
+script: make BUILD_TYPE=Release package
 deploy:
   provider: releases
   on:
