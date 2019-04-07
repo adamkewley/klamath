@@ -21,44 +21,32 @@ size_t klmth::Cursor::remaining() const noexcept {
   return this->size - this->offset;
 }
 
-void klmth::Cursor::advance(size_t n) {
-  if (n > this->remaining()) {
-    throw std::out_of_range("tried to advance a cursor beyond its bounds");
-  } else {
-    this->advance_unsafe(n);
-  }
-}
-
 void klmth::Cursor::advance_unsafe(size_t n) noexcept {
   this->offset += n;
 }
 
-uint8_t klmth::read_u8_unsafe(Cursor& c) noexcept {
-  uint8_t ret = c.data()[0];
-  c.advance_unsafe(1);
+const uint8_t* klmth::Cursor::read_then_advance_unsafe(size_t n) noexcept {
+  const uint8_t* ret = this->data();
+  this->offset += n;
   return ret;
+}
+
+uint8_t klmth::read_u8_unsafe(Cursor& c) noexcept {
+  return *c.read_then_advance_unsafe(1);
 }
 
 uint32_t klmth::read_le_u32_unsafe(Cursor& c) noexcept {
-  uint32_t ret = read_le_u32_unsafe(c.data());
-  c.advance_unsafe(4);
-  return ret;
+  return read_le_u32_unsafe(c.read_then_advance_unsafe(4));
 }
 
 uint32_t klmth::read_be_u32_unsafe(Cursor& c) noexcept {
-  uint32_t ret = read_be_u32_unsafe(c.data());
-  c.advance_unsafe(4);
-  return ret;
+  return read_be_u32_unsafe(c.read_then_advance_unsafe(4));
 }
 
 uint16_t klmth::read_be_u16_unsafe(Cursor& c) noexcept {
-  uint16_t ret = read_be_u16_unsafe(c.data());
-  c.advance(2);
-  return ret;
+  return read_be_u16_unsafe(c.read_then_advance_unsafe(2));
 }
 
 int16_t klmth::read_be_i16_unsafe(Cursor& c) noexcept {
-  int16_t ret = read_be_i16_unsafe(c.data());
-  c.advance(2);
-  return ret;
+  return read_be_i16_unsafe(c.read_then_advance_unsafe(2));
 }

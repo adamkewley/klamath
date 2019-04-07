@@ -2,6 +2,8 @@
 
 #include <stdexcept>
 #include <istream>
+#include <cstring>
+#include <iostream>
 
 #include "src/utils/cursor.hpp"
 
@@ -9,22 +11,22 @@ using klmth::read_be_u32_unsafe;
 using klmth::read_be_u16_unsafe;
 
 namespace {
-  const unsigned num_magic_nums = 4;
-  const unsigned max_glyph_height_len = 2;
-  const unsigned letter_spacing_len = 2;
-  const unsigned space_width_len = 2;
-  const unsigned line_spacing_len = 2;
-  const unsigned header_len =
+  static const uint8_t magic_nums[] = { 'A', 'A', 'F', 'F' };
+  static const unsigned max_glyph_height_len = 2;
+  static const unsigned letter_spacing_len = 2;
+  static const unsigned space_width_len = 2;
+  static const unsigned line_spacing_len = 2;
+  static const unsigned header_len =
     max_glyph_height_len + letter_spacing_len + space_width_len + line_spacing_len;
 
-  const unsigned glyph_width_len = 2;
-  const unsigned glyph_height_len = 2;
-  const unsigned glyph_opacities_offset = 4;
-  const unsigned glyph_min_len =
+  static const unsigned glyph_width_len = 2;
+  static const unsigned glyph_height_len = 2;
+  static const unsigned glyph_opacities_offset = 4;
+  static const unsigned glyph_min_len =
     glyph_width_len + glyph_height_len + glyph_opacities_offset;  // 0 * 0 dimensions
 
-  const unsigned min_aaf_len =
-    num_magic_nums + header_len + (klmth::aaf::num_glyphs * glyph_min_len);
+  static const unsigned min_aaf_len =
+    sizeof(magic_nums) + header_len + (klmth::aaf::num_glyphs * glyph_min_len);
 
 
   void read_header(klmth::Cursor& c, klmth::aaf::File& out) {
@@ -32,7 +34,9 @@ namespace {
       throw std::runtime_error("too little data for an AAF file");
     }
 
-    if (read_u8_unsafe(c) != 'A' || read_u8_unsafe(c) != 'A' || read_u8_unsafe(c) != 'F' || read_u8_unsafe(c) != 'F') {
+    if (std::memcmp(c.read_then_advance_unsafe(sizeof(magic_nums)),
+                    magic_nums,
+                    sizeof(magic_nums)) != 0) {
       throw std::runtime_error("first four bytes of an AAF file are not the magic number (AAFF)");
     }
 
@@ -42,28 +46,26 @@ namespace {
     out.line_spacing = read_be_u16_unsafe(c);
   }
 
-  klmth::aaf::File read(const uint8_t* buf, size_t n) {
+  klmth::aaf::File read(const uint8_t* buf, size_t n) {    
     klmth::Cursor c{buf, n};
     klmth::aaf::File out;
     
     read_header(c, out);
 
-    // Read glyph headers
-    for (size_t i = 0; i < out.glyphs.size(); ++i) {
+    // read glyph headers
+    for (klmth::aaf::Glyph& g : out.glyphs) {
       if (c.remaining() < glyph_min_len) {
         throw std::runtime_error("ran out of data when reading an aaf glyph header");
       }
 
-      klmth::aaf::Glyph& g = out.glyphs[i];
-      g.width = read_be_u16_unsafe(c);
-      g.height = read_be_u16_unsafe(c);
-      // glyph offset: not needed because the entire file is parsed
+      g.dimensions.width = read_be_u16_unsafe(c);
+      g.dimensions.height = read_be_u16_unsafe(c);
       read_be_u32_unsafe(c);
     }
 
-    // Read opacities
+    // read glyph opacities
     for (klmth::aaf::Glyph& g : out.glyphs) {
-      size_t num_opacities = g.width * g.height;
+      size_t num_opacities = g.dimensions.width * g.dimensions.height;
 
       if (c.remaining() < num_opacities) {
         throw std::runtime_error("ran out of data when reading aaf opacities");

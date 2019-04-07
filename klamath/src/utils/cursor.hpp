@@ -12,8 +12,8 @@ namespace klmth {
 
     const uint8_t* data() const noexcept;
     size_t remaining() const noexcept;
-    void advance(size_t n);
     void advance_unsafe(size_t n) noexcept;
+    const uint8_t* read_then_advance_unsafe(size_t n) noexcept;
   private:
     const uint8_t* buf;
     size_t size;

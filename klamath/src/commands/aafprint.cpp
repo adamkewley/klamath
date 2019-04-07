@@ -41,13 +41,13 @@ namespace {
   void print_aaf_glyph(const aaf::Glyph& g, std::ostream& out) {
     size_t row_base_idx = 0;
 
-    for (size_t row = 0; row < g.height; ++row) {
-      for (size_t col = 0; col < g.width; ++col) {
+    for (size_t row = 0; row < g.dimensions.height; ++row) {
+      for (size_t col = 0; col < g.dimensions.width; ++col) {
         uint8_t opacity = g.opacities[row_base_idx + col];
         out << opacity_to_char(opacity);
       }
       out << std::endl;
-      row_base_idx += g.width;
+      row_base_idx += g.dimensions.width;
     }
   }
 

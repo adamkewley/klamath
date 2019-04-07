@@ -5,15 +5,19 @@
 #include <vector>
 #include <array>
 
+#include "src/utils/geometry.hpp"
+
 namespace klmth {
   namespace aaf {
-    const size_t num_glyphs = 256;
+    
+    using Dimensions = klmth::geometry::Dimensions<uint16_t>;
     
     struct Glyph {
-      uint16_t width;
-      uint16_t height;
+      Dimensions dimensions;
       std::vector<uint8_t> opacities;
     };
+
+    static const size_t num_glyphs = 256;
 	
     struct File {
       uint16_t max_glyph_height;
