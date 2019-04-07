@@ -91,7 +91,7 @@ namespace {
   }
 }
 
-int klmth::dat2_extract_main(int argc, const char** argv) {
+int klmth::dat2_extract_main(int argc, char** argv) {
   CLI::App app{"extract a DAT2 file into the current working directory"};
   std::string dat2_path;
   app.add_option("dat2_file", dat2_path, "path to a DAT2 file")->required();

@@ -2,10 +2,13 @@
 
 #include <istream>
 
-#include "src/utils/byteorder.hpp"
+#include "src/utils/cursor.hpp"
 
 
 using namespace klmth;
+using klmth::read_be_u32_unsafe;
+using klmth::read_be_u16_unsafe;
+using klmth::read_be_i16_unsafe;
 
 namespace {  
   frm::FrameHeader read_frame_header(std::istream& in) {
@@ -18,19 +21,19 @@ namespace {
       throw std::runtime_error("ran out of data while reading frm frame header");
     }
 
-    size_t offset = 0;
+    klmth::Cursor c{buf.data(), buf.size()};
     frm::Dimensions dimensions{
-        klmth::read_be_u16(buf.data(), offset), 
-        klmth::read_be_u16(buf.data(), offset),
+        read_be_u16_unsafe(c), 
+        read_be_u16_unsafe(c),
     };
 
-    if (klmth::read_be_u32(buf.data(), offset) != geometry::area(dimensions)) {
+    if (read_be_u32_unsafe(c) != geometry::area(dimensions)) {
       throw std::runtime_error("frame header size field does not match the dimensions of the frame");
     }
 
     frm::PixelShift pixel_shift{
-        klmth::read_be_i16(buf.data(), offset),
-        klmth::read_be_i16(buf.data(), offset),
+        read_be_i16_unsafe(c),
+        read_be_i16_unsafe(c),
     };
 
     return { dimensions, pixel_shift };
@@ -238,25 +241,25 @@ frm::Header frm::read_header(std::istream& in) {
 
   frm::Header out;
 
-  size_t offset = 0;
-  out.version_number = klmth::read_be_u32(buf.data(), offset);
-  out.fps = klmth::read_be_u16(buf.data(), offset);
-  out.action_frame = klmth::read_be_u16(buf.data(), offset);
-  out.frames_per_direction = klmth::read_be_u16(buf.data(), offset);
+  klmth::Cursor c{buf.data(), buf.size()};
+  out.version_number = read_be_u32_unsafe(c);
+  out.fps = read_be_u16_unsafe(c);
+  out.action_frame = read_be_u16_unsafe(c);
+  out.frames_per_direction = read_be_u16_unsafe(c);
     
   for (auto& pixel_shift : out.pixel_shifts) {
-    pixel_shift.x = klmth::read_be_i16(buf.data(), offset);
+    pixel_shift.x = read_be_i16_unsafe(c);
   }
 
   for (auto& pixel_shift : out.pixel_shifts) {
-    pixel_shift.y = klmth::read_be_i16(buf.data(), offset);
+    pixel_shift.y = read_be_i16_unsafe(c);
   }
 
   for (uint32_t& offset_in_frame_data : out.offsets_in_frame_data) {
-    offset_in_frame_data = klmth::read_be_u32(buf.data(), offset);
+    offset_in_frame_data = read_be_u32_unsafe(c);
   }
 
-  out.size_of_frame_data = klmth::read_be_u32(buf.data(), offset);
+  out.size_of_frame_data = read_be_u32_unsafe(c);
 
   return out;
 }

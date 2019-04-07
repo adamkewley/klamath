@@ -4,8 +4,10 @@
 #include <vector>
 #include <array>
 
-#include "src/utils/byteorder.hpp"
+#include "src/utils/byteorder_ios.hpp"
+#include "src/utils/cursor.hpp"
 
+using klmth::read_le_u32_unsafe;
 
 klmth::dat2::Sections::Sections(uint32_t _data_section_size,
                                 uint32_t _num_files,
@@ -35,8 +37,8 @@ klmth::dat2::Sections klmth::dat2::read_sections(std::istream& in) {
     throw std::runtime_error("insufficient data in dat2 file: must be at least 12 bytes (num files section, tree size section, and file size section");
   }
 
-  uint32_t tree_size = klmth::read_le_u32(in);
-  uint32_t file_size = klmth::read_le_u32(in);
+  uint32_t tree_size = read_le_u32_unsafe(in);
+  uint32_t file_size = read_le_u32_unsafe(in);
 
   if (file_size != in.tellg()) {
     throw std::runtime_error("filesize declared in DAT2 footer does not match actual size of the file");
@@ -49,7 +51,7 @@ klmth::dat2::Sections klmth::dat2::read_sections(std::istream& in) {
   uint32_t data_section_size = num_files_offset;
 
   in.seekg(num_files_offset);
-  uint32_t num_files = klmth::read_le_u32(in);
+  uint32_t num_files = read_le_u32_unsafe(in);
 
   return { data_section_size, num_files, tree_offset, tree_size, file_size };
 }
@@ -63,7 +65,7 @@ void klmth::dat2::read_tree_entry(std::istream& in, TreeEntry& out) {
     is_compressed_len + decompressed_size_len + packed_size_len + offset_len;
 
 
-  uint32_t filename_len = klmth::read_le_u32(in);
+  uint32_t filename_len = read_le_u32_unsafe(in);
 
   std::vector<uint8_t> filename_buf;
   filename_buf.resize(filename_len);
@@ -85,9 +87,9 @@ void klmth::dat2::read_tree_entry(std::istream& in, TreeEntry& out) {
     throw std::runtime_error("ran out of data when trying to read dat2 entry fields");
   }
 
-  size_t offset = 0;
-  out.is_compressed = buf[offset++] != 0;
-  out.decompressed_size = klmth::read_le_u32(buf.data(), offset);
-  out.packed_size = klmth::read_le_u32(buf.data(), offset);
-  out.offset = klmth::read_le_u32(buf.data(), offset);
+  klmth::Cursor c{buf.data(), buf.size()};
+  out.is_compressed = read_u8_unsafe(c) != 0;
+  out.decompressed_size = read_le_u32_unsafe(c);
+  out.packed_size = read_le_u32_unsafe(c);
+  out.offset = read_le_u32_unsafe(c);
 }

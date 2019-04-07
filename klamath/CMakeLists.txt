@@ -11,7 +11,9 @@ if(NOT ZLIB_FOUND)
 endif()
 
 add_executable(${PROJECT_NAME}
-  src/utils/byteorder.cpp
+  src/utils/byteorder_buf.cpp
+  src/utils/byteorder_ios.cpp
+  src/utils/cursor.cpp
   src/utils/zlib.cpp
   src/utils/sdl.cpp
   src/utils/color.cpp
