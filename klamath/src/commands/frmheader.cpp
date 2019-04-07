@@ -3,6 +3,8 @@
 #include <iostream>
 #include <fstream>
 
+#include "vendor/CLI11.hpp"
+
 #include "src/parsers/frm.hpp"
 
 
@@ -69,20 +71,26 @@ namespace {
   }
 }
 
-int klmth::frmheader_main(int argc, const char** argv) {
-  if (argc == 0) {
-    throw std::runtime_error("too few arguments provided to `frm_show_main`: this is a developer error");
+int klmth::frmheader_main(int argc, char** argv) {
+  CLI::App app{"print FRM file header as plaintext"};
+  std::vector<std::string> frm_paths;
+  app.add_option("frm_file", frm_paths, "path to FRM file. '-' is interpreted as stdin. Supplying no paths will cause application to read FRM data from stdin");
+
+  try {
+    app.parse(argc, argv);
+  } catch (const CLI::ParseError& ex) {
+    return app.exit(ex);
   }
 
   try {
-    if (argc == 1) {
+    if (frm_paths.empty()) {
       print_stream(std::cin, std::cout, "stdin");
     } else {
-      for (int i = 1; i < argc; ++i) {
-        print_path(argv[i]);
+      for (auto& frm_path : frm_paths) {
+        print_path(frm_path);
       }
     }
-
+    
     return 0;
   } catch (const std::exception& ex) {
     std::cerr << argv[0] << ": " << ex.what() << std::endl;

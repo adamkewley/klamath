@@ -3,9 +3,10 @@
 #include <iostream>
 #include <fstream>
 #include <stdexcept>
-
 #include <sys/stat.h>
 #include <sys/types.h>
+
+#include "vendor/CLI11.hpp"
 
 #include "src/parsers/dat2.hpp"
 #include "src/utils/zlib.hpp"
@@ -91,23 +92,17 @@ namespace {
 }
 
 int klmth::dat2_extract_main(int argc, const char** argv) {
-  std::string usage = std::string("usage: ") + argv[0] + ": <dat2_path>";
+  CLI::App app{"extract a DAT2 file into the current working directory"};
+  std::string dat2_path;
+  app.add_option("dat2_file", dat2_path, "path to a DAT2 file")->required();
 
-  if (argc < 2) {
-    std::cerr << argv[0] << ": too few arguments provided" << std::endl;
-    std::cerr << usage << std::endl;
-    return 1;
-  } else if (argc > 2) {
-    std::cerr << argv[0] << ": too many args provided" << std::endl;
-    std::cerr << usage << std::endl;
-    return 1;
+  try {
+    app.parse(argc, argv);
+  } catch (const CLI::ParseError& ex) {
+    return app.exit(ex);
   }
 
-
-  const char* dat2_path = argv[1];
-
-  std::ifstream dat2_strm;
-  dat2_strm.open(dat2_path, std::ios::in | std::ios::binary);
+  std::ifstream dat2_strm{dat2_path, std::ios::in | std::ios::binary};
 
   if (!dat2_strm.good()) {
     std::cerr << argv[0] << ": " << dat2_path << " error opening file" << std::endl;

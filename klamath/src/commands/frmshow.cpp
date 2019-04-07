@@ -7,6 +7,8 @@
 
 #include <SDL2/SDL_events.h>
 
+#include "vendor/CLI11.hpp"
+
 #include "src/parsers/pal.hpp"
 #include "src/parsers/frm.hpp"
 #include "src/utils/sdl.hpp"
@@ -243,25 +245,26 @@ namespace {
 }
 
 
-int klmth::frm_show_main(int argc, const char** argv) {
-  if (argc == 0) {
-    throw std::runtime_error("too few arguments provided to `frm_show_main`: this is a developer error");
-  } else if (argc < 2) {
-    const std::string usage = std::string("usage: ") + argv[0] + " <pal_file> [frm_file]...";
-
-    std::cerr << argv[0] << ": too few arguments" << std::endl;
-    std::cerr << usage << std::endl;
-    return 1;
-  }
-
+int klmth::frm_show_main(int argc, char** argv) {
+  CLI::App app{"show frm files in a GUI window"};
+  std::string pal_pth;
+  app.add_option("pal_pth", pal_pth, "path to a PAL file")->required();
+  std::vector<std::string> frm_pths;
+  app.add_option("frm_file", frm_pths, "path to FRM files. '-' interpreted as stdin. Supplying no paths will cause it to read FRM data from stdin");
 
   try {
-    pal::File palette = load_palette(argv[1]);
+    app.parse(argc, argv);
+  } catch (const CLI::ParseError& ex) {
+    return app.exit(ex);
+  }
 
-    if (argc == 2) {
+  try {
+    pal::File palette = load_palette(pal_pth);
+
+    if (frm_pths.size() == 0) {
       show(palette, stdin_senteniel);
     } else {
-      show(palette, std::vector<std::string>{ argv + 2, argv + argc });
+      show(palette, frm_pths);
     }
 
     return 0;

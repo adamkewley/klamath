@@ -10,7 +10,7 @@
 
 
 namespace {
-  typedef int (*subcommand)(int, const char **);
+  typedef int (*subcommand)(int, char **);
 
   std::map<std::string, subcommand> subcommands {
     { "dat2extract", &klmth::dat2_extract_main },
@@ -21,7 +21,7 @@ namespace {
   };
 }
 
-int main(int argc, const char** argv) {
+int main(int argc, char** argv) {
   if (argc < 2) {
     std::cerr << "usage: " << argv[0] << " <command>" << std::endl
               << std::endl

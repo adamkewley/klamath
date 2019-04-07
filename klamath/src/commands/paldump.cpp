@@ -3,6 +3,8 @@
 #include <iostream>
 #include <fstream>
 
+#include "vendor/CLI11.hpp"
+
 #include "src/parsers/pal.hpp"
 
 
@@ -51,18 +53,23 @@ namespace {
 }
 
 
-int klmth::paldump_main(int argc, const char** argv) {
-  if (argc == 0) {
-    std::cerr << "fatal error: no application name argument" << std::endl;
-    return 1;
+int klmth::paldump_main(int argc, char** argv) {
+  CLI::App app{"dump pal color indices as plaintext"};
+  std::vector<std::string> pal_pths;
+  app.add_option("pal_file", pal_pths, "path to PAL file. '-' is interpreted as stdin. Supplying no paths will cause application to read AAF data from stdin");
+
+  try {
+    app.parse(argc, argv);
+  } catch (const CLI::ParseError& ex) {
+    return app.exit(ex);
   }
 
   try {
-    if (argc == 1) {
+    if (pal_pths.empty()) {
       print_stream(std::cin, std::cout, "stdin");
     } else {
-      for (int i = 1; i < argc; ++i) {
-        print_path(argv[i], std::cout);
+      for (auto& pal_path : pal_pths) {
+        print_path(pal_path, std::cout);
       }
     }
 

@@ -3,6 +3,8 @@
 #include <iostream>
 #include <fstream>
 
+#include "vendor/CLI11.hpp"
+
 #include "src/parsers/aaf.hpp"
 
 
@@ -59,8 +61,18 @@ namespace {
 }
 
 
-int klmth::aaf_print_main(int argc, const char** argv) {
-  if (argc == 1) {
+int klmth::aaf_print_main(int argc, char** argv) {
+  CLI::App app{"print AAF glyphs in plaintext"};
+  std::vector<std::string> aaf_pths;
+  app.add_option("aaf_file", aaf_pths, "path to AAF file. '-' is interpreted as stdin. Supplying no paths will cause application to read AAF data from stdin");
+
+  try {
+    app.parse(argc, argv);
+  } catch (const CLI::ParseError& ex) {
+    return app.exit(ex);
+  }
+
+  if (aaf_pths.size() == 0) {
     try {
       aaf::File aaf_file = aaf::read_file(std::cin);
       print_aaf_file(aaf_file, std::cout);
@@ -69,11 +81,8 @@ int klmth::aaf_print_main(int argc, const char** argv) {
       return 1;
     }
   } else {
-    for (int i = 1; i < argc; ++i) {
-      const char* aaf_pth = argv[i];
-
-      std::fstream in;
-      in.open(aaf_pth, std::ios::in | std::ios::binary);
+    for (auto& aaf_pth : aaf_pths) {
+      std::fstream in{aaf_pth, std::ios::in | std::ios::binary};
 
       if (!in.good()) {
         std::cerr << argv[0] << ": " << aaf_pth << ": error opening aaf" << std::endl;

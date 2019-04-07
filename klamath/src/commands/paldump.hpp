@@ -1,5 +1,5 @@
 #pragma once
 
 namespace klmth {
-  int paldump_main(int argc, const char** argv);
+  int paldump_main(int argc, char** argv);
 }

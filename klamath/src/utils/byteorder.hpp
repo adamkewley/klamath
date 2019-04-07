@@ -4,7 +4,7 @@
 #include <cstddef>
 #include <iosfwd>
 
-namespace klmth {  
+namespace klmth {
   uint32_t read_le_u32(const uint8_t* buf);
   uint32_t read_le_u32(const uint8_t* buf, size_t& offset);
   uint32_t read_le_u32(std::istream& in);
