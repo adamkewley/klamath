@@ -4,6 +4,7 @@
 #include <fstream>
 #include <memory>
 #include <stdexcept>
+#include <thread>
 
 #include <SDL2/SDL_events.h>
 
@@ -73,22 +74,31 @@ namespace {
     }
   }
 
-  sdl::StaticTexture create_texture(sdl::Window& w, const pal::File& palette, const frm::Frame& frame) {
-    sdl::PixelBuf pixelbuf(frame.dimensions());
+  sdl::StaticTexture create_texture(sdl::Window& w,
+                                    const pal::File& palette,
+                                    frm::Dimensions dimensions,
+                                    const frm::Frame& frame) {
+    std::vector<klmth::Rgb> pixels(geometry::area(frame));
+
     const auto& color_indices = frame.color_indices();
-    for (size_t pixel = 0; pixel < color_indices.size(); ++pixel) {
-      uint8_t palette_idx = color_indices[pixel];
-      pixelbuf[pixel] = scale_brightness(palette.palette[palette_idx], 4);
+    for (auto i = 0U; i < pixels.size(); ++i) {
+      uint8_t palette_idx = color_indices[i];
+      pixels[i] = scale_brightness(palette.palette[palette_idx], 4);
     }
 
-    return w.mk_static_texture(pixelbuf);
+    unsigned x = (dimensions.width / 2) - (geometry::width(frame) / 2) + frame.pixel_shift().x;
+    unsigned y = dimensions.height - geometry::height(frame) + frame.pixel_shift().y;
+
+    sdl::Rect target{ {x, y}, frame.dimensions() };
+
+    return w.mk_static_texture(frame.dimensions(), pixels, target);
   }
 
   void show(const pal::File& palette, const frm::Frame& frame) {
     sdl::Context c;
     sdl::Window w = c.create_window(frame.dimensions());
 
-    sdl::StaticTexture t = create_texture(w, palette, frame);
+    sdl::StaticTexture t = create_texture(w, palette, frame.dimensions(), frame);
 
     w.render_clear();
     w.render_copy_fullscreen(t);
@@ -109,7 +119,7 @@ namespace {
     std::vector<sdl::StaticTexture> frame_textures;
     frame_textures.reserve(animation.num_frames());
     for (const frm::Frame& frame : animation.frames()) {
-      frame_textures.emplace_back(create_texture(w, palette, frame));
+      frame_textures.emplace_back(create_texture(w, palette, animation.dimensions(), frame));
     }
 
     const std::chrono::milliseconds sleep_dur(1000/animation.fps());
@@ -127,7 +137,7 @@ namespace {
       w.render_clear();
       w.render_copy_fullscreen(frame_textures[frame++ % num_frames]);
       w.render_present();
-      sdl::sleep(sleep_dur);
+      std::this_thread::sleep_for(sleep_dur);
     }
   }
 
@@ -141,7 +151,7 @@ namespace {
 
     for (frm::Orientation orientation : frm::orientations) {
       const frm::Frame& img = orientable.frame_at(orientation);
-      sdl::StaticTexture t = create_texture(w, palette, img);
+      sdl::StaticTexture t = create_texture(w, palette, img.dimensions(), img);
       sdl::Rect destination{ layout.cell_pos(orientation), img.dimensions() };
       w.render_copy(t, destination);
     }
@@ -167,7 +177,7 @@ namespace {
       std::vector<sdl::StaticTexture>& frames = frames_per_orient[o];
       frames.reserve(am.num_frames_per_orientation());
       for (const frm::Frame& frame : animation.frames()) {
-        frames.emplace_back(create_texture(w, palette, frame));
+        frames.emplace_back(create_texture(w, palette, animation.dimensions(), frame));
       }
     }
 
@@ -192,7 +202,7 @@ namespace {
       frame++;
 
       w.render_present();
-      sdl::sleep(sleep_dur);
+      std::this_thread::sleep_for(sleep_dur);
     }        
   }
 
@@ -233,6 +243,7 @@ namespace {
         throw std::runtime_error(std::string(frm_pth) + ": error when opening frm file");
       }
 
+      std::cerr << "frmshow: showing: " << frm_pth << std::endl;
       show(palette, frm_strm, frm_pth);
     }
   }

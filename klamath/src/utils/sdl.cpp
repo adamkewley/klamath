@@ -1,99 +1,62 @@
 #include "src/utils/sdl.hpp"
 
 #include <stdexcept>
+#include <sstream>
 
 #include <SDL2/SDL.h>
 
 namespace {
+  using klmth::sdl::Dimensions;
+  using klmth::sdl::Rect;
+  using klmth::Rgb;
 
+  Uint32 to_pixel(SDL_Surface* s, const Rgb& rgb) {
+    return SDL_MapRGB(s->format, rgb.r, rgb.g, rgb.b);
+  }
+  
   class SurfaceLock {
   public:
-    SurfaceLock(SDL_Surface* s) {
-      if (SDL_LockSurface(s) == -1) {
-        throw std::runtime_error("could not acquire SDL surface lock");
+    SurfaceLock(SDL_Surface* _s) {
+      if (SDL_LockSurface(_s) == -1) {
+        std::stringstream err;
+        err << "could not acquire lock for SDL surface: " << SDL_GetError();
+        throw std::runtime_error(err.str());
       } else {
-        _s = s;
-        _n_pix = static_cast<size_t>(s->w * s->h);
+        this->s = _s;
       }
     }
 
-    SurfaceLock(const SurfaceLock& other) = delete;
-
-    SurfaceLock(SurfaceLock&& tmp) {
-      this->_s = tmp._s;
-      this->_n_pix = tmp._n_pix;
-      tmp._s = nullptr;
-    }
-
-    template<typename ValueGetter>
-    void assign_pixel_range(size_t offset, size_t n, ValueGetter f) {
-      size_t end = n + offset;
-      if (end > _n_pix) {
-        throw std::runtime_error("tried to assign outside pixel buffer boundaries");
-      } else {
-        Uint32* pixels = reinterpret_cast<Uint32*>(_s->pixels);
-        for (size_t i = offset; i < end; ++i) {
-          pixels[i] = f(i);
-        }
-      }
+    SurfaceLock(SurfaceLock&& tmp) noexcept {
+      this->s = tmp.s;
+      tmp.s = nullptr;
     }
 
     ~SurfaceLock() noexcept {
-      if (_s != nullptr) {
-        SDL_UnlockSurface(_s);
-      }
-    }
-  private:
-    SDL_Surface* _s;
-    size_t _n_pix;
-  };
-
-
-  class Surface {
-  public:
-    Surface(klmth::sdl::Dimensions dimensions) {
-      s = SDL_CreateRGBSurface(0,
-                               dimensions.width,
-                               dimensions.height,
-                               32,
-                               0xff000000,  // rgba
-                               0x00ff0000,
-                               0x0000ff00,
-                               0x000000ff);
-
-      if (s == NULL) {
-        throw std::runtime_error("null returned when creating SDL surface: out of memory?");
+      if (this->s != nullptr) {
+        SDL_UnlockSurface(this->s);
       }
     }
 
-    SurfaceLock lock() {
-      return SurfaceLock(s);
+    SDL_Surface* get() const noexcept {
+      return this->s;
     }
 
-    Uint32 to_pixel(const klmth::Rgb& rgb) {
-      return SDL_MapRGB(s->format, rgb.r, rgb.g, rgb.b);
-    }
-
-    const void* pixels() const {
-      return s->pixels;
-    }
-
-    int pitch() const {
-      return s->pitch;
-    }
-
-    ~Surface() noexcept {
-      if (s != NULL) {
-        SDL_FreeSurface(s);
+    void assign(const std::vector<klmth::Rgb>& pixels) {
+      unsigned area = this->s->w * this->s->h;
+      if (pixels.size() > area) {
+        throw std::runtime_error("tried to assign outside pixel buffer boundaries");
+      } else {
+        Uint32* buf = reinterpret_cast<Uint32*>(s->pixels);
+        for (size_t i = 0; i < pixels.size(); ++i) {
+          buf[i] = to_pixel(this->s, pixels[i]);
+        }
       }
     }
-
   private:
     SDL_Surface* s;
   };
 
-
-  klmth::sdl::StaticTexture mk_texture(SDL_Renderer* r, klmth::sdl::Dimensions dimensions) {
+  klmth::sdl::StaticTexture mk_texture(SDL_Renderer* r, Dimensions dimensions) {
     SDL_Texture* t = SDL_CreateTexture(r,
                                        SDL_PIXELFORMAT_RGBA8888,
                                        SDL_TEXTUREACCESS_STATIC,
@@ -107,7 +70,7 @@ namespace {
     }
   }
 
-  SDL_Rect to_sdl_rect(const klmth::sdl::Rect& rect) {
+  SDL_Rect to_sdl_rect(const Rect& rect) {
     SDL_Rect ret;
     ret.x = rect.location.x;
     ret.y = rect.location.y;
@@ -132,6 +95,69 @@ klmth::sdl::StaticTexture::~StaticTexture() noexcept {
     SDL_DestroyTexture(_t);
   }
 }
+
+klmth::sdl::Surface::Surface(Dimensions dimensions) {
+  this->s = SDL_CreateRGBSurface(0,
+                                 dimensions.width,
+                                 dimensions.height,
+                                 32,
+                                 0xff000000,  // rgba
+                                 0x00ff0000,
+                                 0x0000ff00,
+                                 0x000000ff);
+
+  if (this->s == NULL) {
+    throw std::runtime_error("null returned when creating SDL surface: out of memory?");
+  }
+}
+
+klmth::sdl::Surface::Surface(Dimensions dimensions, const std::vector<klmth::Rgb>& pixels) {
+  if (geometry::area(dimensions) != pixels.size()) {
+    std::stringstream err;
+    err << "number of pixels ("  << pixels.size() << ")"
+        << " does not match the dimensions of the surface (w = " << dimensions.width
+        << " h = " << dimensions.height << ")";
+    throw std::runtime_error(err.str());
+  }
+  
+  this->s = SDL_CreateRGBSurface(0,
+                                 dimensions.width,
+                                 dimensions.height,
+                                 32,
+                                 0xff000000,  // rgba
+                                 0x00ff0000,
+                                 0x0000ff00,
+                                 0x000000ff);
+
+  if (this->s == NULL) {
+    throw std::runtime_error("null returned when creating SDL surface: out of memory?");
+  } else {
+    SurfaceLock l{this->s};
+    l.assign(pixels);
+  }
+}
+
+klmth::sdl::Surface::~Surface() noexcept {
+  if (this->s != NULL) {
+    SDL_FreeSurface(s);
+    this->s = NULL;
+  }
+}
+
+const SDL_Surface* klmth::sdl::Surface::get() const noexcept {
+  return this->s;
+}
+
+void klmth::sdl::Surface::blit(const Surface& src, Rect srcrect, Rect dstrect) {
+  SDL_Rect src_sdlrect = to_sdl_rect(srcrect);
+  SDL_Rect dst_sdlrect = to_sdl_rect(dstrect);
+  if (SDL_BlitSurface(src.s, &src_sdlrect, this->s, &dst_sdlrect) != 0) {
+    std::stringstream err;
+    err << "error blitting surface: " << SDL_GetError();
+    throw std::runtime_error(err.str());
+  }
+}
+
 
 klmth::sdl::Window::Window(Dimensions dimensions) {
   if (SDL_CreateWindowAndRenderer(dimensions.width, dimensions.height, SDL_WINDOW_SHOWN, &w, &r) == -1) {
@@ -178,21 +204,88 @@ klmth::sdl::Window::~Window() noexcept {
   }
 }
 
-klmth::sdl::StaticTexture klmth::sdl::Window::mk_static_texture(const PixelBuf& pixelbuf) {
-  Surface s(pixelbuf.dimensions());
-  {
-    SurfaceLock l = s.lock();
-    l.assign_pixel_range(0, pixelbuf.size(), [&](size_t i) {
-        return s.to_pixel(pixelbuf[i]);
-      });
-  }
+klmth::sdl::StaticTexture klmth::sdl::Window::mk_static_texture(Dimensions dimensions,
+                                                                const std::vector<klmth::Rgb>& pixels) {
+  Surface s{dimensions, pixels};
+  StaticTexture t = mk_texture(r, dimensions);
+  SDL_UpdateTexture(t._t, NULL, s.get()->pixels, s.get()->pitch);
+  return t;
+}
 
-  StaticTexture t = mk_texture(r, pixelbuf.dimensions());
-  SDL_UpdateTexture(t._t, NULL, s.pixels(), s.pitch());
+klmth::sdl::StaticTexture klmth::sdl::Window::mk_static_texture(Dimensions dimensions,
+                                                                const std::vector<klmth::Rgb>& pixels,
+                                                                const Rect& target) {
+  Surface src{dimensions, pixels};
+  Surface targ{target.dimensions};
+
+  targ.blit(src, { {0, 0}, dimensions }, target);
+
+  StaticTexture t = mk_texture(this->r, target.dimensions);
+
+  SDL_UpdateTexture(t._t, NULL, targ.get()->pixels, targ.get()->pitch);
 
   return t;
 }
 
+/*
+{
+  
+
+  sdl::StaticTexture create_texture(sdl::Window& w,
+                                    const pal::File& palette,
+                                    const frm::Dimensions& parent_dimensions,
+                                    const frm::Frame& frame) {
+    std::vector<klmth::Rgb> pixels{geometry::area(parent_dimensions)};
+
+    int rows_above = 0;//frame.pixel_shift().y;
+    int pixels_above = rows_above * parent_dimensions.width;
+    
+    int rows_below = 0;//parent_dimensions.height - frame.dimensions().height - rows_above;
+    int pixels_below = rows_below * parent_dimensions.width;
+    
+    int cols_left = 0;//frame.pixel_shift().x ;
+    int cols_right = 0;//parent_dimensions.width - frame.dimensions().width - cols_left;
+
+    std::cout << "parent height = " << parent_dimensions.height
+              << "parent width = " << parent_dimensions.width
+              << "height = " << frame.dimensions().height
+              << "width = " << frame.dimensions().width
+              << "rows above = " << rows_above
+              << "rows below = " << rows_below
+              << "cols left = " << cols_left
+              << "cols right = " << cols_right
+              << std::endl;
+
+    
+    size_t buf_offset = 0;
+    for (auto i = 0; i < pixels_above; ++i) {
+      pixels[buf_offset++] = {0,0,0};
+    }
+
+    size_t src_offset = 0;
+    const auto& color_indices = frame.color_indices();
+    
+    for (auto row = 0; row < frame.dimensions().height; ++row) {
+      for (auto i = 0; i < cols_left; ++i) {
+        pixels[buf_offset++] = {0,0,0};
+      }
+      for (auto i = 0; i < frame.dimensions().width; ++i) {
+        uint8_t palette_idx = color_indices[src_offset++];
+        pixels[buf_offset++] = scale_brightness(palette.palette[palette_idx], 4);
+      }
+      for (auto i = 0; i < cols_right; ++i) {
+        pixels[buf_offset++] = {0,0,0};
+      }
+    }
+
+    for (auto i = 0; i < pixels_below; ++i) {
+      pixels[buf_offset++] = {0,0,0};
+    }
+
+    return w.mk_static_texture(parent_dimensions, pixels);
+  }
+}
+*/
 
 
 klmth::sdl::Context::Context() {
@@ -213,9 +306,4 @@ bool klmth::sdl::Context::poll_event(SDL_Event* out) {
 
 klmth::sdl::Context::~Context() noexcept {
   SDL_Quit();
-}
-
-
-void klmth::sdl::sleep(std::chrono::milliseconds duration) {
-  SDL_Delay(duration.count());
 }

@@ -24,7 +24,5 @@ uint16_t klmth::read_be_u16_unsafe(const uint8_t* buf) noexcept {
 }
 
 int16_t klmth::read_be_i16_unsafe(const uint8_t* buf) noexcept {
-  int16_t ret = static_cast<int16_t>(buf[0]);
-  ret |= buf[1];
-  return ret;
+  return static_cast<int16_t>(read_be_u16_unsafe(buf));
 }

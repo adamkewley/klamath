@@ -7,6 +7,7 @@
 #include "src/commands/paldump.hpp"
 #include "src/commands/frmshow.hpp"
 #include "src/commands/frmheader.hpp"
+#include "src/commands/frmdump.hpp"
 
 
 namespace {
@@ -18,6 +19,7 @@ namespace {
     { "palprint", &klmth::paldump_main },
     { "frmshow", &klmth::frm_show_main },
     { "frmheader", &klmth::frmheader_main },
+    { "frmdump", &klmth::frmdump_main },
   };
 }
 

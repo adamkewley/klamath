@@ -36,6 +36,16 @@ namespace klmth {
     }
 
     template<typename T>
+    auto width(T in) -> decltype(in.dimensions().width) {
+      return in.dimensions().width;
+    }
+
+    template<typename T>
+    auto height(T in) -> decltype(in.dimensions().height) {
+      return in.dimensions().height;
+    }
+
+    template<typename T>
     T area(Dimensions<T> d) noexcept {
       return d.width * d.height;
     }

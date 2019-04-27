@@ -28,6 +28,7 @@ add_executable(${PROJECT_NAME}
   src/commands/paldump.cpp
   src/commands/frmshow.cpp
   src/commands/frmheader.cpp
+  src/commands/frmdump.cpp
   
   src/klamath.cpp
   )

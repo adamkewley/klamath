@@ -43,6 +43,7 @@ namespace klmth {
     };
 
     using Dimensions = geometry::Dimensions<uint16_t>;
+    using Point = geometry::Point<uint16_t>;
     
     class FrameHeader {
     public:
@@ -232,5 +233,6 @@ namespace klmth {
 
     Header read_header(std::istream& in);
     Any read_any(std::istream& in);
+    OrientableAnimation read_orientable_anim(std::istream& in);
   }
 }

@@ -1,6 +1,6 @@
 #include "src/parsers/frm.hpp"
 
-#include <istream>
+#include <iostream>
 
 #include "src/utils/cursor.hpp"
 
@@ -35,6 +35,8 @@ namespace {
         read_be_i16_unsafe(c),
         read_be_i16_unsafe(c),
     };
+
+    std::cout << "frame " << pixel_shift.x << " " << pixel_shift.y << std::endl;
 
     return { dimensions, pixel_shift };
   }
@@ -246,14 +248,20 @@ frm::Header frm::read_header(std::istream& in) {
   out.fps = read_be_u16_unsafe(c);
   out.action_frame = read_be_u16_unsafe(c);
   out.frames_per_direction = read_be_u16_unsafe(c);
-    
+
+  std::cout << "file x shifts ";
   for (auto& pixel_shift : out.pixel_shifts) {
     pixel_shift.x = read_be_i16_unsafe(c);
+    std::cout << pixel_shift.x << " ";
   }
+  std::cout << std::endl;
 
+  std::cout << "file x shifts ";
   for (auto& pixel_shift : out.pixel_shifts) {
     pixel_shift.y = read_be_i16_unsafe(c);
+    std::cout << pixel_shift.y << " ";
   }
+  std::cout << std::endl;
 
   for (uint32_t& offset_in_frame_data : out.offsets_in_frame_data) {
     offset_in_frame_data = read_be_u32_unsafe(c);
@@ -282,4 +290,9 @@ frm::Any frm::read_any(std::istream& in) {
       return seek_and_read_orientable(in, header);
     }
   }
+}
+
+frm::OrientableAnimation frm::read_orientable_anim(std::istream& in) {
+  Header header = read_header(in);
+  return seek_and_read_orientable_anim(in, header);
 }

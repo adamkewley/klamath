@@ -20,39 +20,8 @@ namespace klmth {
     using Dimensions = geometry::Dimensions<uint32_t>;
     using Point = geometry::Point<unsigned>;
     using Rect = geometry::Rect<uint32_t, unsigned>;
+
     
-    class PixelBuf {
-    public:
-      PixelBuf(Dimensions dimensions) : _dimensions(dimensions) {
-        this->pixels.resize(geometry::area(dimensions));
-      }
-
-      const klmth::Rgb& operator[](size_t idx) const {
-        return this->pixels[idx];
-      }
-
-      klmth::Rgb& operator[](size_t idx) {
-        return this->pixels[idx];
-      }
-
-      Dimensions dimensions() const noexcept {
-        return this->_dimensions;
-      }
-
-      size_t size() const noexcept {
-        return this->pixels.size();
-      }
-
-      void resize(Dimensions new_dimensions) {
-        this->pixels.resize(geometry::area(new_dimensions));
-        this->_dimensions = new_dimensions;
-      }
-      
-    private:
-      std::vector<klmth::Rgb> pixels;
-      Dimensions _dimensions;
-    };
-
     class StaticTexture {
     public:
       StaticTexture(SDL_Texture* t) noexcept;
@@ -60,20 +29,46 @@ namespace klmth {
       StaticTexture(StaticTexture&& tmp) noexcept;
       ~StaticTexture() noexcept;
 
+      StaticTexture operator=(const StaticTexture& other) = delete;
+
     private:
       SDL_Texture* _t;
       friend class Window;
     };
+    
+
+    class Surface {
+    public:
+      Surface(Dimensions dimensions);
+      Surface(Dimensions dimensions, const std::vector<klmth::Rgb>& pixels);
+      Surface(const Surface& other) = delete;
+      ~Surface() noexcept;
+
+      Surface operator=(const Surface& other) = delete;
+
+      void blit(const Surface& src, Rect srcrect, Rect dstrect);
+      const SDL_Surface* get() const noexcept;
+
+    private:
+      SDL_Surface* s;
+    };
+    
 
     class Window {
     public:
       Window(Dimensions dimensions);
       Window(const Window& other) = delete;
-      Window operator=(const Window& other) = delete;
       Window(Window&& tmp);
       ~Window() noexcept;
 
-      StaticTexture mk_static_texture(const PixelBuf& pixel_buf);
+      Window operator=(const Window& other) = delete;
+
+      StaticTexture mk_static_texture(Dimensions dimensions,
+                                      const std::vector<klmth::Rgb>& pixels);
+
+      StaticTexture mk_static_texture(Dimensions dimensions,
+                                      const std::vector<klmth::Rgb>& pixels,
+                                      const Rect& target);
 
       void render_clear();
       void render_copy_fullscreen(const StaticTexture& texture);
@@ -84,6 +79,7 @@ namespace klmth {
       SDL_Window* w;
       SDL_Renderer* r;
     };
+    
 
     class Context {
     public:
@@ -94,7 +90,5 @@ namespace klmth {
       bool wait_for_event(SDL_Event* out);
       bool poll_event(SDL_Event* out);
     };
-
-    void sleep(std::chrono::milliseconds duration);
   }
 }
