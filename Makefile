@@ -2,7 +2,7 @@
 
 OUT_DIR=target/
 BUILD_TYPE?=Debug
-VERSION?=0.0.3
+VERSION?=0.0.4
 
 .PHONY: compile clean package all
 .DEFAULT_GOAL := compile
@@ -30,7 +30,7 @@ package-deb: compile
 
 package: package-deb
 
-deploy:
+deploy: package
 	cp klamath_${VERSION}_amd64.deb ~/Dropbox/Projects/prototypes/klamath/releases
 
 install:
