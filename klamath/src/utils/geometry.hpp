@@ -12,7 +12,7 @@ namespace klmth {
       Dimensions() noexcept : width(0), height(0) {
       }
 
-      Dimensions(T _width, T _height) noexcept : width(_width), height(_height) {
+      constexpr Dimensions(T _width, T _height) noexcept : width(_width), height(_height) {
       }
 
       template<typename TOther>
@@ -41,8 +41,18 @@ namespace klmth {
     }
 
     template<typename T>
+    auto width(T in) -> decltype(in.dimensions.width) {
+      return in.dimensions.width;
+    }
+
+    template<typename T>
     auto height(T in) -> decltype(in.dimensions().height) {
       return in.dimensions().height;
+    }
+
+    template<typename T>
+    auto height(T in) -> decltype(in.dimensions.height) {
+      return in.dimensions.height;
     }
 
     template<typename T>
@@ -54,6 +64,12 @@ namespace klmth {
     auto area(T in) -> decltype(area(in.dimensions())) {
       return area(in.dimensions());
     }
+
+    template<typename T>
+    auto area(T in) -> decltype(area(in.dimensions)) {
+      return area(in.dimensions);
+    }
+    
 
     template<
       typename T,

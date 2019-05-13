@@ -1,4 +1,4 @@
-#include "src/parsers/pal.hpp"
+#include "src/formats/pal_reader.hpp"
 
 #include <stdexcept>
 #include <istream>
@@ -7,7 +7,7 @@
 namespace {
   const size_t filesize = 0x00008300;  // up to "additional table #1"
 
-  void parse(const uint8_t* buf, size_t n, klmth::pal::File& out) {
+  void parse(const uint8_t* buf, size_t n, pal::File& out) {
     if (n < filesize) {
       throw std::runtime_error("ran out of data when reading pal file");
     }
@@ -25,7 +25,7 @@ namespace {
   }
 }
 
-klmth::pal::File klmth::pal::parse(std::istream& in) {
+pal::File pal::parse(std::istream& in) {
   std::array<uint8_t, filesize> buf;
   in.read(reinterpret_cast<char*>(buf.data()), buf.size());
 
@@ -33,7 +33,7 @@ klmth::pal::File klmth::pal::parse(std::istream& in) {
     throw std::runtime_error("insufficient data in palette (.pal) source: required size is " + std::to_string(filesize) + " bytes");
   }
 
-  klmth::pal::File palette;
+  pal::File palette;
   ::parse(buf.data(), buf.size(), palette);
   return palette;
 }

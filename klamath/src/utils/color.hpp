@@ -4,15 +4,13 @@
 
 namespace klmth {
   struct Rgb {
-    Rgb() noexcept : r(0), g(0), b(0) {
-    }
+    Rgb() noexcept;
     
-    Rgb(uint8_t _r, uint8_t _g, uint8_t _b) noexcept : r(_r), g(_g), b(_b) {
-    }
+    Rgb(uint8_t _r, uint8_t _g, uint8_t _b) noexcept;
     
-    uint8_t r;
-    uint8_t g;
-    uint8_t b;
+    uint8_t r = 0;
+    uint8_t g = 0;
+    uint8_t b = 0;
   };
 
   Rgb scale_brightness(Rgb rgb, uint8_t scalar);

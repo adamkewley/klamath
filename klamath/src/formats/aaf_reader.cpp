@@ -1,4 +1,4 @@
-#include "src/parsers/aaf.hpp"
+#include "src/formats/aaf_reader.hpp"
 
 #include <stdexcept>
 #include <istream>
@@ -26,10 +26,10 @@ namespace {
     glyph_width_len + glyph_height_len + glyph_opacities_offset;  // 0 * 0 dimensions
 
   static const unsigned min_aaf_len =
-    sizeof(magic_nums) + header_len + (klmth::aaf::num_glyphs * glyph_min_len);
+    sizeof(magic_nums) + header_len + (aaf::num_glyphs * glyph_min_len);
 
 
-  void read_header(klmth::Cursor& c, klmth::aaf::File& out) {
+  void read_header(klmth::Cursor& c, aaf::File& out) {
     if (c.remaining() < min_aaf_len) {
       throw std::runtime_error("too little data for an AAF file");
     }
@@ -46,14 +46,14 @@ namespace {
     out.line_spacing = read_be_u16_unsafe(c);
   }
 
-  klmth::aaf::File read(const uint8_t* buf, size_t n) {    
+  aaf::File read(const uint8_t* buf, size_t n) {    
     klmth::Cursor c{buf, n};
-    klmth::aaf::File out;
+    aaf::File out;
     
     read_header(c, out);
 
     // read glyph headers
-    for (klmth::aaf::Glyph& g : out.glyphs) {
+    for (aaf::Glyph& g : out.glyphs) {
       if (c.remaining() < glyph_min_len) {
         throw std::runtime_error("ran out of data when reading an aaf glyph header");
       }
@@ -64,7 +64,7 @@ namespace {
     }
 
     // read glyph opacities
-    for (klmth::aaf::Glyph& g : out.glyphs) {
+    for (aaf::Glyph& g : out.glyphs) {
       size_t num_opacities = g.dimensions.width * g.dimensions.height;
 
       if (c.remaining() < num_opacities) {
@@ -80,7 +80,7 @@ namespace {
   }
 }
 
-klmth::aaf::File klmth::aaf::read_file(std::istream& in) {
+aaf::File aaf::read_file(std::istream& in) {
   static const size_t max_aaf_size = 1 << 16;
 
   std::array<uint8_t, max_aaf_size> buf;
@@ -92,3 +92,4 @@ klmth::aaf::File klmth::aaf::read_file(std::istream& in) {
     return ::read(buf.data(), in.gcount());
   }
 }
+

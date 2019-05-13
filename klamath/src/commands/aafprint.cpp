@@ -3,9 +3,9 @@
 #include <iostream>
 #include <fstream>
 
-#include "vendor/CLI11.hpp"
+#include "third_party/CLI11.hpp"
 
-#include "src/parsers/aaf.hpp"
+#include "src/formats/aaf_reader.hpp"
 
 
 namespace {

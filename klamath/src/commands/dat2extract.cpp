@@ -6,9 +6,9 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 
-#include "vendor/CLI11.hpp"
+#include "third_party/CLI11.hpp"
 
-#include "src/parsers/dat2.hpp"
+#include "src/formats/dat2_reader.hpp"
 #include "src/utils/zlib.hpp"
 
 
@@ -83,10 +83,8 @@ namespace {
     in.seekg(s.tree_offset, std::ios::beg);
 
     EntryExtractor entry_extractor(in, cfg);
-    dat2::TreeEntry entry;
     for (size_t i = 0; i < s.num_files; ++i) {
-      dat2::read_tree_entry(in, entry);
-      entry_extractor.extract(entry);
+      entry_extractor.extract(dat2::read_tree_entry(in));
     }
   }
 }

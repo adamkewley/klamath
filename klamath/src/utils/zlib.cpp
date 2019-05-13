@@ -4,7 +4,7 @@
 #include <iostream>
 #include <array>
 
-#include <zlib.h>
+#include "third_party/miniz.h"
 
 
 namespace {
@@ -78,12 +78,9 @@ namespace {
   };
 }
 
-void klmth::zlib::decompress(const uint8_t* in,
-                             size_t in_size,
-                             uint8_t* out,
-                             size_t out_capacity) {
+void klmth::zlib::decompress(nonstd::span<const uint8_t> in, nonstd::span<uint8_t> out) {
   BufferDecompressor d;
-  d.decompress_in_one_step(in, in_size, out, out_capacity);
+  d.decompress_in_one_step(in.data(), in.size(), out.data(), out.size());
 }
 
 void klmth::zlib::decompress(std::istream& in,

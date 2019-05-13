@@ -3,9 +3,9 @@
 #include <iostream>
 #include <fstream>
 
-#include "vendor/CLI11.hpp"
+#include "third_party/CLI11.hpp"
 
-#include "src/parsers/frm.hpp"
+#include "src/formats/frm_reader.hpp"
 
 
 namespace {

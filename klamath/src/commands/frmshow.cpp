@@ -8,11 +8,15 @@
 
 #include <SDL2/SDL_events.h>
 
-#include "vendor/CLI11.hpp"
+#include "third_party/CLI11.hpp"
 
-#include "src/parsers/pal.hpp"
-#include "src/parsers/frm.hpp"
+#include "src/formats/pal_reader.hpp"
+#include "src/formats/frm_reader.hpp"
 #include "src/utils/sdl.hpp"
+
+using klmth::geometry::area;
+using klmth::geometry::width;
+using klmth::geometry::height;
 
 
 namespace {
@@ -23,30 +27,29 @@ namespace {
 
   class OrientationsLayout {
   public:
-    OrientationsLayout(const frm::Dimensions dimensions) noexcept : _cell_dimensions(dimensions) {
+    OrientationsLayout(const frm::File& f) noexcept {
+      for (frm::Orientation o : frm::orientations) {
+        frm::Dimensions d = f.animation(o).dimensions();
+        this->cell_dims = klmth::geometry::union_of(this->cell_dims, d);
+      }
     }
 
     sdl::Dimensions dimensions() const noexcept {
-      static const unsigned rows = 3;
-      static const unsigned cols = 2;
-
-      auto width = this->_cell_dimensions.width * cols;
-      auto height = this->_cell_dimensions.height * rows;
-      return { width, height };
+      return { cols * cell_dims.width, rows * cell_dims.height };
     }
 
     sdl::Point cell_pos(frm::Orientation orientation) const {
       switch (orientation) {
       case frm::Orientation::north_east:
-        return { _cell_dimensions.width, 0 };
+        return { cell_dims.width, 0 };
       case frm::Orientation::east:
-        return { _cell_dimensions.width, _cell_dimensions.height };
+        return { cell_dims.width, cell_dims.height };
       case frm::Orientation::south_east:
-        return { _cell_dimensions.width, _cell_dimensions.height * 2u };
+        return { cell_dims.width, cell_dims.height * 2u };
       case frm::Orientation::south_west:
-        return { 0, _cell_dimensions.height * 2u };
+        return { 0, cell_dims.height * 2u };
       case frm::Orientation::west:
-        return { 0, _cell_dimensions.height };
+        return { 0, cell_dims.height };
       case frm::Orientation::north_west:
         return { 0, 0 };
       default:
@@ -54,8 +57,11 @@ namespace {
       }
     }
 
+    frm::Dimensions cell_dims{0, 0};
+
   private:
-    frm::Dimensions _cell_dimensions;
+    static constexpr unsigned cols = 2;
+    static constexpr unsigned rows = 3;
   };
   
 
@@ -78,111 +84,39 @@ namespace {
                                     const pal::File& palette,
                                     frm::Dimensions dimensions,
                                     const frm::Frame& frame) {
-    std::vector<klmth::Rgb> pixels(geometry::area(frame));
+    std::vector<klmth::Rgb> pixels(area(frame));
 
-    const auto& color_indices = frame.color_indices();
+    const auto& color_indices = frame.data();
     for (auto i = 0U; i < pixels.size(); ++i) {
       uint8_t palette_idx = color_indices[i];
       pixels[i] = scale_brightness(palette.palette[palette_idx], 4);
     }
 
-    unsigned x = (dimensions.width / 2) - (geometry::width(frame) / 2) + frame.pixel_shift().x;
-    unsigned y = dimensions.height - geometry::height(frame) + frame.pixel_shift().y;
+    unsigned x = (dimensions.width / 2) - (width(frame) / 2) + frame.pixel_shift().x;
+    unsigned y = dimensions.height - height(frame) + frame.pixel_shift().y;
 
     sdl::Rect target{ {x, y}, frame.dimensions() };
 
     return w.mk_static_texture(frame.dimensions(), pixels, target);
   }
 
-  void show(const pal::File& palette, const frm::Frame& frame) {
+  void show(const pal::File& palette, const frm::File& f) {
     sdl::Context c;
-    sdl::Window w = c.create_window(frame.dimensions());
-
-    sdl::StaticTexture t = create_texture(w, palette, frame.dimensions(), frame);
-
-    w.render_clear();
-    w.render_copy_fullscreen(t);
-    w.render_present();
-
-    SDL_Event e;
-    while (c.wait_for_event(&e)) {
-      if (e.type == SDL_QUIT || (e.type == SDL_KEYDOWN && e.key.keysym.sym == SDLK_ESCAPE)) {
-        break;
-      }
-    }
-  }
-
-  void show(const pal::File& palette, const frm::Animation& animation) {
-    sdl::Context c;
-    sdl::Window w = c.create_window(animation.dimensions());
-
-    std::vector<sdl::StaticTexture> frame_textures;
-    frame_textures.reserve(animation.num_frames());
-    for (const frm::Frame& frame : animation.frames()) {
-      frame_textures.emplace_back(create_texture(w, palette, animation.dimensions(), frame));
-    }
-
-    const std::chrono::milliseconds sleep_dur(1000/animation.fps());
-    const size_t num_frames = animation.num_frames();
-
-    SDL_Event e;
-    int frame = 0;
-
-    while (true) {
-      while (c.poll_event(&e)) {
-        if (e.type == SDL_QUIT || (e.type == SDL_KEYDOWN && e.key.keysym.sym == SDLK_ESCAPE)) {
-          return;
-        }
-      }
-      w.render_clear();
-      w.render_copy_fullscreen(frame_textures[frame++ % num_frames]);
-      w.render_present();
-      std::this_thread::sleep_for(sleep_dur);
-    }
-  }
-
-  void show(const pal::File& palette, const frm::Orientable& orientable) {
-    OrientationsLayout layout{orientable.max_dimensions()};
-
-    sdl::Context c;
-    sdl::Window w = c.create_window(layout.dimensions());
-
-    w.render_clear();
-
-    for (frm::Orientation orientation : frm::orientations) {
-      const frm::Frame& img = orientable.frame_at(orientation);
-      sdl::StaticTexture t = create_texture(w, palette, img.dimensions(), img);
-      sdl::Rect destination{ layout.cell_pos(orientation), img.dimensions() };
-      w.render_copy(t, destination);
-    }
-
-    w.render_present();
-
-    SDL_Event e;
-    while (c.wait_for_event(&e)) {
-      if (e.type == SDL_QUIT || (e.type == SDL_KEYDOWN && e.key.keysym.sym == SDLK_ESCAPE)) {
-        break;
-      }
-    }
-  }
-
-  void show(const pal::File& palette, const frm::OrientableAnimation& am) {
-    sdl::Context c;
-    const OrientationsLayout layout{am.max_dimensions()};
+    const OrientationsLayout layout{f};
     sdl::Window w = c.create_window(layout.dimensions());
 
     std::array<std::vector<sdl::StaticTexture>, frm::num_orientations> frames_per_orient;
     for (frm::Orientation o : frm::orientations) {
-      const frm::Animation&  animation = am.animation_at(o);
-      std::vector<sdl::StaticTexture>& frames = frames_per_orient[o];
-      frames.reserve(am.num_frames_per_orientation());
-      for (const frm::Frame& frame : animation.frames()) {
-        frames.emplace_back(create_texture(w, palette, animation.dimensions(), frame));
+      const auto& anim = f.animation(o);
+      auto& sdl_frames = frames_per_orient[o];
+      for (const frm::Frame& frame : anim.frames()) {
+        sdl_frames.emplace_back(create_texture(w, palette, frame.dimensions(), frame));
       }
     }
 
-    const std::chrono::milliseconds sleep_dur(1000/am.fps());
-    const size_t num_frames = am.num_frames_per_orientation();
+    const uint16_t fps = f.animation(frm::north_east).fps();
+    const std::chrono::milliseconds sleep_dur(1000/fps);
+    const size_t num_frames = f.animation(frm::north_east).frames().size();
 
     SDL_Event e;
     int frame = 0;
@@ -195,7 +129,7 @@ namespace {
       }
       w.render_clear();
       for (frm::Orientation o : frm::orientations) {
-        const sdl::Rect destination{layout.cell_pos(o), am.animation_at(o).dimensions() };
+        const sdl::Rect destination{layout.cell_pos(o), layout.cell_dims };
         const sdl::StaticTexture& t = frames_per_orient[o][frame % num_frames];
         w.render_copy(t, destination);
       }
@@ -203,30 +137,13 @@ namespace {
 
       w.render_present();
       std::this_thread::sleep_for(sleep_dur);
-    }        
-  }
-
-  void show(const pal::File& palette, const frm::Any& any) {
-    switch (any.type()) {
-    case frm::AnyType::frame:
-      show(palette, any.frame_unpack());
-      break;
-    case frm::AnyType::animation:
-      show(palette, any.animation_unpack());
-      break;
-    case frm::AnyType::orientable:
-      show(palette, any.orientable_unpack());
-      break;
-    case frm::AnyType::orientable_animation:
-      show(palette, any.orientable_animation_unpack());
-      break;
     }
   }
 
   void show(const pal::File& palette, std::istream& frm_strm, const std::string& data_name) {
     try {
-      frm::Any any = frm::read_any(frm_strm);
-      show(palette, any);
+      frm::File f = frm::read_file(frm_strm);
+      show(palette, f);
     } catch (const std::exception& ex) {
       throw std::runtime_error(data_name + ": error showing frm: " + ex.what());
     }

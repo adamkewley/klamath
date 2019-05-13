@@ -4,9 +4,13 @@
 #include <cstddef>
 #include <iosfwd>
 
+#include "third_party/nonstd/span.hpp"
+
 namespace klmth {
   namespace zlib {
-    void decompress(const uint8_t* in, size_t in_size, uint8_t* out, size_t out_capacity);
+    void decompress(nonstd::span<const uint8_t> in,
+                    nonstd::span<uint8_t> out);
+    
     void decompress(std::istream& in, size_t n, std::ostream& out);
   }
 }

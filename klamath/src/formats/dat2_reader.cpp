@@ -1,4 +1,4 @@
-#include "src/parsers/dat2.hpp"
+#include "src/formats/dat2_reader.hpp"
 
 #include <istream>
 #include <vector>
@@ -8,26 +8,14 @@
 #include "src/utils/cursor.hpp"
 
 using klmth::read_le_u32_unsafe;
-
-klmth::dat2::Sections::Sections(uint32_t _data_section_size,
-                                uint32_t _num_files,
-                                uint32_t _tree_offset,
-                                uint32_t _tree_size,
-                                uint32_t _file_size) :
-  data_section_size(_data_section_size),
-  num_files(_num_files),
-  tree_offset(_tree_offset),
-  tree_size(_tree_size),
-  file_size(_file_size) {
-  }
+using namespace dat2;
 
 
-
-klmth::dat2::Sections klmth::dat2::read_sections(std::istream& in) {
-  static const unsigned num_files_field_len = 4;
-  static const unsigned tree_size_field_len = 4;
-  static const unsigned file_size_field_len = 4;
-  static const unsigned footer_field_len = tree_size_field_len + file_size_field_len;
+Sections dat2::read_sections(std::istream& in) {
+  constexpr unsigned num_files_field_len = 4;
+  constexpr unsigned tree_size_field_len = 4;
+  constexpr unsigned file_size_field_len = 4;
+  constexpr unsigned footer_field_len = tree_size_field_len + file_size_field_len;
 
   in.seekg(-static_cast<int>(footer_field_len), in.end);
 
@@ -56,15 +44,16 @@ klmth::dat2::Sections klmth::dat2::read_sections(std::istream& in) {
   return { data_section_size, num_files, tree_offset, tree_size, file_size };
 }
 
-void klmth::dat2::read_tree_entry(std::istream& in, TreeEntry& out) {
-  static const unsigned is_compressed_len = 1;
-  static const unsigned decompressed_size_len = 4;
-  static const unsigned packed_size_len = 4;
-  static const unsigned offset_len = 4;
-  static const unsigned fixed_fields_len =
+TreeEntry dat2::read_tree_entry(std::istream& in) {
+  constexpr unsigned is_compressed_len = 1;
+  constexpr unsigned decompressed_size_len = 4;
+  constexpr unsigned packed_size_len = 4;
+  constexpr unsigned offset_len = 4;
+  constexpr unsigned fixed_fields_len =
     is_compressed_len + decompressed_size_len + packed_size_len + offset_len;
 
-
+  TreeEntry out;
+  
   uint32_t filename_len = read_le_u32_unsafe(in);
 
   std::vector<uint8_t> filename_buf;
@@ -92,4 +81,6 @@ void klmth::dat2::read_tree_entry(std::istream& in, TreeEntry& out) {
   out.decompressed_size = read_le_u32_unsafe(c);
   out.packed_size = read_le_u32_unsafe(c);
   out.offset = read_le_u32_unsafe(c);
+
+  return out;
 }

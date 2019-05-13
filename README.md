@@ -29,6 +29,8 @@ klmth palprint [PAL_FILE]
 
 # Building
 
+Depends on `libsdl2-dev`
+
 ```
 # install to ~/.local/bin
 make install

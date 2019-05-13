@@ -3,9 +3,9 @@
 #include <iostream>
 #include <fstream>
 
-#include "vendor/CLI11.hpp"
+#include "third_party/CLI11.hpp"
 
-#include "src/parsers/pal.hpp"
+#include "src/formats/pal_reader.hpp"
 
 
 namespace {
