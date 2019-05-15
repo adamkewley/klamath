@@ -1,3 +1,6 @@
+Indexed Text
+============
+
 This is a simple text file containing indexed strings of text. Each line
 uses the DOS style end of line markers CRLF
 (":raw-latex:`\r`:raw-latex:`\n`"). This file format is used in the

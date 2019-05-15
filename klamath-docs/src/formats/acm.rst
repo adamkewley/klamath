@@ -1,27 +1,55 @@
-===
+---
 ACM
-===
+---
 
 ACM is a compressed audio file format used by Interplay computer
 games. ACM files contain audio information stored in a proprietary
 format. Video games such as Fallout, Baulder's Gate and BioWare
 commonly use this file format.
 
-An ACM file consists of a header followed by a stream of information.
+An ACM file consists of a ``header`` followed by a sequence of
+``stream`` elements.
 
 
+~~~~~~~~~~~~~
+Binary Format
+~~~~~~~~~~~~~
 
-DWORD 32-bit signed integer WORD 16-bit signed integer
+An ACM file consists of header data followed by a sequence of stream
+elements.
 
-Also C-like declarations and expressions are used.
+~~~~~~
+Header
+~~~~~~
 
-ACM file consists of two main parts:
+.. code:: text
 
-1. short header
+    endianness = big
 
-2. ACM-Stream, containing packed information
+     0                   1                   2                   3
+     0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+    |       0x97      |      0x28     |      0x03     |     0x01    |
+    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+    |                          num_samples                          |
+    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+    |           num_channels          |          frequency          |
+    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+    |   pack_flgs_1   |  pack_flgs_2  |
+    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 
-==Header==
+Notes:
+
+- A sample is 16 bits long (in stream)
+- ``num_channels``: is 1 for mono, 2 for stereo. However, the field is never really used.
+- ``frequency``: bitrate: is ``22050`` for all known ACMs
+- ``pack_flgs_1`` and ``pack_flgs_2`` hold flags at particulr is a
+  bitset with the
+
+
+~~~~~~
+Header
+~~~~~~
 
 This table describes the meaning of header's fields:
 

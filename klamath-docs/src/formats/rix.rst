@@ -1,3 +1,6 @@
+RIX
+===
+
 In Fallout 2 there are six RIX files. All are in master.dat, in the
 art:raw-latex:`\splash `folder, and appear when loading the game.
 

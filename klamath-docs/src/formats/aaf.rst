@@ -37,8 +37,7 @@ would be much duller in colour. This would be expected for the rounder
 corners of the b.
 
 
-**Multi-byte sequences are stored in big-endian format, NOT LITTLE
-ENDIAN**
+**NOTE**: Multi-byte sequences are stored in big-endian format
 
 -------------
 Binary Format
@@ -112,6 +111,9 @@ Binary Format
        +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
        |   ...etc...   | ...until...   | opa @ w-2,h-1 | opa @ w-1,h-1 | : 0x(w*h)
        +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+
+
 
 ----------
 References
