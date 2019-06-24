@@ -16,7 +16,7 @@ namespace {
 
   void print_pal(pal::File f, std::ostream& out) {
     out << "palette (rgb):" << std::endl;
-    for (const klmth::Rgb& rgb : f.palette) {
+    for (const pal::Rgb& rgb : f.palette) {
       out << std::to_string(rgb.r) << " "
           << std::to_string(rgb.g) << " "
           << std::to_string(rgb.b) << std::endl;

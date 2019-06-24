@@ -8,7 +8,6 @@
 #include "src/commands/frmshow.hpp"
 #include "src/commands/frmheader.hpp"
 
-
 namespace {
   typedef int (*subcommand)(int, char **);
 

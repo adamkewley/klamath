@@ -5,7 +5,6 @@
 #include <vector>
 #include <chrono>
 
-#include "src/utils/color.hpp"
 #include "src/utils/geometry.hpp"
 
 struct SDL_Texture;
@@ -20,7 +19,6 @@ namespace klmth {
     using Dimensions = geometry::Dimensions<uint32_t>;
     using Point = geometry::Point<unsigned>;
     using Rect = geometry::Rect<uint32_t, unsigned>;
-
     
     class StaticTexture {
     public:
@@ -35,12 +33,18 @@ namespace klmth {
       SDL_Texture* _t;
       friend class Window;
     };
-    
+
+    struct Rgba {
+      uint8_t r;
+      uint8_t g;
+      uint8_t b;
+      uint8_t a = 255;
+    };
 
     class Surface {
     public:
       Surface(Dimensions dimensions);
-      Surface(Dimensions dimensions, const std::vector<klmth::Rgb>& pixels);
+      Surface(Dimensions dimensions, const std::vector<Rgba>& pixels);
       Surface(const Surface& other) = delete;
       ~Surface() noexcept;
 
@@ -64,10 +68,10 @@ namespace klmth {
       Window operator=(const Window& other) = delete;
 
       StaticTexture mk_static_texture(Dimensions dimensions,
-                                      const std::vector<klmth::Rgb>& pixels);
+                                      const std::vector<Rgba>& pixels);
 
       StaticTexture mk_static_texture(Dimensions dimensions,
-                                      const std::vector<klmth::Rgb>& pixels,
+                                      const std::vector<Rgba>& pixels,
                                       const Rect& target);
 
       void render_clear();

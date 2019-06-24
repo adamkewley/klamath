@@ -13,7 +13,6 @@ add_executable(${PROJECT_NAME}
   src/utils/cursor.cpp
   src/utils/zlib.cpp
   src/utils/sdl.cpp
-  src/utils/color.cpp
   
   src/formats/dat2_reader.cpp
   src/formats/aaf_reader.cpp

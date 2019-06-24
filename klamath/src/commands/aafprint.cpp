@@ -60,7 +60,6 @@ namespace {
   }
 }
 
-
 int klmth::aaf_print_main(int argc, char** argv) {
   CLI::App app{"print AAF glyphs in plaintext"};
   std::vector<std::string> aaf_pths;

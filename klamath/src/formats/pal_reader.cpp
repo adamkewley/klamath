@@ -13,7 +13,7 @@ namespace {
     }
 
     size_t offset = 0;
-    for (klmth::Rgb& rgb : out.palette) {
+    for (pal::Rgb& rgb : out.palette) {
       rgb.r = buf[offset++];
       rgb.g = buf[offset++];
       rgb.b = buf[offset++];

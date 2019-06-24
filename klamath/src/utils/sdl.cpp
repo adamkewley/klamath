@@ -6,12 +6,10 @@
 #include <SDL2/SDL.h>
 
 namespace {
-  using klmth::sdl::Dimensions;
-  using klmth::sdl::Rect;
-  using klmth::Rgb;
+  using namespace klmth::sdl;
 
-  Uint32 to_pixel(SDL_Surface* s, const Rgb& rgb) {
-    return SDL_MapRGB(s->format, rgb.r, rgb.g, rgb.b);
+  Uint32 to_pixel(SDL_Surface* s, Rgba rgb) {
+    return SDL_MapRGBA(s->format, rgb.r, rgb.g, rgb.b, rgb.a);
   }
   
   class SurfaceLock {
@@ -41,7 +39,7 @@ namespace {
       return this->s;
     }
 
-    void assign(const std::vector<klmth::Rgb>& pixels) {
+    void assign(const std::vector<Rgba>& pixels) {
       unsigned area = this->s->w * this->s->h;
       if (pixels.size() > area) {
         throw std::runtime_error("tried to assign outside pixel buffer boundaries");
@@ -56,7 +54,7 @@ namespace {
     SDL_Surface* s;
   };
 
-  klmth::sdl::StaticTexture mk_texture(SDL_Renderer* r, Dimensions dimensions) {
+  StaticTexture mk_texture(SDL_Renderer* r, Dimensions dimensions) {
     SDL_Texture* t = SDL_CreateTexture(r,
                                        SDL_PIXELFORMAT_RGBA8888,
                                        SDL_TEXTUREACCESS_STATIC,
@@ -79,8 +77,6 @@ namespace {
     return ret;
   }
 }
-
-
 
 klmth::sdl::StaticTexture::StaticTexture(SDL_Texture* t) noexcept : _t(t) {
 }
@@ -111,7 +107,9 @@ klmth::sdl::Surface::Surface(Dimensions dimensions) {
   }
 }
 
-klmth::sdl::Surface::Surface(Dimensions dimensions, const std::vector<klmth::Rgb>& pixels) {
+klmth::sdl::Surface::Surface(Dimensions dimensions,
+                             const std::vector<Rgba>& pixels) {
+  
   if (geometry::area(dimensions) != pixels.size()) {
     std::stringstream err;
     err << "number of pixels ("  << pixels.size() << ")"
@@ -205,7 +203,7 @@ klmth::sdl::Window::~Window() noexcept {
 }
 
 klmth::sdl::StaticTexture klmth::sdl::Window::mk_static_texture(Dimensions dimensions,
-                                                                const std::vector<klmth::Rgb>& pixels) {
+                                                                const std::vector<Rgba>& pixels) {
   Surface s{dimensions, pixels};
   StaticTexture t = mk_texture(r, dimensions);
   SDL_UpdateTexture(t._t, NULL, s.get()->pixels, s.get()->pitch);
@@ -213,7 +211,7 @@ klmth::sdl::StaticTexture klmth::sdl::Window::mk_static_texture(Dimensions dimen
 }
 
 klmth::sdl::StaticTexture klmth::sdl::Window::mk_static_texture(Dimensions dimensions,
-                                                                const std::vector<klmth::Rgb>& pixels,
+                                                                const std::vector<Rgba>& pixels,
                                                                 const Rect& target) {
   Surface src{dimensions, pixels};
   Surface targ{target.dimensions};
@@ -226,67 +224,6 @@ klmth::sdl::StaticTexture klmth::sdl::Window::mk_static_texture(Dimensions dimen
 
   return t;
 }
-
-/*
-{
-  
-
-  sdl::StaticTexture create_texture(sdl::Window& w,
-                                    const pal::File& palette,
-                                    const frm::Dimensions& parent_dimensions,
-                                    const frm::Frame& frame) {
-    std::vector<klmth::Rgb> pixels{geometry::area(parent_dimensions)};
-
-    int rows_above = 0;//frame.pixel_shift().y;
-    int pixels_above = rows_above * parent_dimensions.width;
-    
-    int rows_below = 0;//parent_dimensions.height - frame.dimensions().height - rows_above;
-    int pixels_below = rows_below * parent_dimensions.width;
-    
-    int cols_left = 0;//frame.pixel_shift().x ;
-    int cols_right = 0;//parent_dimensions.width - frame.dimensions().width - cols_left;
-
-    std::cout << "parent height = " << parent_dimensions.height
-              << "parent width = " << parent_dimensions.width
-              << "height = " << frame.dimensions().height
-              << "width = " << frame.dimensions().width
-              << "rows above = " << rows_above
-              << "rows below = " << rows_below
-              << "cols left = " << cols_left
-              << "cols right = " << cols_right
-              << std::endl;
-
-    
-    size_t buf_offset = 0;
-    for (auto i = 0; i < pixels_above; ++i) {
-      pixels[buf_offset++] = {0,0,0};
-    }
-
-    size_t src_offset = 0;
-    const auto& color_indices = frame.color_indices();
-    
-    for (auto row = 0; row < frame.dimensions().height; ++row) {
-      for (auto i = 0; i < cols_left; ++i) {
-        pixels[buf_offset++] = {0,0,0};
-      }
-      for (auto i = 0; i < frame.dimensions().width; ++i) {
-        uint8_t palette_idx = color_indices[src_offset++];
-        pixels[buf_offset++] = scale_brightness(palette.palette[palette_idx], 4);
-      }
-      for (auto i = 0; i < cols_right; ++i) {
-        pixels[buf_offset++] = {0,0,0};
-      }
-    }
-
-    for (auto i = 0; i < pixels_below; ++i) {
-      pixels[buf_offset++] = {0,0,0};
-    }
-
-    return w.mk_static_texture(parent_dimensions, pixels);
-  }
-}
-*/
-
 
 klmth::sdl::Context::Context() {
   SDL_Init(SDL_INIT_VIDEO);

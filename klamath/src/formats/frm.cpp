@@ -33,12 +33,23 @@ frm::Animation::Animation(uint16_t fps,
   _frames{std::move(frames)} {
   }
 
-frm::Dimensions frm::Animation::dimensions() const noexcept {
-  frm::Dimensions largest{0, 0};
+frm::Dimensions frm::Animation::dimensions() const noexcept {  
+  frm::Dimensions largest_dims{0, 0};
+  frm::Dimensions max_shift{0, 0};
+  
   for (const frm::Frame& f : this->_frames) {
-    largest = klmth::geometry::union_of(largest, f.dimensions());
+    frm::Dimensions shift =
+      klmth::geometry::dimensions(f.pixel_shift());
+
+    // shift is x2 because of the arithmetic for calculating a frame's
+    // position within an animation. The animation's dimensions
+    // (above) are halved but the shift isn't, so you need "extra"
+    // room to accomodate for the shift
+    largest_dims = union_of(largest_dims, f.dimensions());
+    max_shift = union_of(max_shift, shift * 2);
   }
-  return largest;
+
+  return largest_dims + max_shift;
 }
 
 uint16_t frm::Animation::fps() const noexcept {
@@ -63,5 +74,6 @@ frm::File::File(std::vector<Animation> animations,
 }
 
 const frm::Animation& frm::File::animation(Orientation o) const noexcept {
-  return this->_animations[o];
+  uint8_t idx = this->_animation_idxs[o];
+  return this->_animations[idx];
 }

@@ -1,5 +1,7 @@
 #pragma once
 
+#include <cmath>
+
 namespace klmth {
   namespace geometry {
     template<
@@ -25,6 +27,20 @@ namespace klmth {
         this->width += other.width;
         this->height += other.height;
         return *this;
+      }
+
+      Dimensions<T> operator+(Dimensions<T> other) const noexcept {
+        return {
+          static_cast<T>(this->width + other.width),
+            static_cast<T>(this->height + other.height),
+        };
+      }
+
+      Dimensions<T> operator*(unsigned scalar) const noexcept {
+        return {
+          static_cast<T>(this->width * scalar),
+            static_cast<T>(this->height * scalar),
+        };
       }
     };
 
@@ -68,8 +84,7 @@ namespace klmth {
     template<typename T>
     auto area(T in) -> decltype(area(in.dimensions)) {
       return area(in.dimensions);
-    }
-    
+    }    
 
     template<
       typename T,
@@ -91,6 +106,25 @@ namespace klmth {
 	return *this;
       }
     };
+
+    
+    template<typename T>
+    Point<typename std::make_unsigned<T>::type> abs(Point<T> in) {
+      return { 0U, 0U };
+    }
+
+    template<typename T>
+    Dimensions<typename std::make_unsigned<T>::type> dimensions(Point<T> in) {
+      // The dimensions of a point are the dimensions of the rectangle
+      // formed between the origin and the point.
+      
+      using ValType = typename std::make_unsigned<T>::type;
+
+      ValType x = static_cast<ValType>(std::abs(in.x));
+      ValType y = static_cast<ValType>(std::abs(in.y));
+      
+      return { x, y };
+    }
 
     template<
       typename TPosition,
