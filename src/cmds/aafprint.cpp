@@ -1,5 +1,3 @@
-#include "src/commands/aafprint.hpp"
-
 #include <iostream>
 #include <fstream>
 
@@ -12,30 +10,14 @@ namespace {
   using namespace klmth;
 
   char opacity_to_char(uint8_t opacity) {
-    switch (opacity) {
-    case 0:
-      return ' ';
-    case 1:
-      return '1';
-    case 2:
-      return '2';
-    case 3:
-      return '3';
-    case 4:
-      return '4';
-    case 5:
-      return '5';
-    case 6:
-      return '6';
-    case 7:
-      return '7';
-    case 8:
-      return '8';
-    case 9:
-      return '9';
-    default:
+    constexpr std::array<char, 10> opacities {
+      ' ', '1', '2', '3', '4', '5', '6', '7', '8', '9' };
+
+    if (opacity >= opacities.size()) {
       throw std::runtime_error(std::to_string(opacity) + ": unknown opacity value");
     }
+
+    return opacities[opacity];
   }
 
   void print_aaf_glyph(const aaf::Glyph& g, std::ostream& out) {
@@ -60,7 +42,7 @@ namespace {
   }
 }
 
-int klmth::aaf_print_main(int argc, char** argv) {
+int cmd_aafprint(int argc, char** argv) {
   CLI::App app{"print AAF glyphs in plaintext"};
   std::vector<std::string> aaf_pths;
   app.add_option("aaf_file", aaf_pths, "path to AAF file. '-' is interpreted as stdin. Supplying no paths will cause application to read AAF data from stdin");

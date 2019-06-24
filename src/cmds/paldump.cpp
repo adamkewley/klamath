@@ -1,5 +1,3 @@
-#include "src/commands/paldump.hpp"
-
 #include <iostream>
 #include <fstream>
 
@@ -9,8 +7,6 @@
 
 
 namespace {
-  using namespace klmth;
-
   const std::string stdin_senteniel = "-";
 
 
@@ -53,7 +49,7 @@ namespace {
 }
 
 
-int klmth::paldump_main(int argc, char** argv) {
+int cmd_paldump(int argc, char** argv) {
   CLI::App app{"dump pal color indices as plaintext"};
   std::vector<std::string> pal_pths;
   app.add_option("pal_file", pal_pths, "path to PAL file. '-' is interpreted as stdin. Supplying no paths will cause application to read AAF data from stdin");

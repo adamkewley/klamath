@@ -5,7 +5,7 @@
 #include <cstring>
 #include <iostream>
 
-#include "src/utils/cursor.hpp"
+#include "src/utils/io.hpp"
 
 using klmth::read_be_u32_unsafe;
 using klmth::read_be_u16_unsafe;

@@ -1,5 +1,3 @@
-#include "src/commands/frmheader.hpp"
-
 #include <iostream>
 #include <fstream>
 
@@ -71,7 +69,7 @@ namespace {
   }
 }
 
-int klmth::frmheader_main(int argc, char** argv) {
+int cmd_frmheader(int argc, char** argv) {
   CLI::App app{"print FRM file header as plaintext"};
   std::vector<std::string> frm_paths;
   app.add_option("frm_file", frm_paths, "path to FRM file. '-' is interpreted as stdin. Supplying no paths will cause application to read FRM data from stdin");

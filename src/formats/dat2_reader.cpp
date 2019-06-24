@@ -4,8 +4,7 @@
 #include <vector>
 #include <array>
 
-#include "src/utils/byteorder_ios.hpp"
-#include "src/utils/cursor.hpp"
+#include "src/utils/io.hpp"
 
 using klmth::read_le_u32_unsafe;
 using namespace dat2;

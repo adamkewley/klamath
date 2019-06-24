@@ -1,5 +1,3 @@
-#include "src/commands/frmshow.hpp"
-
 #include <iostream>
 #include <fstream>
 #include <memory>
@@ -230,7 +228,7 @@ namespace {
 }
 
 
-int klmth::frm_show_main(int argc, char** argv) {
+int cmd_frmshow(int argc, char** argv) {
   CLI::App app{"show frm files in a GUI window"};
   std::string pal_pth;
   app.add_option("pal_pth", pal_pth, "path to a PAL file")->required();

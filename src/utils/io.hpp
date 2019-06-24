@@ -2,9 +2,13 @@
 
 #include <cstdint>
 #include <cstddef>
+#include <iosfwd>
 
 namespace klmth {
-  
+  // Cursor points to a userspace buffer, which is known at compile
+  // time. Knowing that, and the use of unsafe operations (because
+  // upstream code "knows" the size of the buffer) enables high-perf
+  // binary parsing with a stream-like interface.
   class Cursor {
   public:
     Cursor(const uint8_t* _buf, size_t _size, size_t _offset);
@@ -19,6 +23,16 @@ namespace klmth {
     size_t size;
     size_t offset;
   };
+  
+  uint32_t read_le_u32_unsafe(const uint8_t* buf) noexcept;
+  
+  uint32_t read_be_u32_unsafe(const uint8_t* buf) noexcept;
+  uint16_t read_be_u16_unsafe(const uint8_t* buf) noexcept;
+  int16_t read_be_i16_unsafe(const uint8_t* buf) noexcept;
+
+  uint32_t read_le_u32_unsafe(std::istream& in);
+  uint32_t read_be_u32_unsafe(std::istream& in);
+  uint16_t read_be_u16_unsafe(std::istream& in);
 
   uint8_t read_u8_unsafe(Cursor& c) noexcept;
   uint32_t read_le_u32_unsafe(Cursor& c) noexcept;

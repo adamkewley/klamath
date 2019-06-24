@@ -78,9 +78,12 @@ namespace {
   };
 }
 
-void klmth::zlib::decompress(nonstd::span<const uint8_t> in, nonstd::span<uint8_t> out) {
+void klmth::zlib::decompress(const uint8_t* in_buf,
+                             size_t in_sz,
+                             uint8_t* out_buf,
+                             size_t out_sz) {
   BufferDecompressor d;
-  d.decompress_in_one_step(in.data(), in.size(), out.data(), out.size());
+  d.decompress_in_one_step(in_buf, in_sz, out_buf, out_sz);
 }
 
 void klmth::zlib::decompress(std::istream& in,

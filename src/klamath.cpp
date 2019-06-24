@@ -2,21 +2,21 @@
 #include <string>
 #include <map>
 
-#include "src/commands/dat2extract.hpp"
-#include "src/commands/aafprint.hpp"
-#include "src/commands/paldump.hpp"
-#include "src/commands/frmshow.hpp"
-#include "src/commands/frmheader.hpp"
+int cmd_aafprint(int argc, char** argv);
+int cmd_dat2extract(int argc, char** argv);
+int cmd_frmheader(int argc, char** argv);
+int cmd_frmshow(int argc, char** argv);
+int cmd_paldump(int argc, char** argv);
 
 namespace {
   typedef int (*subcommand)(int, char **);
 
   std::map<std::string, subcommand> subcommands {
-    { "dat2extract", &klmth::dat2_extract_main },
-    { "aafprint", &klmth::aaf_print_main },
-    { "palprint", &klmth::paldump_main },
-    { "frmshow", &klmth::frm_show_main },
-    { "frmheader", &klmth::frmheader_main },
+    { "dat2extract", &cmd_dat2extract },
+    { "aafprint", &cmd_aafprint },
+    { "palprint", &cmd_paldump },
+    { "frmshow", &cmd_frmshow },
+    { "frmheader", &cmd_frmheader },
   };
 }
 
