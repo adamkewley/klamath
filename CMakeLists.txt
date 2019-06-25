@@ -29,12 +29,14 @@ add_executable(${PROJECT_NAME}
   src/formats/frm.cpp
   src/formats/frm_reader.cpp
   src/formats/pal_reader.cpp
+  src/formats/map_reader.cpp
   
   src/cmds/dat2extract.cpp
   src/cmds/aafprint.cpp
   src/cmds/paldump.cpp
   src/cmds/frmshow.cpp
   src/cmds/frmheader.cpp
+  src/cmds/mapheader.cpp
   
   src/klamath.cpp
   )

@@ -51,6 +51,10 @@ uint32_t klmth::read_be_u32_unsafe(std::istream& in) {
   return read_be_u32_unsafe(buf);
 }
 
+int32_t klmth::read_be_i32_unsafe(std::istream& in) {
+  return read_be_u32_unsafe(in);
+}
+
 uint16_t klmth::read_be_u16_unsafe(std::istream& in) {
   uint8_t buf[2];
   read(in, buf, sizeof(buf));

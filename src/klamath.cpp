@@ -7,6 +7,7 @@ int cmd_dat2extract(int argc, char** argv);
 int cmd_frmheader(int argc, char** argv);
 int cmd_frmshow(int argc, char** argv);
 int cmd_paldump(int argc, char** argv);
+int cmd_mapheader(int argc, char** argv);
 
 namespace {
   typedef int (*subcommand)(int, char **);
@@ -17,6 +18,7 @@ namespace {
     { "palprint", &cmd_paldump },
     { "frmshow", &cmd_frmshow },
     { "frmheader", &cmd_frmheader },
+    { "mapheader", &cmd_mapheader },
   };
 }
 
