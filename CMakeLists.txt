@@ -30,6 +30,7 @@ add_executable(${PROJECT_NAME}
   src/formats/frm_reader.cpp
   src/formats/pal_reader.cpp
   src/formats/map_reader.cpp
+  src/formats/lst_reader.cpp
   
   src/cmds/dat2extract.cpp
   src/cmds/aafprint.cpp
@@ -40,6 +41,7 @@ add_executable(${PROJECT_NAME}
   src/cmds/mapglobals.cpp
   src/cmds/maplocals.cpp
   src/cmds/maptiles.cpp
+  src/cmds/lststrip.cpp
   
   src/klamath.cpp
   )
