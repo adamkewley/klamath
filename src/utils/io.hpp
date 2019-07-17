@@ -3,6 +3,7 @@
 #include <cstdint>
 #include <cstddef>
 #include <iosfwd>
+#include <vector>
 
 namespace klmth {
   // Cursor points to a userspace buffer, which is known at compile
@@ -34,6 +35,7 @@ namespace klmth {
   uint32_t read_be_u32_unsafe(std::istream& in);
   int32_t read_be_i32_unsafe(std::istream& in);
   uint16_t read_be_u16_unsafe(std::istream& in);
+  std::vector<int32_t> read_n_be_i32(std::istream& in, size_t n);
 
   uint8_t read_u8_unsafe(Cursor& c) noexcept;
   uint32_t read_le_u32_unsafe(Cursor& c) noexcept;

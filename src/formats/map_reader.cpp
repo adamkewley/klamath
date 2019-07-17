@@ -11,6 +11,7 @@ using klmth::map::File;
 using klmth::map::Version;
 using klmth::map::PlayerDefaults;
 using klmth::map::Elevation;
+using klmth::map::Tiles;
 
 namespace {
   Version read_version(std::istream& in) {
@@ -85,6 +86,16 @@ namespace {
     ret.orientation = read_orientation(in);
     return ret;
   }
+
+  std::unique_ptr<Tiles> read_tiles(std::istream& in) {
+    Tiles t;
+    for (auto i = 0U; i < map::tiles_per_elevation; ++i) {
+      uint16_t roof = read_be_u16_unsafe(in);
+      uint16_t floor = read_be_u16_unsafe(in);
+      t[i] = { roof, floor };
+    }
+    return std::make_unique<Tiles>(std::move(t));
+  }
 }
 
 Header map::parse_header(std::istream& in) {
@@ -101,7 +112,7 @@ Header map::parse_header(std::istream& in) {
   ret.has_low_elevation = (flg & 0x2) == 0;
   ret.has_med_elevation = (flg & 0x4) == 0;
   ret.has_high_elevation = (flg & 0x8) == 0;
-  
+
   read_be_i32_unsafe(in);  // map darkness (unused)
 
   ret.num_global_vars = read_be_i32_unsafe(in);
@@ -113,38 +124,23 @@ Header map::parse_header(std::istream& in) {
 
   if (in.gcount() != 4*44) {
     throw std::runtime_error{"ran out of data when skipping to the end of a MAP header"};
-  }    
-    
+  }
+
   return ret;
 }
 
 File map::parse_file(std::istream& in) {
-  Header h = parse_header(in);
+  const Header h = parse_header(in);
 
-  unsigned num_globals = static_cast<unsigned>(h.num_global_vars);
-  std::vector<int32_t> globals;
-  for (auto i = 0U; i < num_globals; ++i) {
-    int32_t global_var = read_be_i32_unsafe(in);
-    globals.push_back(global_var);
-  }
+  std::vector<int32_t> globals = read_n_be_i32(in, h.num_global_vars);
+  std::vector<int32_t> locals = read_n_be_i32(in, h.num_local_vars);
 
-  unsigned num_locals = static_cast<unsigned>(h.num_local_vars);
-  std::vector<int32_t> locals;
-  for (auto i = 0U; i < num_locals; ++i) {
-    int32_t local_var = read_be_i32_unsafe(in);
-    locals.push_back(local_var);
-  }
+  std::unique_ptr<Tiles> low_level =
+    h.has_low_elevation ? read_tiles(in) : nullptr;
+  std::unique_ptr<Tiles> med_level =
+    h.has_med_elevation ? read_tiles(in) : nullptr;
+  std::unique_ptr<Tiles> high_level =
+    h.has_high_elevation ? read_tiles(in) : nullptr;
 
-  std::unique_ptr<Tiles> low_evel;
-  if (h.has_low_elevation) {
-    Tiles t;
-    for (auto i = 0U; i < map::tiles_per_elevation; ++i) {
-      uint16_t roof = read_be_u16_unsafe(in);
-      uint16_t floor = read_be_u16_unsafe(in);
-      t[i] = { roof, floor };
-    }
-    low_evel = std::make_unique<Tiles>(std::move(t));
-  }
-
-  return { std::move(h), std::move(globals), std::move(locals), std::move(low_evel) };
+  return { std::move(h), std::move(globals), std::move(locals), std::move(low_level), std::move(med_level), std::move(high_level) };
 }

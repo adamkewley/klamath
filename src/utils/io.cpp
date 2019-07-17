@@ -61,6 +61,15 @@ uint16_t klmth::read_be_u16_unsafe(std::istream& in) {
   return read_be_u16_unsafe(buf);
 }
 
+std::vector<int32_t> klmth::read_n_be_i32(std::istream& in, size_t n) {
+  std::vector<int32_t> ret(n);
+  for (auto i = 0U; i < n; ++i) {
+    int32_t global_var = read_be_i32_unsafe(in);
+    ret.push_back(global_var);
+  }
+  return ret;
+}
+
 klmth::Cursor::Cursor(const uint8_t* _buf, size_t _size, size_t _offset) :
   buf(_buf), size(_size), offset(_offset) {
 }
