@@ -60,8 +60,8 @@ namespace {
     print_kv(out, "script_id", header.script_id);
     print_kv(out, "is_savegame_map", header.is_savegame_map);
     print_kv(out, "has_low_elevation", header.has_low_elevation);
-    print_kv(out, "has_med_elevation", header.has_low_elevation);
-    print_kv(out, "has_high_elevation", header.has_low_elevation);
+    print_kv(out, "has_med_elevation", header.has_med_elevation);
+    print_kv(out, "has_high_elevation", header.has_high_elevation);
     print_kv(out, "num_global_vars", header.num_global_vars);
     print_kv(out, "map_id", header.map_id);
     print_kv(out, "timestamp", header.timestamp);
