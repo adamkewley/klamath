@@ -7,6 +7,7 @@
 
 using namespace klmth;
 using klmth::map::Header;
+using klmth::map::File;
 using klmth::map::Version;
 using klmth::map::PlayerDefaults;
 using klmth::map::Elevation;
@@ -97,10 +98,9 @@ Header map::parse_header(std::istream& in) {
   int32_t flg = read_be_i32_unsafe(in);
 
   ret.is_savegame_map = (flg & 0x1) != 0;
-  ret.map_elevation =
-    (flg & 0x2) == 0 ? map::low :
-    (flg & 0x4) == 0 ? map::med :
-    map::high;
+  ret.has_low_elevation = (flg & 0x2) == 0;
+  ret.has_med_elevation = (flg & 0x4) == 0;
+  ret.has_high_elevation = (flg & 0x8) == 0;
   
   read_be_i32_unsafe(in);  // map darkness (unused)
 
@@ -113,8 +113,20 @@ Header map::parse_header(std::istream& in) {
 
   if (in.gcount() != 4*44) {
     throw std::runtime_error{"ran out of data when skipping to the end of a MAP header"};
-  }
-  
+  }    
     
   return ret;
+}
+
+File map::parse_file(std::istream& in) {
+  Header h = parse_header(in);
+
+  unsigned num_globals = static_cast<unsigned>(h.num_global_vars);
+  std::vector<int32_t> globals;
+  for (auto i = 0U; i < num_globals; ++i) {
+    int32_t global_var = read_be_i32_unsafe(in);
+    globals.push_back(global_var);
+  }
+
+  return { std::move(h), std::move(globals) };
 }

@@ -7,5 +7,6 @@
 namespace klmth {
   namespace map {
     Header parse_header(std::istream& in);
+    File parse_file(std::istream& in);
   }
 }

@@ -31,10 +31,17 @@ namespace klmth {
       int32_t num_local_vars;
       int32_t script_id;
       bool is_savegame_map;
-      Elevation map_elevation;
+      bool has_low_elevation;
+      bool has_med_elevation;
+      bool has_high_elevation;
       int32_t num_global_vars;
       int32_t map_id;
       uint32_t timestamp;
+    };
+
+    struct File {
+      Header header;
+      std::vector<int32_t> global_vars;
     };
   }
 }
