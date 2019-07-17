@@ -90,34 +90,30 @@ void klmth::zlib::decompress(std::istream& in,
                              size_t n,
                              std::ostream& out) {
   
-  std::array<uint8_t, 65536> inbuf;
-  std::array<uint8_t, 65536> outbuf;
+  std::array<uint8_t, 1<<16> inbuf;
+  std::array<uint8_t, 1<<16> outbuf;
   InflateStream s(inbuf.data(), 0, outbuf.data(), outbuf.size());
-
-  while (n != 0) {
+  
+  for (;;) {   
     if (s.avail_in == 0) {
       in.read(reinterpret_cast<char*>(inbuf.data()), std::min(n, inbuf.size()));
       s.next_in = inbuf.data();
-
+      
       if (in.gcount() > 0) {
         s.avail_in = in.gcount();
         n -= in.gcount();
-      } else {
-        return;
       }
     }
 
     int inflate_ret = s.inflate(Z_NO_FLUSH);
     size_t n_out = outbuf.size() - s.avail_out;
 
-    out.write(reinterpret_cast<char*>(outbuf.data()), n_out);  // TODO: check errs
+    // TODO: check writing errs
+    out.write(reinterpret_cast<char*>(outbuf.data()), n_out);
     s.next_out = outbuf.data();
     s.avail_out = outbuf.size();
 
-    switch (inflate_ret) {
-    case Z_OK:
-      break;
-    case Z_STREAM_END:
+    if (inflate_ret == Z_STREAM_END) {
       return;
     }
   }
