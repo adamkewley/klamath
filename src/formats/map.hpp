@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstdint>
+#include <memory>
 
 #include "src/formats/frm.hpp"
 
@@ -39,9 +40,24 @@ namespace klmth {
       uint32_t timestamp;
     };
 
+    struct Tile {
+      uint16_t roof_id;
+      uint16_t floor_id;
+    };
+
+    constexpr unsigned rows = 100;
+    constexpr unsigned cols = 100;
+    constexpr unsigned tiles_per_elevation = rows * cols;
+
+    using Tiles = std::array<Tile, tiles_per_elevation>;
+
     struct File {
       Header header;
       std::vector<int32_t> global_vars;
-    };
+      std::vector<int32_t> local_vars;
+      std::unique_ptr<Tiles> low_elevation_tiles;
+      std::unique_ptr<Tiles> mid_elevation_tiles;
+      std::unique_ptr<Tiles> high_elevation_tiles;
+    };    
   }
 }

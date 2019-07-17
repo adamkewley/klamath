@@ -128,5 +128,23 @@ File map::parse_file(std::istream& in) {
     globals.push_back(global_var);
   }
 
-  return { std::move(h), std::move(globals) };
+  unsigned num_locals = static_cast<unsigned>(h.num_local_vars);
+  std::vector<int32_t> locals;
+  for (auto i = 0U; i < num_locals; ++i) {
+    int32_t local_var = read_be_i32_unsafe(in);
+    locals.push_back(local_var);
+  }
+
+  std::unique_ptr<Tiles> low_evel;
+  if (h.has_low_elevation) {
+    Tiles t;
+    for (auto i = 0U; i < map::tiles_per_elevation; ++i) {
+      uint16_t roof = read_be_u16_unsafe(in);
+      uint16_t floor = read_be_u16_unsafe(in);
+      t[i] = { roof, floor };
+    }
+    low_evel = std::make_unique<Tiles>(std::move(t));
+  }
+
+  return { std::move(h), std::move(globals), std::move(locals), std::move(low_evel) };
 }

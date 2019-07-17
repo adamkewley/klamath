@@ -38,6 +38,8 @@ add_executable(${PROJECT_NAME}
   src/cmds/frmheader.cpp
   src/cmds/mapheader.cpp
   src/cmds/mapglobals.cpp
+  src/cmds/maplocals.cpp
+  src/cmds/maptiles.cpp
   
   src/klamath.cpp
   )
