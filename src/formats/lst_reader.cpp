@@ -4,35 +4,82 @@
 #include <istream>
 
 std::vector<std::string> klmth::lst::parse_file(std::istream& in) {
-  // Doing it this way, rather than char-by-char, reduces virtual call
-  // overhead and prevents overallocating the comment string only to
-  // cull it later.
-  std::array<char, 1<<16> buf;
-  std::string cur;
-  bool skip = false;
-  std::vector<std::string> ret;
   
+  enum class State {
+    start,
+    content,
+    ws,
+    comment,
+  };
+  
+  std::array<char, 1<<16> buf;
+  std::string ws;
+  std::string cur;
+  State st{State::start};
+  std::vector<std::string> ret;
+
+  // Parsing as a streaming state machine. Reads are done into a 2^16
+  // byte buffer to reduce IO overhead.
+  //
+  // LST files can contain line comments (start with ';') and
+  // leading/trailing whitespace around each entry. This parser tries
+  // to skip all of that so that the output contains clean, trimmed
+  // entries.
   while (!in.eof()) {
     in.read(buf.data(), buf.size());
     auto avail = in.gcount();
     
     for (int i = 0; i < avail; ++i) {
       char c = buf[i];
+
       switch (c) {
       case '\r':
-        continue;
+        break;
       case '\n':
         ret.emplace_back(std::move(cur));
         cur.clear();
-        skip = false;
-        continue;
+        ws.clear();
+        st = State::start;
+        break;
       case ';':
-        skip = true;
-        continue;
-      }
-
-      if (!skip) {
-        cur += c;
+        ws.clear();
+        st = State::comment;
+        break;
+      case ' ':
+      case '\t':
+        switch (st) {
+        case State::start:
+          break;
+        case State::content:
+          ws += c;
+          st = State::ws;
+          break;
+        case State::ws:
+          ws += c;
+          break;
+        case State::comment:
+          break;
+        }
+        break;
+      default:  // normal char
+        switch (st) {  
+        case State::start:
+          cur += c;
+          st = State::content;
+          break;
+        case State::content:
+          cur += c;
+          break;
+        case State::ws:
+          cur += ws;
+          cur += c;
+          ws.clear();
+          st = State::content;
+          break;
+        case State::comment:
+          break;
+        }
+        break;
       }
     }
   }

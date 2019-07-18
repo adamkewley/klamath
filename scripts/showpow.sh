@@ -1,3 +1,6 @@
 #!/bin/bash
 
-target/klamath frmshow assets/out/color.pal assets/critters/art/critters/HAPOWRFF.FRM
+CRITTERS=critters
+MASTER=master
+
+target/klamath frmshow ${MASTER}/color.pal ${CRITTERS}/art/critters/HAPOWRFF.FRM

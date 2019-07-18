@@ -237,6 +237,12 @@ sdl::StaticTexture::~StaticTexture() noexcept {
   }
 }
 
+sdl::StaticTexture& sdl::StaticTexture::operator=(sdl::StaticTexture&& tmp) noexcept {
+      this->_t = tmp._t;
+      tmp._t = nullptr;
+      return *this;
+}
+
 sdl::Window::Window(Dimensions dimensions) {
   if (SDL_CreateWindowAndRenderer(dimensions.width, dimensions.height, SDL_WINDOW_SHOWN, &w, &r) == -1) {
     throw std::runtime_error(std::string("error creating window: ") + SDL_GetError());
@@ -280,12 +286,20 @@ sdl::Animation sdl::Window::animation(const pal::File& palette, const frm::Anima
   
   return { std::move(frames), frm.dimensions() };
 }
+
+sdl::StaticTexture sdl::Window::texture(const pal::File& palette, const frm::Frame& img) {
+    return create_texture(this->r, palette, img);
+}
       
 void sdl::Window::render_frame(const Animation& anim, size_t framenum, const Rect& destination) {
   const Frame& f = anim.frames[framenum];
   Point pos = destination.location + framepos(anim, f);
   
   render_copy(this->r, f.texture, { pos, f.dimensions });
+}
+
+void sdl::Window::render_texture(StaticTexture& texture, const Rect& destination) {
+    render_copy(this->r, texture, destination);
 }
 
 sdl::Context::Context() {

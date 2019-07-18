@@ -40,9 +40,12 @@ namespace klmth {
       uint32_t timestamp;
     };
 
+    using TileId = uint16_t;
+    constexpr TileId null_tileid = 1;
+
     struct Tile {
-      uint16_t roof_id;
-      uint16_t floor_id;
+      TileId roof_id;
+      TileId floor_id;
     };
 
     constexpr unsigned rows = 100;

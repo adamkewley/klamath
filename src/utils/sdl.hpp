@@ -22,7 +22,7 @@ namespace klmth {
     using Point = geometry::Point<unsigned>;
     using Rect = geometry::Rect<uint32_t, unsigned>;
     using Shift = geometry::Point<int16_t>;
-    
+
     class StaticTexture {
     public:
       StaticTexture(SDL_Texture* t) noexcept;
@@ -31,6 +31,7 @@ namespace klmth {
       ~StaticTexture() noexcept;
 
       StaticTexture operator=(const StaticTexture& other) = delete;
+      StaticTexture& operator=(StaticTexture&& tmp) noexcept;
 
       SDL_Texture* _t;
     };
@@ -44,7 +45,7 @@ namespace klmth {
     struct Animation {
       std::vector<Frame> frames;
       Dimensions dimensions;
-    };    
+    };
 
     class Window {
     public:
@@ -56,12 +57,14 @@ namespace klmth {
       Window operator=(const Window& other) = delete;
 
       Animation animation(const pal::File& palette, const frm::Animation& frm);
-      
+      StaticTexture texture(const pal::File& palette, const frm::Frame& img);
+
       void render_frame(const Animation& anim, size_t frame, const Rect& destination);
+      void render_texture(StaticTexture& texture, const Rect& destination);
       void render_clear();
       void render_present();
 
-    private:      
+    private:
       SDL_Window* w;
       SDL_Renderer* r;
     };
