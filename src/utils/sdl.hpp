@@ -6,6 +6,8 @@
 #include <chrono>
 
 #include "src/utils/geometry.hpp"
+#include "src/formats/pal.hpp"
+#include "src/formats/frm.hpp"
 
 struct SDL_Texture;
 struct SDL_Window;
@@ -19,6 +21,7 @@ namespace klmth {
     using Dimensions = geometry::Dimensions<uint32_t>;
     using Point = geometry::Point<unsigned>;
     using Rect = geometry::Rect<uint32_t, unsigned>;
+    using Shift = geometry::Point<int16_t>;
     
     class StaticTexture {
     public:
@@ -29,34 +32,19 @@ namespace klmth {
 
       StaticTexture operator=(const StaticTexture& other) = delete;
 
-    private:
       SDL_Texture* _t;
-      friend class Window;
     };
 
-    struct Rgba {
-      uint8_t r;
-      uint8_t g;
-      uint8_t b;
-      uint8_t a = 255;
+    struct Frame {
+      StaticTexture texture;
+      Dimensions dimensions;
+      Shift shift;
     };
 
-    class Surface {
-    public:
-      Surface(Dimensions dimensions);
-      Surface(Dimensions dimensions, const std::vector<Rgba>& pixels);
-      Surface(const Surface& other) = delete;
-      ~Surface() noexcept;
-
-      Surface operator=(const Surface& other) = delete;
-
-      void blit(const Surface& src, Rect srcrect, Rect dstrect);
-      const SDL_Surface* get() const noexcept;
-
-    private:
-      SDL_Surface* s;
-    };
-    
+    struct Animation {
+      std::vector<Frame> frames;
+      Dimensions dimensions;
+    };    
 
     class Window {
     public:
@@ -67,23 +55,16 @@ namespace klmth {
 
       Window operator=(const Window& other) = delete;
 
-      StaticTexture mk_static_texture(Dimensions dimensions,
-                                      const std::vector<Rgba>& pixels);
-
-      StaticTexture mk_static_texture(Dimensions dimensions,
-                                      const std::vector<Rgba>& pixels,
-                                      const Rect& target);
-
+      Animation animation(const pal::File& palette, const frm::Animation& frm);
+      
+      void render_frame(const Animation& anim, size_t frame, const Rect& destination);
       void render_clear();
-      void render_copy_fullscreen(const StaticTexture& texture);
-      void render_copy(const StaticTexture& texture, const Rect& destination);
       void render_present();
 
     private:      
       SDL_Window* w;
       SDL_Renderer* r;
     };
-    
 
     class Context {
     public:

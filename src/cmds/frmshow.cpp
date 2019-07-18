@@ -5,17 +5,11 @@
 #include <thread>
 
 #include <SDL2/SDL_events.h>
-
 #include "third_party/CLI11.hpp"
 
 #include "src/formats/pal_reader.hpp"
 #include "src/formats/frm_reader.hpp"
 #include "src/utils/sdl.hpp"
-
-using klmth::geometry::area;
-using klmth::geometry::width;
-using klmth::geometry::height;
-
 
 namespace {
   using namespace klmth;
@@ -61,7 +55,6 @@ namespace {
     static constexpr unsigned cols = 2;
     static constexpr unsigned rows = 3;
   };
-  
 
   pal::File load_palette(const std::string& source) {
     std::ifstream pal_in{source, std::ios::in | std::ios::binary};
@@ -77,95 +70,20 @@ namespace {
     }
   }
 
-  sdl::Rgba to_screen_rgba(pal::Rgb rgb) {
-    constexpr uint8_t white = 255;
-    constexpr auto frm_brightness_scalar = 4;
-    constexpr uint8_t opaque_alpha = 255;
-    constexpr sdl::Rgba transparent_color{ 0, 0, 0, 0 };
-    
-    if (rgb.r == white &&
-        rgb.g == white &&
-        rgb.b == white) {
-      return transparent_color;
-    } else {
-      return {
-        static_cast<uint8_t>(frm_brightness_scalar * rgb.r),
-        static_cast<uint8_t>(frm_brightness_scalar * rgb.g),
-        static_cast<uint8_t>(frm_brightness_scalar * rgb.b),
-        opaque_alpha,
-      };
-    }
-  }
-
-  sdl::StaticTexture create_texture(sdl::Window& w,
-                                    const pal::File& palette,
-                                    const frm::Frame& frame) {
-    std::vector<sdl::Rgba> pixels(area(frame));
-
-    const auto& color_indices = frame.data();
-    for (auto i = 0U; i < pixels.size(); ++i) {
-      uint8_t palette_idx = color_indices[i];
-      pixels[i] = to_screen_rgba(palette.palette[palette_idx]);
-    }
-
-    return w.mk_static_texture(frame.dimensions(), pixels);
-  }
-
-  struct SdlAnimFrame {
-    sdl::StaticTexture texture;
-    frm::Dimensions dimensions;
-    frm::PixelShift shift;
-  };
-
-  struct SdlAnim {
-    std::vector<SdlAnimFrame> frames;
-    frm::Dimensions dimensions;
-  };
-
-  SdlAnimFrame create_frame(sdl::Window& w,
-                            const pal::File& palette,
-                            const frm::Frame& frame) {
-    sdl::StaticTexture t = create_texture(w, palette, frame);
-
-    return { std::move(t), frame.dimensions(), frame.pixel_shift() };
-  }
-
-  SdlAnim create_animation(sdl::Window& w,
-                           const pal::File& palette,
-                           const frm::Animation& animation) {
-    std::vector<SdlAnimFrame> frames;
-    for (const frm::Frame& frame : animation.frames()) {
-      frames.push_back(create_frame(w, palette, frame));
-    }
-
-    return { std::move(frames), animation.dimensions() };
-  }
-
-  sdl::Point pos(const SdlAnim& animation, const SdlAnimFrame& frame) {
-    frm::Dimensions a = animation.dimensions;
-    frm::Dimensions f = frame.dimensions;
-    frm::PixelShift shift = frame.shift;
-
-    unsigned x = (a.width/2 - f.width/2) + shift.x;
-    unsigned y = (a.height/2 - f.height/2) + shift.y;
-
-    return { x, y };    
-  }
-
   void show(const pal::File& palette, const frm::File& f) {
     const OrientationsLayout layout{f};
     
     sdl::Context c;
     sdl::Window w = c.create_window(layout.dimensions());
 
-    std::array<SdlAnim, frm::num_orientations> anims {{
-      { create_animation(w, palette, f.animation(frm::north_east)) },
-        { create_animation(w, palette, f.animation(frm::east)) },
-          { create_animation(w, palette, f.animation(frm::south_east)) },
-            { create_animation(w, palette, f.animation(frm::south_west)) },
-              { create_animation(w, palette, f.animation(frm::west)) },
-                { create_animation(w, palette, f.animation(frm::north_west)) }
-      }};
+    std::array<sdl::Animation, frm::num_orientations> anims {{
+      { w.animation(palette, f.animation(frm::north_east)) },
+      { w.animation(palette, f.animation(frm::east)) },
+      { w.animation(palette, f.animation(frm::south_east)) },
+      { w.animation(palette, f.animation(frm::south_west)) },
+      { w.animation(palette, f.animation(frm::west)) },
+      { w.animation(palette, f.animation(frm::north_west)) }
+    }};
 
     const uint16_t fps = f.animation(frm::north_east).fps();
     const std::chrono::milliseconds sleep_dur(fps ? 1000/fps : 500);
@@ -181,12 +99,11 @@ namespace {
       }
       w.render_clear();
       for (frm::Orientation o : frm::orientations) {
-        const SdlAnim& anim = anims[o];
-        const SdlAnimFrame& frame = anim.frames[framenum % anim.frames.size()];
-        sdl::Point framepos = layout.cell_pos(o) + pos(anim, frame);
-        sdl::Rect target{ framepos, frame.dimensions };
+        const sdl::Animation& anim = anims[o];
+        unsigned frame = framenum % anim.frames.size();
+        const sdl::Rect pos = { layout.cell_pos(o), anim.dimensions };
         
-        w.render_copy(frame.texture, target);
+        w.render_frame(anim, frame, pos);
       }
       ++framenum;
 
