@@ -18,9 +18,9 @@ union SDL_Event;
 namespace klmth {
   namespace sdl {
 
-    using Dimensions = geometry::Dimensions<uint32_t>;
-    using Point = geometry::Point<unsigned>;
-    using Rect = geometry::Rect<uint32_t, unsigned>;
+    using Dimensions = geometry::Dimensions<unsigned>;
+    using Point = geometry::Point<int>;
+    using Rect = geometry::Rect<int, unsigned>;
     using Shift = geometry::Point<int16_t>;
 
     class StaticTexture {

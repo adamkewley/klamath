@@ -4,6 +4,11 @@
 
 namespace klmth {
   namespace geometry {
+
+    /*
+     * 2D dimensions. Cannot be signed (negative width can something
+     * have a negative width?)
+     */
     template<
       typename T,
       typename = typename std::enable_if<std::is_unsigned<T>::value, T>::type>
@@ -11,16 +16,15 @@ namespace klmth {
       T width;
       T height;
 
-      Dimensions() noexcept : width(0), height(0) {
+      Dimensions() noexcept = default;
+
+      constexpr Dimensions(T _width, T _height) noexcept : width{_width}, height{_height} {
       }
 
-      constexpr Dimensions(T _width, T _height) noexcept : width(_width), height(_height) {
-      }
-
-      template<typename TOther>
-      Dimensions(Dimensions<TOther> d) noexcept :
-	width(static_cast<T>(d.width)),
-	height(static_cast<T>(d.height)) {
+      template<typename U>
+      Dimensions(Dimensions<U> d) noexcept :
+	width{static_cast<T>(d.width)},
+	height{static_cast<T>(d.height)} {
       }
 
       Dimensions<T>& operator+=(Dimensions other) noexcept {
@@ -32,14 +36,14 @@ namespace klmth {
       Dimensions<T> operator+(Dimensions<T> other) const noexcept {
         return {
           static_cast<T>(this->width + other.width),
-            static_cast<T>(this->height + other.height),
+          static_cast<T>(this->height + other.height),
         };
       }
 
       Dimensions<T> operator*(unsigned scalar) const noexcept {
         return {
-          static_cast<T>(this->width * scalar),
-            static_cast<T>(this->height * scalar),
+          static_cast<T>(scalar * this->width),
+          static_cast<T>(scalar * this->height),
         };
       }
     };
@@ -99,6 +103,13 @@ namespace klmth {
 
 	return { x, y };
       }
+
+      Point<T> operator-(Point<T> other) const noexcept {
+        T x = this->x - other.x;
+        T y = this->y - other.y;
+
+        return { x, y };
+      }
       
       Point<T>& operator+=(Point<T> other) noexcept {
 	this->x += other.x;
@@ -106,12 +117,6 @@ namespace klmth {
 	return *this;
       }
     };
-
-    
-    template<typename T>
-    Point<typename std::make_unsigned<T>::type> abs(Point<T> in) {
-      return { 0U, 0U };
-    }
 
     template<typename T>
     Dimensions<typename std::make_unsigned<T>::type> dimensions(Point<T> in) {

@@ -46,6 +46,9 @@ namespace klmth {
     struct Tile {
       TileId roof_id;
       TileId floor_id;
+
+      static constexpr uint16_t width = 80;
+      static constexpr uint16_t height = 36;      
     };
 
     constexpr unsigned rows = 100;

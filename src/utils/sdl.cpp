@@ -29,7 +29,7 @@ namespace {
   }
   
   Uint32 to_pixel(SDL_Surface* s, Rgba rgb) {
-    return SDL_MapRGBA(s->format, rgb.r, rgb.g, rgb.b, rgb.a);
+      return SDL_MapRGBA(s->format, rgb.r, rgb.g, rgb.b, rgb.a);
   }
 
   class SurfaceLock {
@@ -151,6 +151,7 @@ namespace {
                                        SDL_TEXTUREACCESS_STATIC,
                                        dimensions.width,
                                        dimensions.height);
+    SDL_SetTextureBlendMode(t, SDL_BLENDMODE_BLEND);
 
     if (t == NULL) {
       throw std::runtime_error("cannot create texture");
@@ -214,10 +215,10 @@ namespace {
     frm::Dimensions f = frame.dimensions;
     frm::PixelShift shift = frame.shift;
 
-    unsigned x = (a.width/2 - f.width/2) + shift.x;
-    unsigned y = (a.height/2 - f.height/2) + shift.y;
+    int x = (a.width/2 - f.width/2) + shift.x;
+    int y = (a.height/2 - f.height/2) + shift.y;
 
-    return { x, y };    
+    return { x, y };
   }
 }
 

@@ -37,9 +37,9 @@ namespace {
       case frm::Orientation::east:
         return { cell_dims.width, cell_dims.height };
       case frm::Orientation::south_east:
-        return { cell_dims.width, cell_dims.height * 2u };
+        return { cell_dims.width, cell_dims.height * 2 };
       case frm::Orientation::south_west:
-        return { 0, cell_dims.height * 2u };
+        return { 0, cell_dims.height * 2 };
       case frm::Orientation::west:
         return { 0, cell_dims.height };
       case frm::Orientation::north_west:
