@@ -64,6 +64,8 @@ namespace klmth {
       void render_clear();
       void render_present();
 
+      void set_title(const std::string& t);
+
     private:
       SDL_Window* w;
       SDL_Renderer* r;

@@ -303,6 +303,10 @@ void sdl::Window::render_texture(StaticTexture& texture, const Rect& destination
     render_copy(this->r, texture, destination);
 }
 
+void sdl::Window::set_title(const std::string& t) {
+    SDL_SetWindowTitle(this->w, t.c_str());
+}
+
 sdl::Context::Context() {
   SDL_Init(SDL_INIT_VIDEO);
 }

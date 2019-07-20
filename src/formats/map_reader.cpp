@@ -12,6 +12,7 @@ using klmth::map::Version;
 using klmth::map::PlayerDefaults;
 using klmth::map::Elevation;
 using klmth::map::Tiles;
+using klmth::map::Elevation;
 
 namespace {
   Version read_version(std::istream& in) {
@@ -43,11 +44,11 @@ namespace {
     int32_t e = read_be_i32_unsafe(in);
     switch (e) {
     case 0:
-      return map::low;
+      return Elevation::low;
     case 1:
-      return map::med;
+      return Elevation::med;
     case 2:
-      return map::high;
+      return Elevation::high;
     default: {
       std::stringstream msg;
       msg << e << ": invalid elevation value in header";

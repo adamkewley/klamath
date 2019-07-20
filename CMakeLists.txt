@@ -30,6 +30,7 @@ add_executable(${PROJECT_NAME}
   src/formats/frm_reader.cpp
   src/formats/pal_reader.cpp
   src/formats/map_reader.cpp
+  src/formats/map.cpp
   src/formats/lst_reader.cpp
   
   src/cmds/dat2extract.cpp

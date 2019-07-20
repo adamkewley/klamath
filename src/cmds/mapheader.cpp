@@ -15,6 +15,7 @@ namespace {
   using klmth::map::PlayerDefaults;
   using klmth::map::Elevation;
   using klmth::map::parse_header;
+  using klmth::map::Elevation;
 
   const char* version_str(Version v) {
     switch (v) {
@@ -29,11 +30,11 @@ namespace {
 
   const char* elevation_str(Elevation e) {
     switch (e) {
-    case map::low:
+    case Elevation::low:
       return "low";
-    case map::med:
+    case Elevation::med:
       return "med";
-    case map::high:
+    case Elevation::high:
       return "high";
     default:
       throw std::runtime_error{"unknown elevation: cannot print"};

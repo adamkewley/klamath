@@ -7,6 +7,7 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 
+#include <SDL2/SDL_events.h>
 #include "third_party/CLI11.hpp"
 
 #include "src/formats/map.hpp"
@@ -21,6 +22,7 @@
 
 using namespace klmth;
 using std::this_thread::sleep_for;
+using std::unique_ptr;
 using namespace std::literals::chrono_literals;
 using sdl::StaticTexture;
 
@@ -92,62 +94,85 @@ namespace {
     sdl::Context context;
     sdl::Window window;
     TileCache tile_cache;
+    sdl::Point view_pos;
+
+    void preload(const map::Tiles& tiles) {
+      for (map::Tile tile : tiles) {
+        this->preload(tile);
+      }
+    }
+
+    StaticTexture& tile_texture(map::TileId id) {
+      return load_via_cache(id);
+    }
+
+  private:
+    void preload(const map::Tile& tile) {
+      if (tile.floor_id != map::null_tileid) {
+        this->preload(tile.floor_id);
+      }
+
+      if (tile.roof_id != map::null_tileid) {
+        this->preload(tile.roof_id);
+      }
+    }
+
+    void preload(map::TileId id) {
+      if (this->tile_cache.find(id) != this->tile_cache.end()) {
+        return;  // already in cache
+      } else {      
+        this->tile_cache.emplace(id, this->load(id));
+      }
+    }
+
+    StaticTexture& load_via_cache(map::TileId id) {
+      if (this->tile_cache.find(id) == this->tile_cache.end()) {
+        this->tile_cache.emplace(id, this->load(id));
+      }
+      return this->tile_cache.at(id);
+    }
+        
+    StaticTexture load(map::TileId id) {
+      if (id == map::null_tileid) {
+        throw std::runtime_error{"tried to load null tile (id = 1). this is a developer error"};
+      }
+
+      if (id >= this->tile_lut.size()) {
+        std::stringstream msg;
+        msg << id << ": tile ID in map file is higher than number of tiles in lookup (usually, TILES.LST), which contains " << this->tile_lut.size() << " entries";
+        throw std::runtime_error{msg.str()};
+      }
+
+      const std::string& tile_name = this->tile_lut[id];
+    
+      // todo: case-insensitive pathing
+      std::string tile_path =
+        file_exists(this->tiles_dir + upcase(tile_name)) ?
+        this->tiles_dir + upcase(tile_name) :
+        file_exists(this->tiles_dir + downcase(tile_name)) ?
+        this->tiles_dir + downcase(tile_name) :
+        this->tiles_dir + tile_name;
+
+      return load(tile_path);
+    }
+
+    StaticTexture load(const std::string& pth) {
+      frm::File file = read_frm(pth);
+            
+      // assumption: tiles only *really* have one orientation.
+      const frm::Animation& anim = file.animation(frm::north_east);
+
+      if (anim.frames().empty()) {
+        std::stringstream msg;
+        msg << pth << ": tile contains no frames";
+        throw std::runtime_error{msg.str()};
+      }
+
+      return this->window.texture(this->pal, anim.frames().front());
+    }
   };
 
-  StaticTexture load_tile(AppState& st, std::string& pth) {
-    frm::File file = read_frm(pth);
-
-    // assumption: tiles only *really* have one orientation.
-    const frm::Animation& anim = file.animation(frm::north_east);
-
-    if (anim.frames().empty()) {
-      std::stringstream msg;
-      msg << pth << ": tile contains no frames";
-      throw std::runtime_error{msg.str()};
-    }
-
-    return st.window.texture(st.pal, anim.frames().front());
-  }
-
-  void populate_tile_cache(AppState& st, uint16_t tileid) {
-    if (tileid == map::null_tileid) {
-      return;
-    }
-    
-    if (st.tile_cache.find(tileid) != st.tile_cache.end()) {
-      return;  // already in cache
-    }
-
-    if (tileid >= st.tile_lut.size()) {
-      std::stringstream msg;
-      msg << tileid << ": tile ID in map file is higher than number of tiles in lookup (usually, TILES.LST), which contains " << st.tile_lut.size() << " entries";
-      throw std::runtime_error{msg.str()};
-    }
-
-    const std::string& tile_name = st.tile_lut[tileid];
-    
-    // todo: case-insensitive pathing
-    std::string tile_path =
-      file_exists(st.tiles_dir + upcase(tile_name)) ?
-      st.tiles_dir + upcase(tile_name) :
-      file_exists(st.tiles_dir + downcase(tile_name)) ?
-      st.tiles_dir + downcase(tile_name) :
-      st.tiles_dir + tile_name;
-      
-    st.tile_cache.emplace(tileid, load_tile(st, tile_path));
-  }
-
-  void populate_tile_cache(AppState& st, const map::Tile& tile) {
-    populate_tile_cache(st, tile.floor_id);    
-  }
-
-  void populate_tile_cache(AppState& st, const map::Tiles& tiles) {
-    for (map::Tile tile : tiles) {
-      populate_tile_cache(st, tile);
-    }
-  }
-
-  void render_frame(AppState& st, const map::Tiles& tiles, sdl::Point view_pos) {
+  sdl::Point to_view_coord(unsigned row, unsigned col) {
     // Mapping tile coordinates to screen coordinates:
     //
     // Fallout uses trimetric projection for tiles (note: NOT
@@ -161,68 +186,99 @@ namespace {
     // line up vertically, so tesselating the tiles in the screen's
     // coordinate system isn't a simple matter of (e.g.)  0.5*width +
     // 0.5*height.
+    sdl::Point row_offset{static_cast<int>(32*row), static_cast<int>(24*row)};
+    sdl::Point col_offset{static_cast<int>(48*(map::cols - col)), static_cast<int>(12*col)};
+    return row_offset + col_offset;
+  }
+
+  void render_tile(AppState&st, sdl::Point shift, map::TileId id, unsigned row, unsigned col) {
     constexpr sdl::Dimensions tile_dimensions{map::Tile::width, map::Tile::height};
+
+    if (id != map::null_tileid) {
+      sdl::Point pos = to_view_coord(row, col) - shift;
+      StaticTexture& texture = st.tile_texture(id);
+      sdl::Rect dest{pos, tile_dimensions};
+      st.window.render_texture(texture, dest);
+    }    
+  }
+
+  void render_frame(AppState& st, const map::Tiles& tiles) {
+    // todo: I just eyeballed this shift
+    constexpr sdl::Point roof_shift{0, 3 * map::Tile::height};
     
+    // floor
     for (auto row = 0U; row < map::rows; ++row) {
-      
-      auto row_beg = map::cols * row;
-      sdl::Point row_offset{static_cast<int>(32*row), static_cast<int>(24*row)};
-      sdl::Point row_origin_in_view = row_offset - view_pos;
-      
+      auto row_beg = map::cols * row;      
       for (auto col = 0U; col < map::cols; ++col) {
         const map::Tile& tile = tiles.at(row_beg + col);
+        render_tile(st, st.view_pos, tile.floor_id, row, col);
+      }
+    }
 
-        // edge case: null tile isn't renderable
-        if (tile.floor_id == map::null_tileid) {
-          continue;
-        }
-
-        sdl::Point col_offset{static_cast<int>(48*(map::cols - col)), static_cast<int>(12*col)};
-        sdl::Point pos_in_view = row_origin_in_view + col_offset;
-
-        StaticTexture& texture = st.tile_cache.at(tile.floor_id);
-        sdl::Rect dest{pos_in_view, tile_dimensions};
-        st.window.render_texture(texture, dest);
+    // roof
+    for (auto row = 0U; row < map::rows; ++row) {
+      auto row_beg = map::cols * row;      
+      for (auto col = 0U; col < map::cols; ++col) {
+        const map::Tile& tile = tiles.at(row_beg + col);
+        render_tile(st, st.view_pos + roof_shift, tile.roof_id, row, col);
       }
     }
   }
 
-  void show_elevation(AppState& st, const map::Tiles& tiles) {
-    populate_tile_cache(st, tiles);
+  void render(AppState& st, const map::File& f) {
+    const std::vector<map::Elevation> elevations = f.elevations();
 
-    for (int i = 0; i < 360; ++i) {
-      sdl::Point screen_pos{25*i, 10*i};
-      
-      st.window.render_clear();
-      render_frame(st, tiles, screen_pos);
-      st.window.render_present();
-      sleep_for(25ms);
-    }
-  }
-
-  void show_lowest_map_elevation(AppState& st, NamedStrm& in) {
-    map::File f = map::parse_file(in.strm);
-
-    std::unique_ptr<map::Tiles> null_tiles;
-    std::unique_ptr<map::Tiles>& lowest =
-      f.low_elevation_tiles ?
-      f.low_elevation_tiles :
-      f.mid_elevation_tiles ?
-      f.mid_elevation_tiles :
-      f.high_elevation_tiles ?
-      f.high_elevation_tiles :
-      null_tiles;
-
-    if (lowest == nullptr) {
+    if (elevations.empty()) {
       throw std::runtime_error{"no tiles at any elevation"};
-    } else {
-      show_elevation(st, *lowest);
-    }    
+    }
+
+    size_t elevation_idx = 0;
+
+    SDL_Event e;
+    while (true) {
+      const unique_ptr<map::Tiles>& tiles = f.tiles(elevations[elevation_idx]);
+      st.preload(*tiles);
+      st.window.render_clear();
+      render_frame(st, *tiles);
+      st.window.render_present();
+
+      st.context.wait_for_event(&e);
+
+      switch (e.type) {
+      case SDL_QUIT:
+        return;
+      case SDL_KEYDOWN:
+        switch (e.key.keysym.sym) {
+        case SDLK_UP:
+          st.view_pos += {0, -100};
+          break;
+        case SDLK_RIGHT:
+          st.view_pos += {100, 0};
+          break;
+        case SDLK_DOWN:
+          st.view_pos += {0, 100};
+          break;
+        case SDLK_LEFT:
+          st.view_pos += {-100, 0};
+          break;
+        case SDLK_ESCAPE:
+          return;
+        case SDLK_n:
+          elevation_idx = elevation_idx == (elevations.size()-1) ? 0 : elevation_idx + 1;
+          break;
+        case SDLK_p:
+          elevation_idx = elevation_idx == 0 ? (elevations.size()-1) : elevation_idx-1;
+          break;
+        }
+      }
+    }
   }
 
   void show_map_strm(AppState& st, NamedStrm in) {
     try {
-      show_lowest_map_elevation(st, in);
+      st.window.set_title(in.name);
+      map::File f = map::parse_file(in.strm);
+      render(st, f);
     } catch (const std::exception& ex) {
       std::stringstream msg;
       msg << in.name << ": " << ex.what();
@@ -261,7 +317,7 @@ int cmd_mapshow(int argc, char** argv) {
   try {
     sdl::Context c;
     sdl::Window w = c.create_window({ 1000, 1000 });
-    AppState st{ read_pal(pal_pth), tiles_dir_pth, read_tiles(tiles_dir_pth), std::move(c), std::move(w), {} };
+    AppState st{ read_pal(pal_pth), tiles_dir_pth, read_tiles(tiles_dir_pth), std::move(c), std::move(w), {}, {2000, 1000} };
     if (map_pths.empty()) {
       show_map_strm(st, { std::cin, "stdin" });
     } else {

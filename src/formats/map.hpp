@@ -3,20 +3,21 @@
 #include <cstdint>
 #include <memory>
 
+#include "src/utils/geometry.hpp"
 #include "src/formats/frm.hpp"
 
 namespace klmth {
   namespace map {
-    
+
     enum Version {
       fallout_1 = 19,
       fallout_2 = 20
     };
-    
-    enum Elevation {
-      low = 0,
-      med = 1,
-      high = 3,
+
+    enum class Elevation {
+      low,
+      med,
+      high,
     };
 
     struct PlayerDefaults {
@@ -24,7 +25,7 @@ namespace klmth {
       Elevation elevation;
       frm::Orientation orientation;
     };
-    
+
     struct Header {
       Version version;
       std::string filename;
@@ -48,7 +49,7 @@ namespace klmth {
       TileId floor_id;
 
       static constexpr uint16_t width = 80;
-      static constexpr uint16_t height = 36;      
+      static constexpr uint16_t height = 36;
     };
 
     constexpr unsigned rows = 100;
@@ -64,6 +65,9 @@ namespace klmth {
       std::unique_ptr<Tiles> low_elevation_tiles;
       std::unique_ptr<Tiles> mid_elevation_tiles;
       std::unique_ptr<Tiles> high_elevation_tiles;
-    };    
+
+      const std::unique_ptr<Tiles>& tiles(Elevation e) const;
+      std::vector<Elevation> elevations() const noexcept;
+    };
   }
 }
