@@ -6,8 +6,9 @@
 #include <unordered_map>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <cctype>
 
-#include <SDL2/SDL_events.h>
+#include <SDL_events.h>
 #include "third_party/CLI11.hpp"
 
 #include "src/formats/map.hpp"

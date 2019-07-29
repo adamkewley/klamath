@@ -4,7 +4,7 @@
 #include <stdexcept>
 #include <thread>
 
-#include <SDL2/SDL_events.h>
+#include <SDL_events.h>
 #include "third_party/CLI11.hpp"
 
 #include "src/formats/pal_reader.hpp"

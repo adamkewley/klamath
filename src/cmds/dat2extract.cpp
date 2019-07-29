@@ -9,6 +9,12 @@
 #include "src/formats/dat2_reader.hpp"
 #include "src/utils/zlib.hpp"
 
+#if _MSC_VER && !__INTEL_COMPILER
+#include <direct.h>
+#define MKDIR(a,b) _mkdir(a)
+#else
+#define MKDIR(a,b) mkdir(a,b)
+#endif
 
 namespace {
   using namespace klmth;
@@ -35,14 +41,14 @@ namespace {
       static const char os_pth_sep = '/';
 
 
-      if (!file_exists(cfg.out_dir) && mkdir(cfg.out_dir.c_str(), 0777) == -1) {
+      if (!file_exists(cfg.out_dir) && MKDIR(cfg.out_dir.c_str(), 0777) == -1) {
         throw std::runtime_error(cfg.out_dir + ": cannot create output directory");
       }
 
       std::string pth_el = cfg.out_dir + os_pth_sep;
       for (char c : entry.filename) {
         if (c == dat2_pth_sep) {
-          if (!file_exists(pth_el) && mkdir(pth_el.c_str(), 0777) == -1) {
+          if (!file_exists(pth_el) && MKDIR(pth_el.c_str(), 0777) == -1) {
             throw std::runtime_error(pth_el + ": cannot create output directory");
           }
 

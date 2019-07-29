@@ -2,6 +2,7 @@
 
 #include <istream>
 #include <algorithm>
+#include <string>
 
 #include "src/utils/io.hpp"
 

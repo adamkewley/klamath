@@ -1,5 +1,6 @@
 #include "src/formats/pal_reader.hpp"
 
+#include <string>
 #include <stdexcept>
 #include <istream>
 
