@@ -49,7 +49,7 @@ namespace {
   }
 
   bool file_exists(const std::string& filename) {
-    struct stat st = {0};
+    struct stat st{};
     return stat(filename.c_str(), &st) != -1;
   }
 
