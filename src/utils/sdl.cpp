@@ -3,7 +3,7 @@
 #include <stdexcept>
 #include <sstream>
 
-#include <SDL2/SDL.h>
+#include <SDL.h>
 
 
 using namespace klmth;

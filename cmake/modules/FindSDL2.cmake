@@ -75,6 +75,7 @@ FIND_PATH(SDL2_INCLUDE_DIR SDL.h
         $ENV{SDL2DIR}
         PATH_SUFFIXES include/SDL2 include
         PATHS
+        C:/Programming/Libraries/SDL2-2.0.10/SDL2/include  # FIXME: klamath: dependent on a particular Windows lib layout
         ~/Library/Frameworks
         /Library/Frameworks
         /usr/local/include/SDL2
@@ -85,14 +86,15 @@ FIND_PATH(SDL2_INCLUDE_DIR SDL.h
         /opt
         ${PROJECT_ROOT_DIR}/ext/SDL2
         )
-#MESSAGE("SDL2_INCLUDE_DIR is ${SDL2_INCLUDE_DIR}")
+MESSAGE("SDL2_INCLUDE_DIR is ${SDL2_INCLUDE_DIR}")
 
 FIND_LIBRARY(SDL2_LIBRARY_TEMP
         NAMES SDL2
         HINTS
         $ENV{SDL2DIR}
-        PATH_SUFFIXES lib64 lib
+        PATH_SUFFIXES lib64 lib lib/x64
         PATHS
+        C:/Programming/Libraries/SDL2-2.0.10/SDL2/lib/x64  # FIXME: klamath: dependent on a particular Windows lib layout
         /sw
         /opt/local
         /opt/csw
@@ -100,7 +102,7 @@ FIND_LIBRARY(SDL2_LIBRARY_TEMP
         ${PROJECT_ROOT_DIR}/ext/SDL2
         )
 
-#MESSAGE("SDL2_LIBRARY_TEMP is ${SDL2_LIBRARY_TEMP}")
+MESSAGE("SDL2_LIBRARY_TEMP is ${SDL2_LIBRARY_TEMP}")
 
 IF(NOT SDL2_BUILDING_LIBRARY)
     IF(NOT ${SDL2_INCLUDE_DIR} MATCHES ".framework")
