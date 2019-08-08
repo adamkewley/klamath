@@ -84,5 +84,8 @@ Header klmth::pro::parse_header(std::istream& in) {
   h.obj_id = read_oid(in);
   h.text_id = read_be_u32_unsafe(in);
   h.frm_id = read_frmid(in);
+  h.light_radius = read_be_u32_unsafe(in);
+  h.light_intensity = read_be_u32_unsafe(in);
+  h.flags = { read_be_u32_unsafe(in) };
   return h;
 }

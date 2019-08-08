@@ -36,11 +36,35 @@ namespace {
     }
   }
 
+  std::string join(const std::string& delim, const std::vector<std::string>& els) {
+    if (els.size() == 0) {
+      return "";
+    }
+    
+    std::ostringstream ss;
+    auto it = els.begin();
+    auto end = els.end() - 1;
+    for (; it < end; ++it) {
+      ss << *it << delim;
+    }
+    ss << *end;
+
+    return ss.str();
+  }
+
+  template<typename T>
+  void print_kv(ostream& out, const char* k, T v) {
+    out << k << " = " << v << std::endl;
+  }
+
   void print(ostream& out, const Header& h) {
-    out << "type = " << pro::str(h.obj_id.type) << std::endl;
-    out << "object_id = " << h.obj_id.val << std::endl;
-    out << "text_id = " << h.text_id << std::endl;
-    out << "frm_type = " << pro::str(h.frm_id.type) << std::endl;
+    print_kv(out, "type", pro::str(h.obj_id.type));
+    print_kv(out, "object_id", h.obj_id.val);
+    print_kv(out, "text_id", h.text_id);
+    print_kv(out, "frm_type", pro::str(h.frm_id.type));
+    print_kv(out, "light_radius", h.light_radius);
+    print_kv(out, "light_intensity", h.light_intensity);
+    print_kv(out, "flags", join(", ", pro::flag_strs(h.flags)));
   }
 
   void run(ostream& out, NamedStrm& strm) {
