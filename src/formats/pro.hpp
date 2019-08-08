@@ -72,5 +72,20 @@ namespace klmth {
       uint32_t light_intensity;
       Flags flags;
     };
+
+    enum class WallOrientation {
+      north_south,
+      east_west,
+      north_corner,
+      south_corner,
+      east_corner,
+      west_corner,
+    };
+
+    const char* str(WallOrientation orientation);
+
+    struct WallData {
+      WallOrientation orientation;
+    };
   }
 }

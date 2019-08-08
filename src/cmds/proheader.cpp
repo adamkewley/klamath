@@ -14,6 +14,8 @@ using std::ifstream;
 using std::stringstream;
 using std::ostream;
 using klmth::pro::Header;
+using klmth::pro::ObjectType;
+using klmth::pro::WallData;
 
 namespace {
   using namespace klmth;
@@ -57,7 +59,7 @@ namespace {
     out << k << " = " << v << std::endl;
   }
 
-  void print(ostream& out, const Header& h) {
+  void print(ostream& out, const Header& h, istream& in) {
     print_kv(out, "type", pro::str(h.obj_id.type));
     print_kv(out, "object_id", h.obj_id.val);
     print_kv(out, "text_id", h.text_id);
@@ -65,12 +67,17 @@ namespace {
     print_kv(out, "light_radius", h.light_radius);
     print_kv(out, "light_intensity", h.light_intensity);
     print_kv(out, "flags", join(", ", pro::flag_strs(h.flags)));
+
+    if (h.obj_id.type == ObjectType::wall) {
+      WallData wd = pro::parse_wall_data(in);
+      print_kv(out, "wall_orientation", pro::str(wd.orientation));
+    }
   }
 
   void run(ostream& out, NamedStrm& strm) {
     out << "[" << strm.name << "]" << std::endl;
     Header h = pro::parse_header(strm.strm);
-    print(out, h);
+    print(out, h, strm.strm);
     out << std::endl;
   }  
   

@@ -5,6 +5,7 @@
 
 using klmth::pro::ObjectType;
 using klmth::pro::FrmType;
+using klmth::pro::WallOrientation;
 using namespace klmth;
 
 const char* pro::str(ObjectType type) {
@@ -145,4 +146,23 @@ std::vector<std::string> pro::flag_strs(Flags f) {
   }
 
   return els;
+}
+
+const char* pro::str(WallOrientation orientation) {
+  switch (orientation) {    
+  case WallOrientation::north_south:
+    return "north_south";
+  case WallOrientation::east_west:
+    return "east_west";
+  case WallOrientation::north_corner:
+    return "north_corner";
+  case WallOrientation::south_corner:
+    return "south_corner";
+  case WallOrientation::east_corner:
+    return "east_corner";
+  case WallOrientation::west_corner:
+    return "west_corner";
+  default:
+    throw std::runtime_error{"unknown orientation passed to pro::str(WallOrientation)"};
+  }
 }
