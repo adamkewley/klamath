@@ -71,6 +71,7 @@ namespace {
     if (h.obj_id.type == ObjectType::wall) {
       WallData wd = pro::parse_wall_data(in);
       print_kv(out, "wall_orientation", pro::str(wd.orientation));
+      print_kv(out, "action_flags", join(", ", pro::flag_strs(wd.action_flags)));
     }
   }
 

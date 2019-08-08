@@ -17,6 +17,7 @@ using klmth::pro::FrmType;
 using klmth::pro::FrmId;
 using klmth::pro::WallOrientation;
 using klmth::pro::WallData;
+using klmth::pro::ActionFlags;
 
 namespace {
   ObjectType parse_obj_type(uint8_t c) {
@@ -118,5 +119,6 @@ Header klmth::pro::parse_header(std::istream& in) {
 WallData pro::parse_wall_data(std::istream& in) {
   WallData wd;
   wd.orientation = read_wall_orientation(in);
+  wd.action_flags = { read_be_u16_unsafe(in) };
   return wd;
 }

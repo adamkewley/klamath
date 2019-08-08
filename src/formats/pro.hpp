@@ -42,7 +42,6 @@ namespace klmth {
     };
 
     struct Flags {
-    public:      
       bool flat() const;
       bool noblock() const;
       bool multihex() const;
@@ -57,7 +56,7 @@ namespace klmth {
       bool lightthru() const;
       bool shootthru() const;
       
-      uint32_t val = 0;
+      uint32_t val;
     };
 
     std::vector<std::string> flag_strs(Flags flags);
@@ -84,8 +83,22 @@ namespace klmth {
 
     const char* str(WallOrientation orientation);
 
+    struct ActionFlags {
+      bool kneel_when_using() const;
+      bool usable() const;
+      bool can_be_used_on_anything() const;
+      bool look() const;
+      bool talk() const;
+      bool pickup() const;
+
+      uint16_t val;
+    };
+
+    std::vector<std::string> flag_strs(ActionFlags action_flags);
+
     struct WallData {
       WallOrientation orientation;
+      ActionFlags action_flags;
     };
   }
 }

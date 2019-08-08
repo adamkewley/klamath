@@ -166,3 +166,52 @@ const char* pro::str(WallOrientation orientation) {
     throw std::runtime_error{"unknown orientation passed to pro::str(WallOrientation)"};
   }
 }
+
+bool pro::ActionFlags::kneel_when_using() const {
+  return (val & 0x0001) > 0;
+}
+
+bool pro::ActionFlags::usable() const {
+  return (val & 0x0008) > 0;
+}
+
+bool pro::ActionFlags::can_be_used_on_anything() const {
+  return (val & 0x0010) > 0;
+}
+
+bool pro::ActionFlags::look() const {
+  return (val & 0x0020) > 0;
+}
+
+bool pro::ActionFlags::talk() const {
+  return (val & 0x0040) > 0;
+}
+
+bool pro::ActionFlags::pickup() const {
+  return (val & 0x0080) > 0;
+}
+
+std::vector<std::string> pro::flag_strs(ActionFlags f) {
+  std::vector<std::string> els;
+  
+  if (f.kneel_when_using()) {
+    els.push_back("kneel_when_using");
+  }
+  if (f.usable()) {
+    els.push_back("usable");
+  }
+  if (f.can_be_used_on_anything()) {
+    els.push_back("can_be_used_on_anything");
+  }
+  if (f.look()) {
+    els.push_back("look");
+  }
+  if (f.talk()) {
+    els.push_back("talk");
+  }
+  if (f.pickup()) {
+    els.push_back("pickup");
+  }
+
+  return els;
+}
