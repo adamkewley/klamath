@@ -11,6 +11,7 @@ int cmd_mapheader(int argc, char** argv);
 int cmd_mapglobals(int argc, char** argv);
 int cmd_maplocals(int argc, char** argv);
 int cmd_maptiles(int argc, char** argv);
+int cmd_mapscripts(int argc, char** argv);
 int cmd_lststrip(int argc, char** argv);
 int cmd_mapshow(int argc, char** argv);
 int cmd_proheader(int argc, char** argv);
@@ -28,6 +29,7 @@ namespace {
     { "mapglobals", &cmd_mapglobals },
     { "maplocals", &cmd_maplocals },
     { "maptiles", &cmd_maptiles },
+    { "mapscripts", &cmd_mapscripts },
     { "lststrip", &cmd_lststrip },
     { "mapshow", &cmd_mapshow },
     { "proheader", &cmd_proheader },

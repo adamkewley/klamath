@@ -58,6 +58,28 @@ namespace klmth {
 
     using Tiles = std::array<Tile, tiles_per_elevation>;
 
+    enum class ScriptType {
+      system,
+      spatial,
+      timer,
+      item,
+      critter,
+    };
+
+    char const * str(ScriptType type);
+
+    class Pid {
+    public:
+      Pid(uint32_t val);
+      ScriptType type() const noexcept;
+    private:
+      ScriptType _type;
+    };
+
+    struct Script {
+      Pid pid;
+    };
+
     struct File {
       Header header;
       std::vector<int32_t> global_vars;
@@ -65,6 +87,7 @@ namespace klmth {
       std::unique_ptr<Tiles> low_elevation_tiles;
       std::unique_ptr<Tiles> mid_elevation_tiles;
       std::unique_ptr<Tiles> high_elevation_tiles;
+      std::vector<Script> scripts;
 
       const std::unique_ptr<Tiles>& tiles(Elevation e) const;
       std::vector<Elevation> elevations() const noexcept;

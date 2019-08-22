@@ -19,6 +19,7 @@ add_executable(${PROJECT_NAME}
   src/utils/io.cpp
   src/utils/zlib.cpp
   src/utils/sdl.cpp
+  src/utils/cli.cpp
   
   src/formats/dat2_reader.cpp
   src/formats/aaf_reader.cpp
@@ -40,6 +41,7 @@ add_executable(${PROJECT_NAME}
   src/cmds/mapglobals.cpp
   src/cmds/maplocals.cpp
   src/cmds/maptiles.cpp
+  src/cmds/mapscripts.cpp
   src/cmds/lststrip.cpp
   src/cmds/mapshow.cpp
   src/cmds/proheader.cpp

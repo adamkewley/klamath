@@ -28,3 +28,46 @@ std::vector<map::Elevation> map::File::elevations() const noexcept {
     }
     return ret;
 }
+
+map::Pid::Pid(uint32_t val) {
+  switch ((val & 0xff000000) >> 24) {
+  case 0:
+    this->_type = ScriptType::system;
+    break;
+  case 1:
+    this->_type = ScriptType::spatial;
+    break;
+  case 2:
+    this->_type = ScriptType::timer;
+    break;
+  case 3:
+    this->_type = ScriptType::item;
+    break;
+  case 4:
+    this->_type = ScriptType::critter;
+    break;
+  default:
+    throw std::runtime_error{"Unknown script type in map PID"};
+  }
+}
+
+map::ScriptType map::Pid::type() const noexcept {
+  return this->_type;
+}
+
+char const * map::str(ScriptType type) {
+  switch (type) {
+  case ScriptType::system:
+    return "system";
+  case ScriptType::spatial:
+    return "spatial";
+  case ScriptType::timer:
+    return "timer";
+  case ScriptType::item:
+    return "item";
+  case ScriptType::critter:
+    return "critter";
+  default:
+    throw std::runtime_error{"Unknown script type encountered"};
+  }
+}
