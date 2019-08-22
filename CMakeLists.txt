@@ -28,6 +28,8 @@ add_executable(${PROJECT_NAME}
   src/formats/map_reader.cpp
   src/formats/map.cpp
   src/formats/lst_reader.cpp
+  src/formats/pro.cpp
+  src/formats/pro_reader.cpp
   
   src/cmds/dat2extract.cpp
   src/cmds/aafprint.cpp
@@ -40,6 +42,7 @@ add_executable(${PROJECT_NAME}
   src/cmds/maptiles.cpp
   src/cmds/lststrip.cpp
   src/cmds/mapshow.cpp
+  src/cmds/proheader.cpp
   
   src/klamath.cpp
   )

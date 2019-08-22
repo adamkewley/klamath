@@ -13,6 +13,7 @@ int cmd_maplocals(int argc, char** argv);
 int cmd_maptiles(int argc, char** argv);
 int cmd_lststrip(int argc, char** argv);
 int cmd_mapshow(int argc, char** argv);
+int cmd_proheader(int argc, char** argv);
 
 namespace {
   typedef int (*subcommand)(int, char **);
@@ -29,6 +30,7 @@ namespace {
     { "maptiles", &cmd_maptiles },
     { "lststrip", &cmd_lststrip },
     { "mapshow", &cmd_mapshow },
+    { "proheader", &cmd_proheader },
   };
 }
 
