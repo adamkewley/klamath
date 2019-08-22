@@ -215,3 +215,47 @@ std::vector<std::string> pro::flag_strs(ActionFlags f) {
 
   return els;
 }
+
+const char* pro::str(MaterialId id) {
+  switch (id) {
+  case MaterialId::glass:
+    return "glass";
+  case MaterialId::metal:
+    return "metal";
+  case MaterialId::plastic:
+    return "plastic";
+  case MaterialId::wood:
+    return "wood";
+  case MaterialId::dirt:
+    return "dirt";
+  case MaterialId::stone:
+    return "stone";
+  case MaterialId::cement:
+    return "cement";
+  case MaterialId::leather:
+    return "leather";
+  default:
+    throw std::runtime_error{"unknown material id passed to pro::str(MaterialId)"};
+  }
+}
+
+pro::ScriptId::ScriptId(uint32_t _val): val{_val} {
+  uint8_t type = (val >> 16) & 0xff;
+  if (type != 3) {
+    std::stringstream msg;
+    msg << "incorrect pro::ScriptId value (" << val << "). Can only be equal to 3 (for holodisk script";
+    throw std::runtime_error{msg.str()};
+  }
+}
+
+pro::ScriptType pro::ScriptId::type() const noexcept {
+  // it's actually (val >> 16) & 0xff, but only one script type is
+  // used in PRO files
+  return ScriptType::holodisk;
+}
+
+uint16_t pro::ScriptId::id() const noexcept {
+  return val & 0xffff;
+}
+
+

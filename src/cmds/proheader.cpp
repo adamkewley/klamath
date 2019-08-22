@@ -59,6 +59,13 @@ namespace {
     out << k << " = " << v << std::endl;
   }
 
+  void read_and_print_wall(ostream& out, istream& in) {
+    WallData wd = pro::parse_wall_data(in);
+    print_kv(out, "wall_orientation", pro::str(wd.orientation));
+    print_kv(out, "action_flags", join(", ", pro::flag_strs(wd.action_flags)));
+    print_kv(out, "material_id", pro::str(wd.material_id));
+  }
+
   void print(ostream& out, const Header& h, istream& in) {
     print_kv(out, "type", pro::str(h.obj_id.type));
     print_kv(out, "object_id", h.obj_id.val);
@@ -68,10 +75,12 @@ namespace {
     print_kv(out, "light_intensity", h.light_intensity);
     print_kv(out, "flags", join(", ", pro::flag_strs(h.flags)));
 
-    if (h.obj_id.type == ObjectType::wall) {
-      WallData wd = pro::parse_wall_data(in);
-      print_kv(out, "wall_orientation", pro::str(wd.orientation));
-      print_kv(out, "action_flags", join(", ", pro::flag_strs(wd.action_flags)));
+    switch (h.obj_id.type) {
+    case ObjectType::wall:
+      read_and_print_wall(out, in);
+      break;
+    default:
+      break;  // todo: other pro data types
     }
   }
 
@@ -94,7 +103,13 @@ namespace {
         } else {
           ifstream fd = open_file(pth);
           NamedStrm in{ fd, pth };
-          run(out, in);
+          try {
+            run(out, in);
+          } catch (const std::exception& ex) {
+            std::stringstream msg;
+            msg << pth << ": " << ex.what();
+            throw std::runtime_error{msg.str()};
+          }
         }
       }
     }

@@ -4,6 +4,8 @@
 #include <string>
 #include <vector>
 
+#include "third_party/optional.hpp"
+
 namespace klmth {
   namespace pro {
     
@@ -96,9 +98,37 @@ namespace klmth {
 
     std::vector<std::string> flag_strs(ActionFlags action_flags);
 
+    enum class MaterialId {
+      glass,
+      metal,
+      plastic,
+      wood,
+      dirt,
+      stone,
+      cement,
+      leather,
+    };
+
+    const char* str(MaterialId material_id);
+
+    enum class ScriptType {
+      holodisk,
+    };
+
+    class ScriptId {
+    public:
+      ScriptId(uint32_t _val);
+      ScriptType type() const noexcept;
+      uint16_t id() const noexcept;
+    private:
+      uint32_t val;
+    };
+
     struct WallData {
       WallOrientation orientation;
       ActionFlags action_flags;
+      nonstd::optional<ScriptId> script_id;
+      MaterialId material_id;
     };
   }
 }
