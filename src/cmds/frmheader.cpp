@@ -4,13 +4,11 @@
 #include "third_party/CLI11.hpp"
 
 #include "src/formats/frm_reader.hpp"
+#include "src/utils/cli.hpp"
 
 
 namespace {
   using namespace klmth;
-
-  const std::string stdin_senteniel = "-";
-
 
   void write_frmheader(const frm::Header& h, std::ostream& out) {
     out << "version number = " << h.version_number << std::endl
@@ -37,35 +35,12 @@ namespace {
     out << std::endl;
   }
 
-  frm::Header read_header(std::istream& in, const std::string& in_name) {
-    try {
-      return frm::read_header(in);
-    } catch (const std::exception& ex) {
-      throw std::runtime_error(in_name + ": error parsing frm data: " + ex.what());
-    }
-  }
+  void print_stream(cli::NamedStream& in, std::ostream& out) {
+    frm::Header h = frm::read_header(in.strm);
 
-  void print_stream(std::istream& in, std::ostream& out, const std::string& in_name) {
-    frm::Header h = read_header(in, in_name);
-
-    out << "[" << in_name << "]" << std::endl;
+    out << "[" << in.name << "]" << std::endl;
     write_frmheader(h, out);
     out << std::endl;
-  }
-
-  void print_path(const std::string& path) {
-    if (path == stdin_senteniel) {
-      print_stream(std::cin, std::cout, "stdin");
-    } else {
-      std::fstream frm_in;
-      frm_in.open(path, std::ios::in | std::ios::binary);
-
-      if (!frm_in.good()) {
-        throw std::runtime_error(std::string(path) + ": error when opening frm file");
-      }
-
-      print_stream(frm_in, std::cout, path);
-    }
   }
 }
 
@@ -77,17 +52,14 @@ int cmd_frmheader(int argc, char** argv) {
   CLI11_PARSE(app, argc, argv);
 
   try {
-    if (frm_paths.empty()) {
-      print_stream(std::cin, std::cout, "stdin");
-    } else {
-      for (auto& frm_path : frm_paths) {
-        print_path(frm_path);
-      }
-    }
-    
+    auto handler = [](cli::NamedStream& strm) {
+                     print_stream(strm, std::cout);
+                   };
+    cli::handle_paths(frm_paths, handler);
+
     return 0;
   } catch (const std::exception& ex) {
-    std::cerr << argv[0] << ": " << ex.what() << std::endl;
+    std::cerr << "frmheader: " << ex.what() << std::endl;
     return 1;
   }
 }

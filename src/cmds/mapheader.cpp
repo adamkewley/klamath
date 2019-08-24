@@ -7,9 +7,11 @@
 
 #include "src/formats/map.hpp"
 #include "src/formats/map_reader.hpp"
+#include "src/utils/cli.hpp"
+
+using namespace klmth;
 
 namespace {
-  using namespace klmth;
   using klmth::map::Header;
   using klmth::map::Version;
   using klmth::map::PlayerDefaults;
@@ -69,34 +71,8 @@ namespace {
     out << std::endl;
   }
   
-  void print_stream(std::istream& in, std::ostream& out, const std::string& stream_name) {
-    print_header(read_header(in), out, stream_name);
-  }
-
-  void print_stdin(std::ostream& out) {
-    print_stream(std::cin, out, "stdin");
-  }
-
-  void print_path(const std::string& path, std::ostream& out) {
-    if (path == "-") {
-      print_stdin(out);
-      return;
-    }
-
-    std::fstream in{path, std::ios::in | std::ios::binary};
-    if (!in.good()) {
-      std::stringstream err{};
-      err << path << ": " << strerror(errno);
-      throw std::runtime_error{err.str()};
-    }
-
-    print_stream(in, out, path);
-  }
-
-  void print_paths(const std::vector<std::string>& paths, std::ostream& out) {
-    for (const std::string& path : paths) {
-      print_path(path, out);
-    }
+  void print_stream(cli::NamedStream& in, std::ostream& out) {
+    print_header(read_header(in.strm), out, in.name);
   }
 }
 
@@ -108,12 +84,10 @@ int cmd_mapheader(int argc, char** argv) {
   CLI11_PARSE(app, argc, argv);
 
   try {
-    if (paths.empty()) {
-      print_stdin(std::cout);
-    } else {
-      print_paths(paths, std::cout);      
-    }
-
+    auto handler = [](cli::NamedStream& strm) {
+                     print_stream(strm, std::cout);
+                   };
+    cli::handle_paths(paths, handler);
     return 0;
   } catch (const std::exception& ex) {
     std::cerr << "mapheader: " << ex.what() << std::endl;

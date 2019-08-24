@@ -27,25 +27,14 @@ int cmd_mapscripts(int argc, char** argv) {
   CLI11_PARSE(app, argc, argv);
 
   try {
-    if (paths.empty()) {
-      NamedStream strm{std::cin, "stdin"};
-      print_stream(strm, std::cout);
-    } else {
-      for (std::string path : paths) {
-        if (path == "-") {
-          NamedStream strm{std::cin, "stdin"};
-          print_stream(strm, std::cout);
-        } else {
-          std::ifstream fd = open_file(path);
-          NamedStream strm{fd, path};
-          print_stream(strm, std::cout);
-        }
-      }
-    }
+    auto handler = [](cli::NamedStream& strm) {
+                     print_stream(strm, std::cout);
+                   };
+
+    cli::handle_paths(paths, handler);
+    return 0;
   } catch (const std::exception& ex) {
     std::cerr << "mapscripts: " << ex.what() << std::endl;
     return 1;
   }
-  
-  return 0;
 }

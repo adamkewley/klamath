@@ -4,6 +4,7 @@
 #include "third_party/CLI11.hpp"
 
 #include "src/formats/aaf_reader.hpp"
+#include "src/utils/cli.hpp"
 
 
 namespace {
@@ -49,32 +50,17 @@ int cmd_aafprint(int argc, char** argv) {
 
   CLI11_PARSE(app, argc, argv);
 
-  if (aaf_pths.size() == 0) {
-    try {
-      aaf::File aaf_file = aaf::read_file(std::cin);
-      print_aaf_file(aaf_file, std::cout);
-    } catch (const std::exception& ex) {
-      std::cerr << argv[0] << ": error reading aaf from stdin: " << ex.what() << std::endl;
-      return 1;
-    }
-  } else {
-    for (auto& aaf_pth : aaf_pths) {
-      std::fstream in{aaf_pth, std::ios::in | std::ios::binary};
+  try {
+    auto handler = [](cli::NamedStream& strm) {
+                     aaf::File aaf_file = aaf::read_file(strm.strm);
+                     print_aaf_file(aaf_file, std::cout);
+                   };
 
-      if (!in.good()) {
-        std::cerr << argv[0] << ": " << aaf_pth << ": error opening aaf" << std::endl;
-        return 1;
-      }
+    cli::handle_paths(aaf_pths, handler);
 
-      try {
-        aaf::File f = aaf::read_file(in);
-        print_aaf_file(f, std::cout);
-      } catch (const std::exception& ex) {
-        std::cerr << argv[0] << ": " << aaf_pth << ": error reading aaf file: " << ex.what() << std::endl;
-        return 1;
-      }
-    }
+    return 0;
+  } catch (const std::exception& ex) {
+    std::cerr << "aafprint: " << ex.what() << std::endl;
+    return 1;
   }
-
-  return 0;
 }

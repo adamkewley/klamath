@@ -6,6 +6,7 @@
 
 #include "src/formats/pro.hpp"
 #include "src/formats/pro_reader.hpp"
+#include "src/utils/cli.hpp"
 
 using std::vector;
 using std::string;
@@ -18,28 +19,9 @@ using klmth::pro::ObjectType;
 using klmth::pro::WallData;
 using klmth::pro::ItemData;
 using klmth::pro::SceneryData;
+using namespace klmth;
 
 namespace {
-  using namespace klmth;
-
-  struct NamedStrm {
-    istream& strm;
-    string name;
-  };
-
-  ifstream open_file(const string& pth) {
-    ifstream f{pth, std::ios::in | std::ios::binary};
-
-    if (f.good()) {
-      f.exceptions(std::ifstream::badbit);
-      return f;
-    } else {
-      stringstream err;
-      err << pth << ": " << strerror(errno);
-      throw std::runtime_error{err.str()};
-    }
-  }
-
   std::string join(const std::string& delim, const std::vector<std::string>& els) {
     if (els.size() == 0) {
       return "";
@@ -109,52 +91,30 @@ namespace {
     }
   }
 
-  void run(ostream& out, NamedStrm& strm) {
+  void run(ostream& out, cli::NamedStream& strm) {
     out << "[" << strm.name << "]" << std::endl;
     Header h = pro::read_header(strm.strm);
     print(out, h, strm.strm);
     out << std::endl;
   }
-
-  void run(ostream& out, const vector<string>& pths) {
-    if (pths.empty()) {
-      NamedStrm stdin{ std::cin, "stdin" };
-      run(out, stdin);
-    } else {
-      for (const string& pth : pths) {
-        if (pth == "-") {
-          NamedStrm stdin{ std::cin, "stdin" };
-          run(out, stdin);
-        } else {
-          ifstream fd = open_file(pth);
-          NamedStrm in{ fd, pth };
-          try {
-            run(out, in);
-          } catch (const std::exception& ex) {
-            std::stringstream msg;
-            msg << pth << ": " << ex.what();
-            throw std::runtime_error{msg.str()};
-          }
-        }
-      }
-    }
-  }
 }
 
 int cmd_proheader(int argc, char** argv) {
-  vector<string> pths;
+  vector<string> paths;
 
   CLI::App app{"dump PRO file headers"};
-  app.add_option("pro_file", pths, "path to pro file(s). '-' is interpreted as stdin.");
+  app.add_option("pro_file", paths, "path to pro file(s). '-' is interpreted as stdin.");
 
   CLI11_PARSE(app, argc, argv);
 
   try {
-    run(std::cout, pths);
+    auto handler = [](cli::NamedStream& strm) {
+                     run(std::cout, strm);
+                   };
+
+    cli::handle_paths(paths, handler);
+
     return 0;
-  } catch (const std::ios_base::failure& ex) {
-    std::cerr << "proheader: " << ex.what() << ": " << strerror(errno) << std::endl;
-    return 1;
   } catch (const std::exception& ex) {
     std::cerr << "proheader: " << ex.what() << std::endl;
     return 1;
