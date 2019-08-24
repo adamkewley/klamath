@@ -33,7 +33,7 @@ namespace klmth {
 
   uint32_t read_le_u32(std::istream& in);
   uint32_t read_be_u32(std::istream& in);
-  int32_t read_be_i32_unsafe(std::istream& in);
+  int32_t read_be_i32(std::istream& in);
   uint16_t read_be_u16(std::istream& in);
   std::vector<int32_t> read_n_be_i32(std::istream& in, size_t n);
   uint8_t read_byte(std::istream& in);

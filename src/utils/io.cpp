@@ -51,7 +51,7 @@ uint32_t klmth::read_be_u32(std::istream& in) {
   return read_be_u32(buf);
 }
 
-int32_t klmth::read_be_i32_unsafe(std::istream& in) {
+int32_t klmth::read_be_i32(std::istream& in) {
   return read_be_u32(in);
 }
 
@@ -64,7 +64,7 @@ uint16_t klmth::read_be_u16(std::istream& in) {
 std::vector<int32_t> klmth::read_n_be_i32(std::istream& in, size_t n) {
   std::vector<int32_t> ret(n);
   for (auto i = 0U; i < n; ++i) {
-    int32_t global_var = read_be_i32_unsafe(in);
+    int32_t global_var = read_be_i32(in);
     ret.push_back(global_var);
   }
   return ret;

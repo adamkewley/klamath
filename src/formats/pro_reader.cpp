@@ -111,7 +111,7 @@ namespace {
   }
 
   nonstd::optional<ScriptId> read_script_id(istream& in) {
-    int32_t v = read_be_i32_unsafe(in);
+    int32_t v = read_be_i32(in);
 
     if (v == -1) {
       return nonstd::nullopt;

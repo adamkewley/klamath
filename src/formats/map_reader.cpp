@@ -44,7 +44,7 @@ namespace {
   }
 
   Elevation read_elevation(std::istream& in) {
-    int32_t e = read_be_i32_unsafe(in);
+    int32_t e = read_be_i32(in);
     switch (e) {
     case 0:
       return Elevation::low;
@@ -61,7 +61,7 @@ namespace {
   }
 
   frm::Orientation read_orientation(std::istream& in) {
-    int o = read_be_i32_unsafe(in);
+    int o = read_be_i32(in);
     switch (o) {
     case 0:
       return frm::north_east;
@@ -85,7 +85,7 @@ namespace {
 
   PlayerDefaults read_player_defaults(std::istream& in) {
     PlayerDefaults ret;
-    ret.pos = read_be_i32_unsafe(in);
+    ret.pos = read_be_i32(in);
     ret.elevation = read_elevation(in);
     ret.orientation = read_orientation(in);
     return ret;
@@ -175,20 +175,20 @@ Header map::parse_header(std::istream& in) {
   ret.version = read_version(in);
   ret.filename = read_filename(in);
   ret.player_defaults = read_player_defaults(in);
-  ret.num_local_vars = read_be_i32_unsafe(in);
-  ret.script_id = read_be_i32_unsafe(in);
+  ret.num_local_vars = read_be_i32(in);
+  ret.script_id = read_be_i32(in);
 
-  int32_t flg = read_be_i32_unsafe(in);
+  int32_t flg = read_be_i32(in);
 
   ret.is_savegame_map = (flg & 0x1) != 0;
   ret.has_low_elevation = (flg & 0x2) == 0;
   ret.has_med_elevation = (flg & 0x4) == 0;
   ret.has_high_elevation = (flg & 0x8) == 0;
 
-  read_be_i32_unsafe(in);  // map darkness (unused)
+  read_be_i32(in);  // map darkness (unused)
 
-  ret.num_global_vars = read_be_i32_unsafe(in);
-  ret.map_id = read_be_i32_unsafe(in);
+  ret.num_global_vars = read_be_i32(in);
+  ret.map_id = read_be_i32(in);
   ret.timestamp = read_be_u32(in);
 
   char throwaway_buf[4*44];
