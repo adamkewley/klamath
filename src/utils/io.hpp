@@ -25,13 +25,13 @@ namespace klmth {
     size_t offset;
   };
   
-  uint32_t read_le_u32_unsafe(const uint8_t* buf) noexcept;
+  uint32_t read_le_u32(const uint8_t* buf) noexcept;
   
   uint32_t read_be_u32_unsafe(const uint8_t* buf) noexcept;
   uint16_t read_be_u16_unsafe(const uint8_t* buf) noexcept;
   int16_t read_be_i16_unsafe(const uint8_t* buf) noexcept;
 
-  uint32_t read_le_u32_unsafe(std::istream& in);
+  uint32_t read_le_u32(std::istream& in);
   uint32_t read_be_u32_unsafe(std::istream& in);
   int32_t read_be_i32_unsafe(std::istream& in);
   uint16_t read_be_u16_unsafe(std::istream& in);
@@ -39,7 +39,7 @@ namespace klmth {
   uint8_t read_byte(std::istream& in);
 
   uint8_t read_u8_unsafe(Cursor& c) noexcept;
-  uint32_t read_le_u32_unsafe(Cursor& c) noexcept;
+  uint32_t read_le_u32(Cursor& c) noexcept;
   uint32_t read_be_u32_unsafe(Cursor& c) noexcept;
   uint16_t read_be_u16_unsafe(Cursor& c) noexcept;
   int16_t read_be_i16_unsafe(Cursor& c) noexcept;

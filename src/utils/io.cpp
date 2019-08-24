@@ -13,7 +13,7 @@ namespace {
   }
 }
 
-uint32_t klmth::read_le_u32_unsafe(const uint8_t* buf) noexcept {
+uint32_t klmth::read_le_u32(const uint8_t* buf) noexcept {
   uint32_t ret = buf[0];
   ret |= static_cast<uint32_t>(buf[1]) << 8;
   ret |= static_cast<uint32_t>(buf[2]) << 16;
@@ -39,10 +39,10 @@ int16_t klmth::read_be_i16_unsafe(const uint8_t* buf) noexcept {
   return static_cast<int16_t>(read_be_u16_unsafe(buf));
 }
 
-uint32_t klmth::read_le_u32_unsafe(std::istream& in) {
+uint32_t klmth::read_le_u32(std::istream& in) {
   uint8_t buf[4];
   read(in, buf, sizeof(buf));
-  return read_le_u32_unsafe(buf);
+  return read_le_u32(buf);
 }
 
 uint32_t klmth::read_be_u32_unsafe(std::istream& in) {
@@ -106,8 +106,8 @@ uint8_t klmth::read_u8_unsafe(Cursor& c) noexcept {
   return *c.read_then_advance_unsafe(1);
 }
 
-uint32_t klmth::read_le_u32_unsafe(Cursor& c) noexcept {
-  return read_le_u32_unsafe(c.read_then_advance_unsafe(4));
+uint32_t klmth::read_le_u32(Cursor& c) noexcept {
+  return read_le_u32(c.read_then_advance_unsafe(4));
 }
 
 uint32_t klmth::read_be_u32_unsafe(Cursor& c) noexcept {

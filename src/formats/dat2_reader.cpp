@@ -6,7 +6,7 @@
 
 #include "src/utils/io.hpp"
 
-using klmth::read_le_u32_unsafe;
+using klmth::read_le_u32;
 using namespace dat2;
 
 
@@ -24,8 +24,8 @@ Sections dat2::read_sections(std::istream& in) {
     throw std::runtime_error("insufficient data in dat2 file: must be at least 12 bytes (num files section, tree size section, and file size section");
   }
 
-  uint32_t tree_size = read_le_u32_unsafe(in);
-  uint32_t file_size = read_le_u32_unsafe(in);
+  uint32_t tree_size = read_le_u32(in);
+  uint32_t file_size = read_le_u32(in);
 
   if (file_size != in.tellg()) {
     throw std::runtime_error("filesize declared in DAT2 footer does not match actual size of the file");
@@ -38,7 +38,7 @@ Sections dat2::read_sections(std::istream& in) {
   uint32_t data_section_size = num_files_offset;
 
   in.seekg(num_files_offset);
-  uint32_t num_files = read_le_u32_unsafe(in);
+  uint32_t num_files = read_le_u32(in);
 
   return { data_section_size, num_files, tree_offset, tree_size, file_size };
 }
@@ -53,7 +53,7 @@ TreeEntry dat2::read_tree_entry(std::istream& in) {
 
   TreeEntry out;
   
-  uint32_t filename_len = read_le_u32_unsafe(in);
+  uint32_t filename_len = read_le_u32(in);
 
   std::vector<uint8_t> filename_buf;
   filename_buf.resize(filename_len);
@@ -77,9 +77,9 @@ TreeEntry dat2::read_tree_entry(std::istream& in) {
 
   klmth::Cursor c{buf.data(), buf.size()};
   out.is_compressed = read_u8_unsafe(c) != 0;
-  out.decompressed_size = read_le_u32_unsafe(c);
-  out.packed_size = read_le_u32_unsafe(c);
-  out.offset = read_le_u32_unsafe(c);
+  out.decompressed_size = read_le_u32(c);
+  out.packed_size = read_le_u32(c);
+  out.offset = read_le_u32(c);
 
   return out;
 }
