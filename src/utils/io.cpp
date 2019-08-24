@@ -61,6 +61,12 @@ uint16_t klmth::read_be_u16(std::istream& in) {
   return ::read_be_u16(buf);
 }
 
+int16_t klmth::read_be_i16(std::istream& in) {
+  uint8_t buf[2];
+  ::read(in, buf, sizeof(buf));
+  return ::read_be_i16(buf);
+}
+
 std::vector<int32_t> klmth::read_n_be_i32(std::istream& in, size_t n) {
   std::vector<int32_t> ret(n);
   for (auto i = 0U; i < n; ++i) {
@@ -93,56 +99,8 @@ std::string klmth::read_str(std::istream& in, size_t len) {
   return ret;
 }
 
-klmth::Cursor::Cursor(const uint8_t* _buf, size_t _size) :
-  buf(_buf), size(_size), offset(0) {
-}
-
-const uint8_t* klmth::Cursor::data() const noexcept {
-  return this->buf + this->offset;
-}
-
-size_t klmth::Cursor::remaining() const noexcept {
-  return this->size - this->offset;
-}
-
-void klmth::Cursor::advance_unsafe(size_t n) noexcept {
-  this->offset += n;
-}
-
-const uint8_t* klmth::Cursor::read_then_advance_unsafe(size_t n) noexcept {
-  const uint8_t* ret = this->data();
-  this->offset += n;
-  return ret;
-}
-
-uint8_t klmth::read_u8_unsafe(Cursor& c) {
-  return *c.read_then_advance_unsafe(1);
-}
-
-uint32_t klmth::read_le_u32(Cursor& c) {
-  return ::read_le_u32(c.read_then_advance_unsafe(4));
-}
-
-uint32_t klmth::read_be_u32(Cursor& c) {
-  return ::read_be_u32(c.read_then_advance_unsafe(4));
-}
-
-uint16_t klmth::read_be_u16(Cursor& c) {
-  return ::read_be_u16(c.read_then_advance_unsafe(2));
-}
-
-int16_t klmth::read_be_i16(Cursor& c) {
-  return ::read_be_i16(c.read_then_advance_unsafe(2));
-}
-
-std::vector<uint8_t> klmth::read(Cursor& c, size_t n) {
-  if (c.remaining() < n) {
-    throw std::runtime_error{"prematurely ran out of data"};
-  }
-
+std::vector<uint8_t> klmth::read(std::istream& in, size_t n) {
   std::vector<uint8_t> ret(n);
-  const uint8_t* start = c.read_then_advance_unsafe(n);
-  std::memcpy(ret.data(), start, n);
-
+  ::read(in, ret.data(), n);
   return ret;
 }

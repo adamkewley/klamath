@@ -29,11 +29,7 @@ namespace {
     magic_nums.size() + header_len + (aaf::num_glyphs * glyph_min_len);
 
 
-  void read_header(klmth::Cursor& c, aaf::File& out) {
-    if (c.remaining() < min_aaf_len) {
-      throw std::runtime_error("too little data for an AAF file");
-    }
-
+  void read_header(std::istream& c, aaf::File& out) {
     std::array<uint8_t, magic_nums.size()> mn_data =
       klmth::read<magic_nums.size()>(c);
 
@@ -46,44 +42,25 @@ namespace {
     out.space_width = read_be_u16(c);
     out.line_spacing = read_be_u16(c);
   }
-
-  aaf::File read(const uint8_t* buf, size_t n) {
-    klmth::Cursor c{buf, n};
-    aaf::File out;
-    
-    read_header(c, out);
-
-    // read glyph headers
-    for (aaf::Glyph& g : out.glyphs) {
-      if (c.remaining() < glyph_min_len) {
-        throw std::runtime_error("ran out of data when reading an aaf glyph header");
-      }
-
-      g.dimensions.width = read_be_u16(c);
-      g.dimensions.height = read_be_u16(c);
-      read_be_u32(c);
-    }
-
-    // read glyph opacities
-    for (aaf::Glyph& g : out.glyphs) {
-      size_t num_opacities = g.dimensions.width * g.dimensions.height;
-      g.opacities = klmth::read(c, num_opacities);
-    }
-
-    return out;
-  }
 }
 
 aaf::File aaf::read_file(std::istream& in) {
-  static const size_t max_aaf_size = 1 << 16;
+  aaf::File out;
 
-  std::array<uint8_t, max_aaf_size> buf;
-  in.read(reinterpret_cast<char*>(buf.data()), buf.size());
+  read_header(in, out);
 
-  if (in.gcount() == max_aaf_size && in.eof()) {
-    throw std::runtime_error("input data too big for an aaf file");
-  } else {
-    return ::read(buf.data(), in.gcount());
+  // read glyph headers
+  for (aaf::Glyph& g : out.glyphs) {
+    g.dimensions.width = read_be_u16(in);
+    g.dimensions.height = read_be_u16(in);
+    read_be_u32(in);
   }
-}
 
+  // read glyph opacities
+  for (aaf::Glyph& g : out.glyphs) {
+    size_t num_opacities = g.dimensions.width * g.dimensions.height;
+    g.opacities = klmth::read(in, num_opacities);
+  }
+
+  return out;
+}

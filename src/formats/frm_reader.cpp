@@ -14,15 +14,7 @@ using klmth::geometry::area;
 namespace {
 
   frm::Frame read_frame(std::istream& in, frm::PixelShift base_shift) {
-    constexpr size_t frame_header_size = 2 + 2 + 4 + 2 + 2;
-    
-    std::array<uint8_t, frame_header_size> buf;
-
-    in.read(reinterpret_cast<char*>(buf.data()), buf.size());
-    if (in.gcount() != buf.size()) {
-      throw std::runtime_error("ran out of data while reading frm frame header");
-    }
-    klmth::Cursor c{buf.data(), buf.size()};
+    std::istream& c = in;
     
     frm::Dimensions dimensions{
         read_be_u16(c), 
@@ -71,17 +63,8 @@ namespace {
 }
 
 frm::Header frm::read_header(std::istream& in) {
-  constexpr size_t file_header_size =
-    4 + 2 + 2 + 2 + (2 * frm::num_orientations) + (2 * frm::num_orientations) + (4 * frm::num_orientations) + 4;
+  std::istream& c = in;
   
-  std::array<uint8_t, file_header_size> buf;
-
-  in.read(reinterpret_cast<char*>(buf.data()), buf.size());
-  if (in.gcount() != buf.size()) {
-    throw std::runtime_error("ran out of data while reading an frm header");
-  }
-
-  klmth::Cursor c{buf.data(), buf.size()};
   uint32_t version_number = read_be_u32(c);
   uint16_t fps = read_be_u16(c);
   uint16_t action_frame = read_be_u16(c);
