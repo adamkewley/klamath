@@ -74,11 +74,7 @@ int cmd_frmheader(int argc, char** argv) {
   std::vector<std::string> frm_paths;
   app.add_option("frm_file", frm_paths, "path to FRM file. '-' is interpreted as stdin. Supplying no paths will cause application to read FRM data from stdin");
 
-  try {
-    app.parse(argc, argv);
-  } catch (const CLI::ParseError& ex) {
-    return app.exit(ex);
-  }
+  CLI11_PARSE(app, argc, argv);
 
   try {
     if (frm_paths.empty()) {

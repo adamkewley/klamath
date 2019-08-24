@@ -54,11 +54,7 @@ int cmd_paldump(int argc, char** argv) {
   std::vector<std::string> pal_pths;
   app.add_option("pal_file", pal_pths, "path to PAL file. '-' is interpreted as stdin. Supplying no paths will cause application to read AAF data from stdin");
 
-  try {
-    app.parse(argc, argv);
-  } catch (const CLI::ParseError& ex) {
-    return app.exit(ex);
-  }
+  CLI11_PARSE(app, argc, argv);
 
   try {
     if (pal_pths.empty()) {

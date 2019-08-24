@@ -38,11 +38,7 @@ int cmd_mapglobals(int argc, char** argv) {
   std::vector<std::string> paths;
   app.add_option("map_file", paths, "path to MAP file. '-' is interpreted as stdin. Supplying no paths will cause application to read MAP from stdin");
 
-  try {
-    app.parse(argc, argv);
-  } catch (const CLI::ParseError& ex) {
-    return app.exit(ex);
-  }
+  CLI11_PARSE(app, argc, argv);
 
   try {
     if (paths.empty()) {

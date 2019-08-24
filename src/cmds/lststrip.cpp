@@ -44,11 +44,7 @@ int cmd_lststrip(int argc, char** argv) {
   std::vector<std::string> paths;
   app.add_option("lst_file", paths, "path to LST file. '-' is interpreted as stdin. Supplying no paths will cause application to read LST from stdin.");
 
-  try {
-    app.parse(argc, argv);
-  } catch (const CLI::ParseError& ex) {
-    return app.exit(ex);
-  }
+  CLI11_PARSE(app, argc, argv);
 
   try {
     if (paths.empty()) {

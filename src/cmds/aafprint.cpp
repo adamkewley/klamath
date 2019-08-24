@@ -47,11 +47,7 @@ int cmd_aafprint(int argc, char** argv) {
   std::vector<std::string> aaf_pths;
   app.add_option("aaf_file", aaf_pths, "path to AAF file. '-' is interpreted as stdin. Supplying no paths will cause application to read AAF data from stdin");
 
-  try {
-    app.parse(argc, argv);
-  } catch (const CLI::ParseError& ex) {
-    return app.exit(ex);
-  }
+  CLI11_PARSE(app, argc, argv);
 
   if (aaf_pths.size() == 0) {
     try {

@@ -147,11 +147,7 @@ int cmd_proheader(int argc, char** argv) {
   CLI::App app{"dump PRO file headers"};
   app.add_option("pro_file", pths, "path to pro file(s). '-' is interpreted as stdin.");
 
-  try {
-    app.parse(argc, argv);
-  } catch (const CLI::ParseError& ex) {
-    return app.exit(ex);
-  }
+  CLI11_PARSE(app, argc, argv);
 
   try {
     run(std::cout, pths);
