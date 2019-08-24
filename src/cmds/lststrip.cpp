@@ -13,7 +13,7 @@ namespace {
   
   void handle_output(std::istream& in, std::ostream& out, const std::string& stream_name) {
     out << "[" << stream_name << "]" << std::endl;
-    for (const std::string& entry : lst::parse_file(in)) {
+    for (const std::string& entry : lst::read_file(in)) {
       out << entry << std::endl;
     }
   }

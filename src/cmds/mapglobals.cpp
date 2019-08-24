@@ -14,7 +14,7 @@ namespace {
   
   void print_stream(std::istream& in, std::ostream& out, const std::string& stream_name) {
     out << "[" << stream_name << "]" << std::endl;
-    File f = map::parse_file(in);
+    File f = map::read_file(in);
     for (int32_t global_var : f.global_vars) {
       out << global_var << std::endl;
     }

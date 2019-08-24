@@ -62,14 +62,14 @@ namespace {
   }
 
   void read_and_print_wall(ostream& out, istream& in) {
-    WallData wd = pro::parse_wall_data(in);
+    WallData wd = pro::read_wall_data(in);
     print_kv(out, "wall_orientation", pro::str(wd.orientation));
     print_kv(out, "action_flags", join(", ", pro::flag_strs(wd.action_flags)));
     print_kv(out, "material_id", pro::str(wd.material_id));
   }
 
   void read_and_print_item(ostream& out, istream& in) {
-    ItemData item = pro::parse_item_data(in);
+    ItemData item = pro::read_item_data(in);
     print_kv(out, "item_type", pro::str(item.type));
     print_kv(out, "material_id", pro::str(item.material_id));
     print_kv(out, "size", item.size);
@@ -80,7 +80,7 @@ namespace {
   }
 
   void read_and_print_scenery(ostream& out, istream& in) {
-    SceneryData scenery = pro::parse_scenery_data(in);
+    SceneryData scenery = pro::read_scenery_data(in);
     print_kv(out, "orientation", pro::str(scenery.type));
     print_kv(out, "action_flags", join(", ", pro::flag_strs(scenery.action_flags)));
   }
@@ -111,7 +111,7 @@ namespace {
 
   void run(ostream& out, NamedStrm& strm) {
     out << "[" << strm.name << "]" << std::endl;
-    Header h = pro::parse_header(strm.strm);
+    Header h = pro::read_header(strm.strm);
     print(out, h, strm.strm);
     out << std::endl;
   }

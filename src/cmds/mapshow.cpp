@@ -73,7 +73,7 @@ namespace {
 
   lst::File read_tiles(const std::string& tiles_dir_pth) {
     std::ifstream tiles_file = open_file(tiles_dir_pth + "/TILES.LST");
-    return lst::parse_file(tiles_file);
+    return lst::read_file(tiles_file);
   }
 
   frm::File read_frm(const std::string& pth) {
@@ -278,7 +278,7 @@ namespace {
   void show_map_strm(AppState& st, NamedStrm in) {
     try {
       st.window.set_title(in.name);
-      map::File f = map::parse_file(in.strm);
+      map::File f = map::read_file(in.strm);
       render(st, f);
     } catch (const std::exception& ex) {
       std::stringstream msg;

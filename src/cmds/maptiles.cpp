@@ -46,7 +46,7 @@ namespace {
 
   void handle_output(std::istream& in, std::ostream& out, const std::string& stream_name) {
     out << "[[[" << stream_name << "]]]" << std::endl;
-    File f = map::parse_file(in);
+    File f = map::read_file(in);
     
     if (f.low_elevation_tiles) {
       out << "[[low]]" << std::endl;

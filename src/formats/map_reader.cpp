@@ -170,7 +170,7 @@ namespace {
   }
 }
 
-Header map::parse_header(std::istream& in) {
+Header map::read_header(std::istream& in) {
   Header ret;
   ret.version = read_version(in);
   ret.filename = read_filename(in);
@@ -201,8 +201,8 @@ Header map::parse_header(std::istream& in) {
   return ret;
 }
 
-File map::parse_file(std::istream& in) {
-  const Header h = parse_header(in);
+File map::read_file(std::istream& in) {
+  const Header h = read_header(in);
 
   std::vector<int32_t> globals = read_n_be_i32(in, h.num_global_vars);
   std::vector<int32_t> locals = read_n_be_i32(in, h.num_local_vars);

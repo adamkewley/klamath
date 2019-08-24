@@ -26,7 +26,7 @@ using klmth::pro::SceneryData;
 using klmth::pro::SceneryType;
 
 namespace {
-  ObjectType parse_obj_type(uint8_t c) {
+  ObjectType read_obj_type(uint8_t c) {
     switch (c) {
     case 0:
       return ObjectType::item;
@@ -49,13 +49,13 @@ namespace {
 
   ObjectId read_oid(istream& in) {
     uint32_t b = read_be_u32(in);
-    ObjectType type = parse_obj_type(b >> 24);
+    ObjectType type = read_obj_type(b >> 24);
     uint16_t val = b & 0xffff;
 
     return { type, val };
   }
 
-  FrmType parse_frm_type(uint8_t c) {
+  FrmType read_frm_type(uint8_t c) {
     switch (c) {
     case 0:
       return FrmType::item;
@@ -82,7 +82,7 @@ namespace {
 
   FrmId read_frmid(istream& in) {
     uint32_t b = read_be_u32(in);
-    FrmType type = parse_frm_type(b >> 24);
+    FrmType type = read_frm_type(b >> 24);
     uint16_t val = b & 0xffff;
 
     return { type, val };
@@ -194,7 +194,7 @@ namespace {
   }
 }
 
-Header klmth::pro::parse_header(std::istream& in) {
+Header klmth::pro::read_header(std::istream& in) {
   Header h;
   h.obj_id = read_oid(in);
   h.text_id = read_be_u32(in);
@@ -205,7 +205,7 @@ Header klmth::pro::parse_header(std::istream& in) {
   return h;
 }
 
-WallData pro::parse_wall_data(std::istream& in) {
+WallData pro::read_wall_data(std::istream& in) {
   WallData wd;
   wd.orientation = read_wall_orientation(in);
   wd.action_flags = { read_be_u16(in) };
@@ -214,7 +214,7 @@ WallData pro::parse_wall_data(std::istream& in) {
   return wd;
 }
 
-ItemData pro::parse_item_data(std::istream& in) {
+ItemData pro::read_item_data(std::istream& in) {
   ItemData ret;
 
   in.ignore(3);  // flags ext: some parts for all items, some parts for weapons
@@ -232,7 +232,7 @@ ItemData pro::parse_item_data(std::istream& in) {
   return ret;
 }
 
-SceneryData pro::parse_scenery_data(std::istream& in) {
+SceneryData pro::read_scenery_data(std::istream& in) {
   SceneryData ret;
   ret.orientation = read_wall_orientation(in);
   ret.action_flags = { read_be_u16(in) };

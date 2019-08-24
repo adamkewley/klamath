@@ -19,7 +19,7 @@ namespace {
     }
   }
 
-  pal::File parse_pal(std::istream& in, const std::string& in_name) {
+  pal::File read_pal(std::istream& in, const std::string& in_name) {
     try {
       return pal::parse(in);
     } catch (const std::exception& ex) {
@@ -28,7 +28,7 @@ namespace {
   }
 
   void print_stream(std::istream& in, std::ostream& out, const std::string& in_name) {
-    pal::File f = parse_pal(in, in_name);
+    pal::File f = read_pal(in, in_name);
     print_pal(f, out);
   }
 

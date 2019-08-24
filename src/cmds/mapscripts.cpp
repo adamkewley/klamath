@@ -10,7 +10,7 @@ using klmth::cli::open_file;
 
 namespace {
   void print_stream(NamedStream& strm, std::ostream& out) {
-    map::File f = map::parse_file(strm.strm);
+    map::File f = map::read_file(strm.strm);
     
     out << "[" << strm.name << "]" << std::endl;
     for (const map::Script& script : f.scripts) {

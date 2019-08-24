@@ -14,7 +14,7 @@ namespace {
   using klmth::map::Version;
   using klmth::map::PlayerDefaults;
   using klmth::map::Elevation;
-  using klmth::map::parse_header;
+  using klmth::map::read_header;
   using klmth::map::Elevation;
 
   const char* version_str(Version v) {
@@ -70,7 +70,7 @@ namespace {
   }
   
   void print_stream(std::istream& in, std::ostream& out, const std::string& stream_name) {
-    print_header(parse_header(in), out, stream_name);
+    print_header(read_header(in), out, stream_name);
   }
 
   void print_stdin(std::ostream& out) {
