@@ -13,9 +13,6 @@ namespace klmth {
       std::string name;
     };
 
-    std::ifstream open_file(const std::string& pth);
-    void handle_paths(const std::vector<std::string>& pths, std::function<void(NamedStream&)> callback);
-
     int main_with_paths(const char* appname,
                         const std::vector<std::string>& pths,
                         std::function<void(NamedStream&)> callback);

@@ -6,7 +6,6 @@
 
 using namespace klmth;
 using klmth::cli::NamedStream;
-using klmth::cli::open_file;
 
 namespace {
   void print_stream(NamedStream& strm, std::ostream& out) {
