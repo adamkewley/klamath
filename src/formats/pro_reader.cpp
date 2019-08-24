@@ -227,7 +227,7 @@ ItemData pro::parse_item_data(std::istream& in) {
   ret.weight = read_be_u32(in);
   ret.cost = read_be_u32(in);
   ret.inventory_fid = read_be_u32(in);
-  ret.sound_id = read_byte(in);
+  ret.sound_id = read_u8(in);
 
   return ret;
 }
@@ -239,6 +239,6 @@ SceneryData pro::parse_scenery_data(std::istream& in) {
   ret.script_id = read_script_id(in);
   ret.type = read_scenery_type(in);
   ret.material_id = read_material_id(in);
-  ret.sound_id = read_byte(in);
+  ret.sound_id = read_u8(in);
   return ret;
 }

@@ -7,6 +7,8 @@
 #include "src/utils/io.hpp"
 
 using klmth::read_le_u32;
+using klmth::read_u8;
+using klmth:: read_str;
 using namespace dat2;
 
 
@@ -44,42 +46,15 @@ Sections dat2::read_sections(std::istream& in) {
 }
 
 TreeEntry dat2::read_tree_entry(std::istream& in) {
-  constexpr unsigned is_compressed_len = 1;
-  constexpr unsigned decompressed_size_len = 4;
-  constexpr unsigned packed_size_len = 4;
-  constexpr unsigned offset_len = 4;
-  constexpr unsigned fixed_fields_len =
-    is_compressed_len + decompressed_size_len + packed_size_len + offset_len;
-
   TreeEntry out;
-  
+
   uint32_t filename_len = read_le_u32(in);
+  out.filename = read_str(in, filename_len);
 
-  std::vector<uint8_t> filename_buf;
-  filename_buf.resize(filename_len);
-
-  in.read(reinterpret_cast<char*>(filename_buf.data()), filename_buf.size());
-  if (!in.good()) {
-    throw std::runtime_error("input stream in bad state after reading dat2 entry filename");
-  } else if (static_cast<unsigned>(in.gcount()) != filename_buf.size()) {
-    throw std::runtime_error("ran out of data when trying to read a dat2 entry filename");
-  }
-
-  out.filename.assign(reinterpret_cast<char*>(filename_buf.data()), filename_buf.size());
-
-  std::array<uint8_t, fixed_fields_len> buf;
-  in.read(reinterpret_cast<char*>(buf.data()), buf.size());
-  if (!in.good()) {
-    throw std::runtime_error("input stream in bad state after reading dat2 entry fields");
-  } else if (static_cast<unsigned>(in.gcount() != buf.size())) {
-    throw std::runtime_error("ran out of data when trying to read dat2 entry fields");
-  }
-
-  klmth::Cursor c{buf.data(), buf.size()};
-  out.is_compressed = read_u8_unsafe(c) != 0;
-  out.decompressed_size = read_le_u32(c);
-  out.packed_size = read_le_u32(c);
-  out.offset = read_le_u32(c);
+  out.is_compressed = read_u8(in) != 0;
+  out.decompressed_size = read_le_u32(in);
+  out.packed_size = read_le_u32(in);
+  out.offset = read_le_u32(in);
 
   return out;
 }
