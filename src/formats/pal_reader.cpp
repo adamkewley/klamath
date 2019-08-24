@@ -1,8 +1,8 @@
 #include "src/formats/pal_reader.hpp"
 
-#include <string>
 #include <stdexcept>
-#include <istream>
+
+#include "src/utils/io.hpp"
 
 
 namespace {
@@ -28,11 +28,7 @@ namespace {
 
 pal::File pal::parse(std::istream& in) {
   std::array<uint8_t, filesize> buf;
-  in.read(reinterpret_cast<char*>(buf.data()), buf.size());
-
-  if (in.gcount() != buf.size()) {
-    throw std::runtime_error("insufficient data in palette (.pal) source: required size is " + std::to_string(filesize) + " bytes");
-  }
+  klmth::read(in, buf.data(), buf.size());
 
   pal::File palette;
   ::parse(buf.data(), buf.size(), palette);

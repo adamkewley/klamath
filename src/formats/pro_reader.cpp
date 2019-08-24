@@ -6,9 +6,6 @@
 #include "src/utils/io.hpp"
 
 using namespace klmth;
-using std::runtime_error;
-using std::istream;
-using std::stringstream;
 using klmth::read_be_u32;
 using klmth::pro::Header;
 using klmth::pro::ObjectId;
@@ -41,13 +38,13 @@ namespace {
     case 5:
       return ObjectType::misc;
     default:
-      stringstream ss;
+      std::stringstream ss;
       ss << "unknown object type (" << c << ") encountered in PRO file";
-      throw runtime_error{ss.str()};
+      throw std::runtime_error{ss.str()};
     }
   }
 
-  ObjectId read_oid(istream& in) {
+  ObjectId read_oid(std::istream& in) {
     uint32_t b = read_be_u32(in);
     ObjectType type = read_obj_type(b >> 24);
     uint16_t val = b & 0xffff;
@@ -74,13 +71,13 @@ namespace {
     case 7:
       return FrmType::inventory;
     default:
-      stringstream ss;
+      std::stringstream ss;
       ss << "unknown frm type (" << c << ") encountered in PRO file";
-      throw runtime_error{ss.str()};
+      throw std::runtime_error{ss.str()};
     }
   }
 
-  FrmId read_frmid(istream& in) {
+  FrmId read_frmid(std::istream& in) {
     uint32_t b = read_be_u32(in);
     FrmType type = read_frm_type(b >> 24);
     uint16_t val = b & 0xffff;
@@ -88,7 +85,7 @@ namespace {
     return { type, val };
   }
 
-  WallOrientation read_wall_orientation(istream& in) {
+  WallOrientation read_wall_orientation(std::istream& in) {
     uint16_t v = read_be_u16(in);
     switch (v) {
     case 0x0000:
@@ -104,13 +101,13 @@ namespace {
     case 0x8000:
       return WallOrientation::west_corner;
     default:
-      stringstream ss;
+      std::stringstream ss;
       ss << "unknown wall orientation value (" << v << "encountered in PRO file";
       throw std::runtime_error{ss.str()};
     }
   }
 
-  nonstd::optional<ScriptId> read_script_id(istream& in) {
+  nonstd::optional<ScriptId> read_script_id(std::istream& in) {
     int32_t v = read_be_i32(in);
 
     if (v == -1) {
@@ -120,7 +117,7 @@ namespace {
     }
   }
 
-  MaterialId read_material_id(istream& in) {
+  MaterialId read_material_id(std::istream& in) {
     uint32_t v = read_be_u32(in);
 
     switch (v) {
@@ -141,13 +138,13 @@ namespace {
     case 7:
       return MaterialId::leather;
     default:
-      stringstream ss;
+      std::stringstream ss;
       ss << "unknown material id (" << v << ") encountered in PRO file";
       throw std::runtime_error{ss.str()};
     }
   }
 
-  ItemType read_item_type(istream& in) {
+  ItemType read_item_type(std::istream& in) {
     uint32_t v = read_be_u32(in);
     switch (v) {
     case 0:
@@ -165,13 +162,13 @@ namespace {
     case 6:
       return ItemType::key;
     default:
-      stringstream msg;
+      std::stringstream msg;
       msg << "unknown item type value (" << v << ") encountered";
       throw std::runtime_error{msg.str()};
     }
   }
 
-  SceneryType read_scenery_type(istream& in) {
+  SceneryType read_scenery_type(std::istream& in) {
     uint32_t v = read_be_u32(in);
     switch (v) {
     case 0:
@@ -187,7 +184,7 @@ namespace {
     case 5:
       return SceneryType::generic;
     default:
-      stringstream msg;
+      std::stringstream msg;
       msg << "unknown scenery type (" << v << ") encountered";
       throw std::runtime_error{msg.str()};
     }
@@ -208,7 +205,7 @@ Header klmth::pro::read_header(std::istream& in) {
 WallData pro::read_wall_data(std::istream& in) {
   WallData wd;
   wd.orientation = read_wall_orientation(in);
-  wd.action_flags = { read_be_u16(in) };
+  wd.action_flags = ActionFlags{read_be_u16(in)};
   wd.script_id = read_script_id(in);
   wd.material_id = read_material_id(in);
   return wd;
@@ -217,9 +214,9 @@ WallData pro::read_wall_data(std::istream& in) {
 ItemData pro::read_item_data(std::istream& in) {
   ItemData ret;
 
-  in.ignore(3);  // flags ext: some parts for all items, some parts for weapons
-  in.ignore(1);  // attack modes: only for weapons
-  in.ignore(4);  // script ID
+  skip<3>(in);  // flags ext: some parts for all items, some parts for weapons
+  skip<1>(in);  // attack modes: only for weapons
+  skip<4>(in);  // script ID
 
   ret.type = read_item_type(in);
   ret.material_id = read_material_id(in);
@@ -235,7 +232,7 @@ ItemData pro::read_item_data(std::istream& in) {
 SceneryData pro::read_scenery_data(std::istream& in) {
   SceneryData ret;
   ret.orientation = read_wall_orientation(in);
-  ret.action_flags = { read_be_u16(in) };
+  ret.action_flags = ActionFlags{read_be_u16(in)};
   ret.script_id = read_script_id(in);
   ret.type = read_scenery_type(in);
   ret.material_id = read_material_id(in);

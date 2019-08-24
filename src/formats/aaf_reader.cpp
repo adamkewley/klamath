@@ -9,6 +9,7 @@
 
 using klmth::read_be_u32;
 using klmth::read_be_u16;
+using klmth::skip;
 
 namespace {
   constexpr std::array<uint8_t, 4> magic_nums{ 'A', 'A', 'F', 'F' };
@@ -29,18 +30,15 @@ namespace {
     magic_nums.size() + header_len + (aaf::num_glyphs * glyph_min_len);
 
 
-  void read_header(std::istream& c, aaf::File& out) {
-    std::array<uint8_t, magic_nums.size()> mn_data =
-      klmth::read<magic_nums.size()>(c);
-
-    if (mn_data != magic_nums) {
+  void read_header(std::istream& in, aaf::File& out) {
+    if (klmth::read<magic_nums.size()>(in) != magic_nums) {
       throw std::runtime_error("first four bytes of an AAF file are not the magic number (AAFF)");
     }
 
-    out.max_glyph_height = read_be_u16(c);
-    out.letter_spacing = read_be_u16(c);
-    out.space_width = read_be_u16(c);
-    out.line_spacing = read_be_u16(c);
+    out.max_glyph_height = read_be_u16(in);
+    out.letter_spacing = read_be_u16(in);
+    out.space_width = read_be_u16(in);
+    out.line_spacing = read_be_u16(in);
   }
 }
 
@@ -53,7 +51,7 @@ aaf::File aaf::read_file(std::istream& in) {
   for (aaf::Glyph& g : out.glyphs) {
     g.dimensions.width = read_be_u16(in);
     g.dimensions.height = read_be_u16(in);
-    read_be_u32(in);
+    skip<4>(in);  // area, which can be computed from width*height
   }
 
   // read glyph opacities

@@ -179,24 +179,18 @@ Header map::read_header(std::istream& in) {
   ret.script_id = read_be_i32(in);
 
   int32_t flg = read_be_i32(in);
-
   ret.is_savegame_map = (flg & 0x1) != 0;
   ret.has_low_elevation = (flg & 0x2) == 0;
   ret.has_med_elevation = (flg & 0x4) == 0;
   ret.has_high_elevation = (flg & 0x8) == 0;
 
-  read_be_i32(in);  // map darkness (unused)
+  skip<4>(in);  // map darkness (unused)
 
   ret.num_global_vars = read_be_i32(in);
   ret.map_id = read_be_i32(in);
   ret.timestamp = read_be_u32(in);
 
-  char throwaway_buf[4*44];
-  in.read(throwaway_buf, sizeof(throwaway_buf));
-
-  if (in.gcount() != 4*44) {
-    throw std::runtime_error{"ran out of data when skipping to the end of a MAP header"};
-  }
+  skip<4*44>(in);  // skipping to the end of a MAP header
 
   return ret;
 }

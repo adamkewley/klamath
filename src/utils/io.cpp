@@ -4,14 +4,6 @@
 #include <stdexcept>
 
 namespace {
-  void read(std::istream& in, uint8_t* buf, size_t n) {
-    in.read(reinterpret_cast<char*>(buf), n);
-
-    if (static_cast<size_t>(in.gcount()) != n) {
-      throw std::runtime_error("ran out of data when trying to read a stream");
-    }
-  }
-
   uint32_t read_le_u32(const uint8_t* buf) {
     uint32_t ret = buf[0];
     ret |= static_cast<uint32_t>(buf[1]) << 8;
@@ -41,13 +33,13 @@ namespace {
 
 uint32_t klmth::read_le_u32(std::istream& in) {
   uint8_t buf[4];
-  ::read(in, buf, sizeof(buf));
+  read(in, buf, sizeof(buf));
   return ::read_le_u32(buf);
 }
 
 uint32_t klmth::read_be_u32(std::istream& in) {
   uint8_t buf[4];
-  ::read(in, buf, sizeof(buf));
+  read(in, buf, sizeof(buf));
   return ::read_be_u32(buf);
 }
 
@@ -57,13 +49,13 @@ int32_t klmth::read_be_i32(std::istream& in) {
 
 uint16_t klmth::read_be_u16(std::istream& in) {
   uint8_t buf[2];
-  ::read(in, buf, sizeof(buf));
+  read(in, buf, sizeof(buf));
   return ::read_be_u16(buf);
 }
 
 int16_t klmth::read_be_i16(std::istream& in) {
   uint8_t buf[2];
-  ::read(in, buf, sizeof(buf));
+  read(in, buf, sizeof(buf));
   return ::read_be_i16(buf);
 }
 
@@ -78,7 +70,7 @@ std::vector<int32_t> klmth::read_n_be_i32(std::istream& in, size_t n) {
 
 uint8_t klmth::read_u8(std::istream& in) {
   uint8_t buf[1];
-  ::read(in, buf, sizeof(buf));
+  read(in, buf, sizeof(buf));
   return buf[0];
 }
 
@@ -101,6 +93,14 @@ std::string klmth::read_str(std::istream& in, size_t len) {
 
 std::vector<uint8_t> klmth::read(std::istream& in, size_t n) {
   std::vector<uint8_t> ret(n);
-  ::read(in, ret.data(), n);
+  read(in, ret.data(), n);
   return ret;
+}
+
+void klmth::read(std::istream& in, uint8_t* buf, size_t n) {
+  in.read(reinterpret_cast<char*>(buf), n);
+
+  if (static_cast<size_t>(in.gcount()) != n) {
+    throw std::runtime_error("ran out of data when trying to read a stream");
+  }
 }
