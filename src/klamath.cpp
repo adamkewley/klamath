@@ -49,7 +49,7 @@ int main(int argc, char** argv) {
     return 1;
   }
 
-  std::string subcommand(argv[1]);
+  std::string subcommand{argv[1]};
 
   if (subcommands.find(subcommand) == subcommands.end()) {
     std::cerr << argv[0] << ": '" << subcommand << "' is not a valid command. Valid commands are:" << std::endl;

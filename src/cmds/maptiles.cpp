@@ -8,9 +8,11 @@
 
 #include "src/formats/map.hpp"
 #include "src/formats/map_reader.hpp"
+#include "src/utils/cli.hpp"
+
+using namespace klmth;
 
 namespace {
-  using namespace klmth;
   using klmth::map::File;
   using klmth::map::Tiles;
 
@@ -44,9 +46,9 @@ namespace {
     }
   }
 
-  void handle_output(std::istream& in, std::ostream& out, const std::string& stream_name) {
-    out << "[[[" << stream_name << "]]]" << std::endl;
-    File f = map::parse_file(in);
+  void handle_output(cli::NamedStream in, std::ostream& out) {
+    out << "[[[" << in.name << "]]]" << std::endl;
+    File f = map::read_file(in.strm);
     
     if (f.low_elevation_tiles) {
       out << "[[low]]" << std::endl;
@@ -63,26 +65,6 @@ namespace {
       print_tiles(*f.high_elevation_tiles, out);      
     }
   }
-  
-  void print_stream(std::istream& in, std::ostream& out, const std::string& stream_name) {
-    try {
-      handle_output(in, out, stream_name);
-    } catch (const std::exception& ex) {
-      throw std::runtime_error(stream_name + ": " + ex.what());
-    }
-  }
-  
-  void print_path(const std::string& path, std::ostream& out) {
-    std::fstream in{path, std::ios::in | std::ios::binary};
-    
-    if (!in.good()) {
-      std::stringstream err{};
-      err << path << ": " << strerror(errno);
-      throw std::runtime_error{err.str()};
-    }
-
-    print_stream(in, out, path);
-  }
 }
 
 int cmd_maptiles(int argc, char** argv) {
@@ -91,28 +73,10 @@ int cmd_maptiles(int argc, char** argv) {
   std::vector<std::string> paths;
   app.add_option("map_file", paths, "path to MAP file. '-' is interpreted as stdin. Supplying no paths will cause application to read MAP from stdin. WARNING: prints out 'a lot' of ASCII: you should zoom your terminal out.");
 
-  try {
-    app.parse(argc, argv);
-  } catch (const CLI::ParseError& ex) {
-    return app.exit(ex);
-  }
+  CLI11_PARSE(app, argc, argv);
 
-  try {
-    if (paths.empty()) {
-      print_stream(std::cin, std::cout, "stdin");
-    } else {
-      for (const auto& path : paths) {
-        if (path == "-") {
-          print_stream(std::cin, std::cout, "stdin");
-        } else {
-          print_path(path, std::cout);
-        }
-      }
-    }
-
-    return 0;
-  } catch (const std::exception& ex) {
-    std::cerr << "maptiles: " << ex.what() << std::endl;
-    return 1;
-  }
+  auto path_handler = [](cli::NamedStream& strm) {
+                        handle_output(strm, std::cout);
+                      };
+  return cli::main_with_paths("maptiles", paths, path_handler);
 }

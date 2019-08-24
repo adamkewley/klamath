@@ -6,40 +6,16 @@
 
 #include "src/formats/pro.hpp"
 #include "src/formats/pro_reader.hpp"
+#include "src/utils/cli.hpp"
 
-using std::vector;
-using std::string;
-using std::istream;
-using std::ifstream;
-using std::stringstream;
-using std::ostream;
 using klmth::pro::Header;
 using klmth::pro::ObjectType;
 using klmth::pro::WallData;
 using klmth::pro::ItemData;
 using klmth::pro::SceneryData;
+using namespace klmth;
 
 namespace {
-  using namespace klmth;
-
-  struct NamedStrm {
-    istream& strm;
-    string name;
-  };
-
-  ifstream open_file(const string& pth) {
-    ifstream f{pth, std::ios::in | std::ios::binary};
-
-    if (f.good()) {
-      f.exceptions(std::ifstream::badbit);
-      return f;
-    } else {
-      stringstream err;
-      err << pth << ": " << strerror(errno);
-      throw std::runtime_error{err.str()};
-    }
-  }
-
   std::string join(const std::string& delim, const std::vector<std::string>& els) {
     if (els.size() == 0) {
       return "";
@@ -57,19 +33,19 @@ namespace {
   }
 
   template<typename T>
-  void print_kv(ostream& out, const char* k, T v) {
+  void print_kv(std::ostream& out, const char* k, T v) {
     out << k << " = " << v << std::endl;
   }
 
-  void read_and_print_wall(ostream& out, istream& in) {
-    WallData wd = pro::parse_wall_data(in);
+  void read_and_print_wall(std::ostream& out, std::istream& in) {
+    WallData wd = pro::read_wall_data(in);
     print_kv(out, "wall_orientation", pro::str(wd.orientation));
     print_kv(out, "action_flags", join(", ", pro::flag_strs(wd.action_flags)));
     print_kv(out, "material_id", pro::str(wd.material_id));
   }
 
-  void read_and_print_item(ostream& out, istream& in) {
-    ItemData item = pro::parse_item_data(in);
+  void read_and_print_item(std::ostream& out, std::istream& in) {
+    ItemData item = pro::read_item_data(in);
     print_kv(out, "item_type", pro::str(item.type));
     print_kv(out, "material_id", pro::str(item.material_id));
     print_kv(out, "size", item.size);
@@ -79,13 +55,13 @@ namespace {
     print_kv(out, "sound_id", item.sound_id);
   }
 
-  void read_and_print_scenery(ostream& out, istream& in) {
-    SceneryData scenery = pro::parse_scenery_data(in);
+  void read_and_print_scenery(std::ostream& out, std::istream& in) {
+    SceneryData scenery = pro::read_scenery_data(in);
     print_kv(out, "orientation", pro::str(scenery.type));
     print_kv(out, "action_flags", join(", ", pro::flag_strs(scenery.action_flags)));
   }
 
-  void print(ostream& out, const Header& h, istream& in) {
+  void print(std::ostream& out, const Header& h, std::istream& in) {
     print_kv(out, "type", pro::str(h.obj_id.type));
     print_kv(out, "object_id", h.obj_id.val);
     print_kv(out, "text_id", h.text_id);
@@ -109,58 +85,24 @@ namespace {
     }
   }
 
-  void run(ostream& out, NamedStrm& strm) {
+  void run(std::ostream& out, cli::NamedStream& strm) {
     out << "[" << strm.name << "]" << std::endl;
-    Header h = pro::parse_header(strm.strm);
+    Header h = pro::read_header(strm.strm);
     print(out, h, strm.strm);
     out << std::endl;
-  }
-
-  void run(ostream& out, const vector<string>& pths) {
-    if (pths.empty()) {
-      NamedStrm stdin{ std::cin, "stdin" };
-      run(out, stdin);
-    } else {
-      for (const string& pth : pths) {
-        if (pth == "-") {
-          NamedStrm stdin{ std::cin, "stdin" };
-          run(out, stdin);
-        } else {
-          ifstream fd = open_file(pth);
-          NamedStrm in{ fd, pth };
-          try {
-            run(out, in);
-          } catch (const std::exception& ex) {
-            std::stringstream msg;
-            msg << pth << ": " << ex.what();
-            throw std::runtime_error{msg.str()};
-          }
-        }
-      }
-    }
   }
 }
 
 int cmd_proheader(int argc, char** argv) {
-  vector<string> pths;
-
   CLI::App app{"dump PRO file headers"};
-  app.add_option("pro_file", pths, "path to pro file(s). '-' is interpreted as stdin.");
+  std::vector<std::string> paths;
+  app.add_option("pro_file", paths, "path to pro file(s). '-' is interpreted as stdin.");
 
-  try {
-    app.parse(argc, argv);
-  } catch (const CLI::ParseError& ex) {
-    return app.exit(ex);
-  }
+  CLI11_PARSE(app, argc, argv);
 
-  try {
-    run(std::cout, pths);
-    return 0;
-  } catch (const std::ios_base::failure& ex) {
-    std::cerr << "proheader: " << ex.what() << ": " << strerror(errno) << std::endl;
-    return 1;
-  } catch (const std::exception& ex) {
-    std::cerr << "proheader: " << ex.what() << std::endl;
-    return 1;
-  }
+  auto path_handler = [](cli::NamedStream& strm) {
+                        run(std::cout, strm);
+                      };
+
+  return cli::main_with_paths("proheader", paths, path_handler);
 }

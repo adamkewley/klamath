@@ -24,4 +24,6 @@ namespace aaf {
     uint16_t line_spacing;
     std::array<Glyph, num_glyphs> glyphs;
   };
+
+  constexpr size_t max_aaf_size = 1 << 16;
 }

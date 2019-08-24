@@ -4,12 +4,11 @@
 #include "third_party/CLI11.hpp"
 
 #include "src/formats/pal_reader.hpp"
+#include "src/utils/cli.hpp"
 
+using namespace klmth;
 
 namespace {
-  const std::string stdin_senteniel = "-";
-
-
   void print_pal(pal::File f, std::ostream& out) {
     out << "palette (rgb):" << std::endl;
     for (const pal::Rgb& rgb : f.palette) {
@@ -18,60 +17,19 @@ namespace {
           << std::to_string(rgb.b) << std::endl;
     }
   }
-
-  pal::File parse_pal(std::istream& in, const std::string& in_name) {
-    try {
-      return pal::parse(in);
-    } catch (const std::exception& ex) {
-      throw std::runtime_error(in_name + ": error parsing + printing: " + ex.what());
-    }
-  }
-
-  void print_stream(std::istream& in, std::ostream& out, const std::string& in_name) {
-    pal::File f = parse_pal(in, in_name);
-    print_pal(f, out);
-  }
-
-  void print_path(const std::string& source, std::ostream& out) {
-    if (source == stdin_senteniel) {
-      print_stream(std::cin, out, "stdin");
-    } else {
-      std::ifstream in;
-      in.open(source, std::ios::in | std::ios::binary);
-
-      if (!in.good()) {
-        throw std::runtime_error(source + ": error opening file");
-      }
-
-      print_stream(in, out, source);
-    }
-  }
 }
 
 
 int cmd_paldump(int argc, char** argv) {
   CLI::App app{"dump pal color indices as plaintext"};
-  std::vector<std::string> pal_pths;
-  app.add_option("pal_file", pal_pths, "path to PAL file. '-' is interpreted as stdin. Supplying no paths will cause application to read AAF data from stdin");
+  std::vector<std::string> paths;
+  app.add_option("pal_file", paths, "path to PAL file. '-' is interpreted as stdin. Supplying no paths will cause application to read AAF data from stdin");
 
-  try {
-    app.parse(argc, argv);
-  } catch (const CLI::ParseError& ex) {
-    return app.exit(ex);
-  }
+  CLI11_PARSE(app, argc, argv);
 
-  try {
-    if (pal_pths.empty()) {
-      print_stream(std::cin, std::cout, "stdin");
-    } else {
-      for (auto& pal_path : pal_pths) {
-        print_path(pal_path, std::cout);
-      }
-    }
-
-    return 0;
-  } catch (const std::exception& ex) {
-    std::cerr << argv[0] << ": " << ex.what() << std::endl;
-    return 1;
-  }
+  auto path_handler = [](cli::NamedStream& strm) {
+                   pal::File f = pal::parse(strm.strm);
+                   print_pal(f, std::cout);
+                 };
+  return cli::main_with_paths("paldump", paths, path_handler);
 }

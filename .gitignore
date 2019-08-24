@@ -434,3 +434,8 @@ healthchecksdb
 MigrationBackup/
 
 # End of https://www.gitignore.io/api/visualstudio
+
+assets/ 
+fo2dat/
+master/
+*\#

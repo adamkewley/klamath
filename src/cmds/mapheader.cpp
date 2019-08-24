@@ -7,14 +7,16 @@
 
 #include "src/formats/map.hpp"
 #include "src/formats/map_reader.hpp"
+#include "src/utils/cli.hpp"
+
+using namespace klmth;
 
 namespace {
-  using namespace klmth;
   using klmth::map::Header;
   using klmth::map::Version;
   using klmth::map::PlayerDefaults;
   using klmth::map::Elevation;
-  using klmth::map::parse_header;
+  using klmth::map::read_header;
   using klmth::map::Elevation;
 
   const char* version_str(Version v) {
@@ -69,34 +71,8 @@ namespace {
     out << std::endl;
   }
   
-  void print_stream(std::istream& in, std::ostream& out, const std::string& stream_name) {
-    print_header(parse_header(in), out, stream_name);
-  }
-
-  void print_stdin(std::ostream& out) {
-    print_stream(std::cin, out, "stdin");
-  }
-
-  void print_path(const std::string& path, std::ostream& out) {
-    if (path == "-") {
-      print_stdin(out);
-      return;
-    }
-
-    std::fstream in{path, std::ios::in | std::ios::binary};
-    if (!in.good()) {
-      std::stringstream err{};
-      err << path << ": " << strerror(errno);
-      throw std::runtime_error{err.str()};
-    }
-
-    print_stream(in, out, path);
-  }
-
-  void print_paths(const std::vector<std::string>& paths, std::ostream& out) {
-    for (const std::string& path : paths) {
-      print_path(path, out);
-    }
+  void print_stream(cli::NamedStream& in, std::ostream& out) {
+    print_header(read_header(in.strm), out, in.name);
   }
 }
 
@@ -105,22 +81,11 @@ int cmd_mapheader(int argc, char** argv) {
   std::vector<std::string> paths;
   app.add_option("map_file", paths, "path to MAP file. '-' is interpreted as stdin. Supplying no paths will cause application to read MAP data from stdin");
 
-  try {
-    app.parse(argc, argv);
-  } catch (const CLI::ParseError& ex) {
-    return app.exit(ex);
-  }
+  CLI11_PARSE(app, argc, argv);
 
-  try {
-    if (paths.empty()) {
-      print_stdin(std::cout);
-    } else {
-      print_paths(paths, std::cout);      
-    }
+  auto path_handler = [](cli::NamedStream& strm) {
+                        print_stream(strm, std::cout);
+                      };
 
-    return 0;
-  } catch (const std::exception& ex) {
-    std::cerr << "mapheader: " << ex.what() << std::endl;
-    return 1;
-  }
+  return cli::main_with_paths("mapheader", paths, path_handler);
 }

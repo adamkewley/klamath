@@ -6,49 +6,30 @@
 
 #include "src/utils/io.hpp"
 
-using klmth::read_be_u32_unsafe;
-using klmth::read_be_u16_unsafe;
-using klmth::read_be_i16_unsafe;
+using klmth::read_be_u32;
+using klmth::read_be_u16;
+using klmth::read_be_i16;
 using klmth::geometry::area;
 
 namespace {
 
-  frm::Frame read_frame(std::istream& in, frm::PixelShift base_shift) {
-    constexpr size_t frame_header_size = 2 + 2 + 4 + 2 + 2;
-    
-    std::array<uint8_t, frame_header_size> buf;
-
-    in.read(reinterpret_cast<char*>(buf.data()), buf.size());
-    if (in.gcount() != buf.size()) {
-      throw std::runtime_error("ran out of data while reading frm frame header");
-    }
-    klmth::Cursor c{buf.data(), buf.size()};
-    
+  frm::Frame read_frame(std::istream& in, frm::PixelShift base_shift) {    
     frm::Dimensions dimensions{
-        read_be_u16_unsafe(c), 
-        read_be_u16_unsafe(c),
+        read_be_u16(in), 
+        read_be_u16(in),
     };
 
-    if (read_be_u32_unsafe(c) != area(dimensions)) {
-      throw std::runtime_error("frame header size field does not match the dimensions of the frame");
+    if (read_be_u32(in) != area(dimensions)) {
+      throw std::runtime_error{"frame header size field does not match the dimensions of the frame"};
     }
 
     frm::PixelShift pixel_shift{
-        read_be_i16_unsafe(c),
-        read_be_i16_unsafe(c),
+        read_be_i16(in),
+        read_be_i16(in),
     };
     pixel_shift += base_shift;
 
-    std::vector<uint8_t> color_indices(area(dimensions));
-
-    in.read(reinterpret_cast<char*>(color_indices.data()), color_indices.size());
-    if (in.gcount() < 0) {
-      throw std::runtime_error("read error when reading frm color indices");
-    } else if (static_cast<unsigned>(in.gcount()) != color_indices.size()) {
-      throw std::runtime_error("ran out of data when reading color indices: needed = " +
-                               std::to_string(color_indices.size()) + " bytes, got = " +
-                               std::to_string(in.gcount()) + " bytes");
-    }
+    std::vector<uint8_t> color_indices = klmth::read(in, area(dimensions));
 
     return { dimensions, pixel_shift, std::move(color_indices) };
   }
@@ -70,38 +51,27 @@ namespace {
   }
 }
 
-frm::Header frm::read_header(std::istream& in) {
-  constexpr size_t file_header_size =
-    4 + 2 + 2 + 2 + (2 * frm::num_orientations) + (2 * frm::num_orientations) + (4 * frm::num_orientations) + 4;
-  
-  std::array<uint8_t, file_header_size> buf;
-
-  in.read(reinterpret_cast<char*>(buf.data()), buf.size());
-  if (in.gcount() != buf.size()) {
-    throw std::runtime_error("ran out of data while reading an frm header");
-  }
-
-  klmth::Cursor c{buf.data(), buf.size()};
-  uint32_t version_number = read_be_u32_unsafe(c);
-  uint16_t fps = read_be_u16_unsafe(c);
-  uint16_t action_frame = read_be_u16_unsafe(c);
-  uint16_t frames_per_direction = read_be_u16_unsafe(c);
+frm::Header frm::read_header(std::istream& in) {  
+  uint32_t version_number = read_be_u32(in);
+  uint16_t fps = read_be_u16(in);
+  uint16_t action_frame = read_be_u16(in);
+  uint16_t frames_per_direction = read_be_u16(in);
 
   std::array<PixelShift, frm::num_orientations> pixel_shifts;
-  for (auto& pixel_shift : pixel_shifts) {
-    pixel_shift.x = read_be_i16_unsafe(c);
+  for (PixelShift& pixel_shift : pixel_shifts) {
+    pixel_shift.x = read_be_i16(in);
   }
 
-  for (auto& pixel_shift : pixel_shifts) {
-    pixel_shift.y = read_be_i16_unsafe(c);
+  for (PixelShift& pixel_shift : pixel_shifts) {
+    pixel_shift.y = read_be_i16(in);
   }
   
   std::array<uint32_t, frm::num_orientations> offsets_in_frame_data;
   for (uint32_t& offset_in_frame_data : offsets_in_frame_data) {
-    offset_in_frame_data = read_be_u32_unsafe(c);
+    offset_in_frame_data = read_be_u32(in);
   }
 
-  uint32_t size_of_frame_data = read_be_u32_unsafe(c);
+  uint32_t size_of_frame_data = read_be_u32(in);
 
   return {
     version_number,
@@ -116,7 +86,6 @@ frm::Header frm::read_header(std::istream& in) {
 
 frm::File frm::read_file(std::istream& in) {
   frm::Header h = read_header(in);
-
   
   uint32_t max_offset =
     *std::max_element(h.offsets_in_frame_data.begin(), h.offsets_in_frame_data.end());

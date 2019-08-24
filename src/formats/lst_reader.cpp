@@ -3,7 +3,7 @@
 #include <array>
 #include <istream>
 
-std::vector<std::string> klmth::lst::parse_file(std::istream& in) {
+std::vector<std::string> klmth::lst::read_file(std::istream& in) {
   
   enum class State {
     start,

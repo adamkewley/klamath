@@ -19,7 +19,7 @@ using klmth::map::ScriptType;
 
 namespace {
   Version read_version(std::istream& in) {
-    auto v = read_be_u32_unsafe(in);
+    auto v = read_be_u32(in);
     switch (v) {
     case map::fallout_1:
     case map::fallout_2:
@@ -44,7 +44,7 @@ namespace {
   }
 
   Elevation read_elevation(std::istream& in) {
-    int32_t e = read_be_i32_unsafe(in);
+    int32_t e = read_be_i32(in);
     switch (e) {
     case 0:
       return Elevation::low;
@@ -61,7 +61,7 @@ namespace {
   }
 
   frm::Orientation read_orientation(std::istream& in) {
-    int o = read_be_i32_unsafe(in);
+    int o = read_be_i32(in);
     switch (o) {
     case 0:
       return frm::north_east;
@@ -85,7 +85,7 @@ namespace {
 
   PlayerDefaults read_player_defaults(std::istream& in) {
     PlayerDefaults ret;
-    ret.pos = read_be_i32_unsafe(in);
+    ret.pos = read_be_i32(in);
     ret.elevation = read_elevation(in);
     ret.orientation = read_orientation(in);
     return ret;
@@ -94,21 +94,21 @@ namespace {
   std::unique_ptr<Tiles> read_tiles(std::istream& in) {
     Tiles t;
     for (auto i = 0U; i < map::tiles_per_elevation; ++i) {
-      uint16_t roof = read_be_u16_unsafe(in);
-      uint16_t floor = read_be_u16_unsafe(in);
+      uint16_t roof = read_be_u16(in);
+      uint16_t floor = read_be_u16(in);
       t[i] = { roof, floor };
     }
     return std::make_unique<Tiles>(std::move(t));
   }
 
   Pid read_pid(std::istream& in) {
-    return {read_be_u32_unsafe(in)};
+    return {read_be_u32(in)};
   }
 
   std::vector<Script> read_scripts(std::istream& in) {
     std::vector<Script> ret;
     for (auto i = 0U; i < 5; ++i) {
-      uint32_t count = read_be_u32_unsafe(in);
+      uint32_t count = read_be_u32(in);
 
       if (count == 0) {
         continue;
@@ -122,42 +122,42 @@ namespace {
       uint32_t check = 0;
       for (auto j = 0U; j < loop; ++j) {
         Pid pid = read_pid(in);
-        read_be_u32_unsafe(in);  // next script. unused
+        read_be_u32(in);  // next script. unused
 
         switch (pid.type()) {
         case ScriptType::spatial:
-          read_be_u32_unsafe(in);  // spatial tile
-          read_be_u32_unsafe(in);  // spatial radius
+          read_be_u32(in);  // spatial tile
+          read_be_u32(in);  // spatial radius
           break;
         case ScriptType::timer:
-          read_be_u32_unsafe(in);  // time
+          read_be_u32(in);  // time
           break;
         default:
           break;  // others have nothing to skip
         }
 
-        read_be_u32_unsafe(in); //flags
-        read_be_u32_unsafe(in); // script ID
-        read_be_u32_unsafe(in); //unknown 5
-        read_be_u32_unsafe(in); //oid == object->OID
-        read_be_u32_unsafe(in); //local var offset
-        read_be_u32_unsafe(in); //loal var cnt
-        read_be_u32_unsafe(in); //unknown 9
-        read_be_u32_unsafe(in); //unknown 10
-        read_be_u32_unsafe(in); //unknown 11
-        read_be_u32_unsafe(in); //unknown 12
-        read_be_u32_unsafe(in); //unknown 13
-        read_be_u32_unsafe(in); //unknown 14
-        read_be_u32_unsafe(in); //unknown 15
-        read_be_u32_unsafe(in); //unknown 16
+        read_be_u32(in); //flags
+        read_be_u32(in); // script ID
+        read_be_u32(in); //unknown 5
+        read_be_u32(in); //oid == object->OID
+        read_be_u32(in); //local var offset
+        read_be_u32(in); //loal var cnt
+        read_be_u32(in); //unknown 9
+        read_be_u32(in); //unknown 10
+        read_be_u32(in); //unknown 11
+        read_be_u32(in); //unknown 12
+        read_be_u32(in); //unknown 13
+        read_be_u32(in); //unknown 14
+        read_be_u32(in); //unknown 15
+        read_be_u32(in); //unknown 16
 
         if (j < count) {
           ret.push_back({ pid });
         }
 
         if ((j % 16) == 15) {
-          check += read_be_u32_unsafe(in);
-          read_be_u32_unsafe(in);
+          check += read_be_u32(in);
+          read_be_u32(in);
         }
       }
 
@@ -170,39 +170,33 @@ namespace {
   }
 }
 
-Header map::parse_header(std::istream& in) {
+Header map::read_header(std::istream& in) {
   Header ret;
   ret.version = read_version(in);
   ret.filename = read_filename(in);
   ret.player_defaults = read_player_defaults(in);
-  ret.num_local_vars = read_be_i32_unsafe(in);
-  ret.script_id = read_be_i32_unsafe(in);
+  ret.num_local_vars = read_be_i32(in);
+  ret.script_id = read_be_i32(in);
 
-  int32_t flg = read_be_i32_unsafe(in);
-
+  int32_t flg = read_be_i32(in);
   ret.is_savegame_map = (flg & 0x1) != 0;
   ret.has_low_elevation = (flg & 0x2) == 0;
   ret.has_med_elevation = (flg & 0x4) == 0;
   ret.has_high_elevation = (flg & 0x8) == 0;
 
-  read_be_i32_unsafe(in);  // map darkness (unused)
+  skip<4>(in);  // map darkness (unused)
 
-  ret.num_global_vars = read_be_i32_unsafe(in);
-  ret.map_id = read_be_i32_unsafe(in);
-  ret.timestamp = read_be_u32_unsafe(in);
+  ret.num_global_vars = read_be_i32(in);
+  ret.map_id = read_be_i32(in);
+  ret.timestamp = read_be_u32(in);
 
-  char throwaway_buf[4*44];
-  in.read(throwaway_buf, sizeof(throwaway_buf));
-
-  if (in.gcount() != 4*44) {
-    throw std::runtime_error{"ran out of data when skipping to the end of a MAP header"};
-  }
+  skip<4*44>(in);  // skipping to the end of a MAP header
 
   return ret;
 }
 
-File map::parse_file(std::istream& in) {
-  const Header h = parse_header(in);
+File map::read_file(std::istream& in) {
+  const Header h = read_header(in);
 
   std::vector<int32_t> globals = read_n_be_i32(in, h.num_global_vars);
   std::vector<int32_t> locals = read_n_be_i32(in, h.num_local_vars);

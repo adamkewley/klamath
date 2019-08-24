@@ -41,6 +41,8 @@ namespace frm {
 
   using Dimensions = klmth::geometry::Dimensions<uint16_t>;
 
+  constexpr size_t frame_header_size = 2 + 2 + 4 + 2 + 2;
+
   class Frame {
   public:
     Frame(Dimensions dimensions,
@@ -73,6 +75,9 @@ namespace frm {
     uint16_t _action_frame;
     std::vector<Frame> _frames;
   };
+
+  constexpr size_t file_header_size =
+    4 + 2 + 2 + 2 + (2 * frm::num_orientations) + (2 * frm::num_orientations) + (4 * frm::num_orientations) + 4;
 
   class File {
   public:

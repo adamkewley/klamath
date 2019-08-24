@@ -6,11 +6,10 @@
 
 using namespace klmth;
 using klmth::cli::NamedStream;
-using klmth::cli::open_file;
 
 namespace {
   void print_stream(NamedStream& strm, std::ostream& out) {
-    map::File f = map::parse_file(strm.strm);
+    map::File f = map::read_file(strm.strm);
     
     out << "[" << strm.name << "]" << std::endl;
     for (const map::Script& script : f.scripts) {
@@ -26,26 +25,9 @@ int cmd_mapscripts(int argc, char** argv) {
 
   CLI11_PARSE(app, argc, argv);
 
-  try {
-    if (paths.empty()) {
-      NamedStream strm{std::cin, "stdin"};
-      print_stream(strm, std::cout);
-    } else {
-      for (std::string path : paths) {
-        if (path == "-") {
-          NamedStream strm{std::cin, "stdin"};
-          print_stream(strm, std::cout);
-        } else {
-          std::ifstream fd = open_file(path);
-          NamedStream strm{fd, path};
-          print_stream(strm, std::cout);
-        }
-      }
-    }
-  } catch (const std::exception& ex) {
-    std::cerr << "mapscripts: " << ex.what() << std::endl;
-    return 1;
-  }
-  
-  return 0;
+  auto path_handler = [](cli::NamedStream& strm) {
+                        print_stream(strm, std::cout);
+                      };
+
+  return cli::main_with_paths("mapscripts", paths, path_handler);
 }

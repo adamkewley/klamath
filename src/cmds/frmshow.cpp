@@ -152,11 +152,7 @@ int cmd_frmshow(int argc, char** argv) {
   std::vector<std::string> frm_pths;
   app.add_option("frm_file", frm_pths, "path to FRM files. '-' interpreted as stdin. Supplying no paths will cause it to read FRM data from stdin");
 
-  try {
-    app.parse(argc, argv);
-  } catch (const CLI::ParseError& ex) {
-    return app.exit(ex);
-  }
+  CLI11_PARSE(app, argc, argv);
 
   try {
     pal::File palette = load_palette(pal_pth);

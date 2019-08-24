@@ -98,11 +98,7 @@ int cmd_dat2extract(int argc, char** argv) {
   std::string dat2_path;
   app.add_option("dat2_file", dat2_path, "path to a DAT2 file")->required();
 
-  try {
-    app.parse(argc, argv);
-  } catch (const CLI::ParseError& ex) {
-    return app.exit(ex);
-  }
+  CLI11_PARSE(app, argc, argv);
 
   std::ifstream dat2_strm{dat2_path, std::ios::in | std::ios::binary};
 

@@ -73,7 +73,7 @@ namespace {
 
   lst::File read_tiles(const std::string& tiles_dir_pth) {
     std::ifstream tiles_file = open_file(tiles_dir_pth + "/TILES.LST");
-    return lst::parse_file(tiles_file);
+    return lst::read_file(tiles_file);
   }
 
   frm::File read_frm(const std::string& pth) {
@@ -278,7 +278,7 @@ namespace {
   void show_map_strm(AppState& st, NamedStrm in) {
     try {
       st.window.set_title(in.name);
-      map::File f = map::parse_file(in.strm);
+      map::File f = map::read_file(in.strm);
       render(st, f);
     } catch (const std::exception& ex) {
       std::stringstream msg;
@@ -309,11 +309,7 @@ int cmd_mapshow(int argc, char** argv) {
   app.add_option("tiles_dir", tiles_dir_pth, "path to tiles dir (e.g. out/art/tiles). Must contain a TILES.LST file, which lists all tiles FRMs that are used in the map (by indexed ID)")->required();
   app.add_option("map_file", map_pths, "path to map file(s). '-' is interpreted as stdin. Supplying no paths will cause application to read MAP from stdin");
 
-  try {
-    app.parse(argc, argv);
-  } catch (const CLI::ParseError& ex) {
-    return app.exit(ex);
-  }
+  CLI11_PARSE(app, argc, argv);
 
   try {
     sdl::Context c;

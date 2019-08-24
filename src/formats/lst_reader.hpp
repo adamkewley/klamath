@@ -6,6 +6,6 @@
 
 namespace klmth {
   namespace lst {
-    std::vector<std::string> parse_file(std::istream& in);
+    std::vector<std::string> read_file(std::istream& in);
   }
 }
