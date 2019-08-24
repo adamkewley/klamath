@@ -35,7 +35,7 @@ uint16_t klmth::read_be_u16(const uint8_t* buf) noexcept {
   return ret;
 }
 
-int16_t klmth::read_be_i16_unsafe(const uint8_t* buf) noexcept {
+int16_t klmth::read_be_i16(const uint8_t* buf) noexcept {
   return static_cast<int16_t>(read_be_u16(buf));
 }
 
@@ -118,6 +118,6 @@ uint16_t klmth::read_be_u16(Cursor& c) noexcept {
   return read_be_u16(c.read_then_advance_unsafe(2));
 }
 
-int16_t klmth::read_be_i16_unsafe(Cursor& c) noexcept {
-  return read_be_i16_unsafe(c.read_then_advance_unsafe(2));
+int16_t klmth::read_be_i16(Cursor& c) noexcept {
+  return read_be_i16(c.read_then_advance_unsafe(2));
 }

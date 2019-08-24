@@ -8,7 +8,7 @@
 
 using klmth::read_be_u32;
 using klmth::read_be_u16;
-using klmth::read_be_i16_unsafe;
+using klmth::read_be_i16;
 using klmth::geometry::area;
 
 namespace {
@@ -34,8 +34,8 @@ namespace {
     }
 
     frm::PixelShift pixel_shift{
-        read_be_i16_unsafe(c),
-        read_be_i16_unsafe(c),
+        read_be_i16(c),
+        read_be_i16(c),
     };
     pixel_shift += base_shift;
 
@@ -89,11 +89,11 @@ frm::Header frm::read_header(std::istream& in) {
 
   std::array<PixelShift, frm::num_orientations> pixel_shifts;
   for (auto& pixel_shift : pixel_shifts) {
-    pixel_shift.x = read_be_i16_unsafe(c);
+    pixel_shift.x = read_be_i16(c);
   }
 
   for (auto& pixel_shift : pixel_shifts) {
-    pixel_shift.y = read_be_i16_unsafe(c);
+    pixel_shift.y = read_be_i16(c);
   }
   
   std::array<uint32_t, frm::num_orientations> offsets_in_frame_data;
