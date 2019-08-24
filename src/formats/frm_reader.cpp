@@ -7,7 +7,7 @@
 #include "src/utils/io.hpp"
 
 using klmth::read_be_u32;
-using klmth::read_be_u16_unsafe;
+using klmth::read_be_u16;
 using klmth::read_be_i16_unsafe;
 using klmth::geometry::area;
 
@@ -25,8 +25,8 @@ namespace {
     klmth::Cursor c{buf.data(), buf.size()};
     
     frm::Dimensions dimensions{
-        read_be_u16_unsafe(c), 
-        read_be_u16_unsafe(c),
+        read_be_u16(c), 
+        read_be_u16(c),
     };
 
     if (read_be_u32(c) != area(dimensions)) {
@@ -83,9 +83,9 @@ frm::Header frm::read_header(std::istream& in) {
 
   klmth::Cursor c{buf.data(), buf.size()};
   uint32_t version_number = read_be_u32(c);
-  uint16_t fps = read_be_u16_unsafe(c);
-  uint16_t action_frame = read_be_u16_unsafe(c);
-  uint16_t frames_per_direction = read_be_u16_unsafe(c);
+  uint16_t fps = read_be_u16(c);
+  uint16_t action_frame = read_be_u16(c);
+  uint16_t frames_per_direction = read_be_u16(c);
 
   std::array<PixelShift, frm::num_orientations> pixel_shifts;
   for (auto& pixel_shift : pixel_shifts) {

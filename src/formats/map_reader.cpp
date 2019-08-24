@@ -94,8 +94,8 @@ namespace {
   std::unique_ptr<Tiles> read_tiles(std::istream& in) {
     Tiles t;
     for (auto i = 0U; i < map::tiles_per_elevation; ++i) {
-      uint16_t roof = read_be_u16_unsafe(in);
-      uint16_t floor = read_be_u16_unsafe(in);
+      uint16_t roof = read_be_u16(in);
+      uint16_t floor = read_be_u16(in);
       t[i] = { roof, floor };
     }
     return std::make_unique<Tiles>(std::move(t));

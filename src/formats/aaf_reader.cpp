@@ -8,7 +8,7 @@
 #include "src/utils/io.hpp"
 
 using klmth::read_be_u32;
-using klmth::read_be_u16_unsafe;
+using klmth::read_be_u16;
 
 namespace {
   static const uint8_t magic_nums[] = { 'A', 'A', 'F', 'F' };
@@ -40,10 +40,10 @@ namespace {
       throw std::runtime_error("first four bytes of an AAF file are not the magic number (AAFF)");
     }
 
-    out.max_glyph_height = read_be_u16_unsafe(c);
-    out.letter_spacing = read_be_u16_unsafe(c);
-    out.space_width = read_be_u16_unsafe(c);
-    out.line_spacing = read_be_u16_unsafe(c);
+    out.max_glyph_height = read_be_u16(c);
+    out.letter_spacing = read_be_u16(c);
+    out.space_width = read_be_u16(c);
+    out.line_spacing = read_be_u16(c);
   }
 
   aaf::File read(const uint8_t* buf, size_t n) {    
@@ -58,8 +58,8 @@ namespace {
         throw std::runtime_error("ran out of data when reading an aaf glyph header");
       }
 
-      g.dimensions.width = read_be_u16_unsafe(c);
-      g.dimensions.height = read_be_u16_unsafe(c);
+      g.dimensions.width = read_be_u16(c);
+      g.dimensions.height = read_be_u16(c);
       read_be_u32(c);
     }
 

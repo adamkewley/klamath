@@ -89,7 +89,7 @@ namespace {
   }
 
   WallOrientation read_wall_orientation(istream& in) {
-    uint16_t v = read_be_u16_unsafe(in);
+    uint16_t v = read_be_u16(in);
     switch (v) {
     case 0x0000:
       return WallOrientation::north_south;
@@ -208,7 +208,7 @@ Header klmth::pro::parse_header(std::istream& in) {
 WallData pro::parse_wall_data(std::istream& in) {
   WallData wd;
   wd.orientation = read_wall_orientation(in);
-  wd.action_flags = { read_be_u16_unsafe(in) };
+  wd.action_flags = { read_be_u16(in) };
   wd.script_id = read_script_id(in);
   wd.material_id = read_material_id(in);
   return wd;
@@ -235,7 +235,7 @@ ItemData pro::parse_item_data(std::istream& in) {
 SceneryData pro::parse_scenery_data(std::istream& in) {
   SceneryData ret;
   ret.orientation = read_wall_orientation(in);
-  ret.action_flags = { read_be_u16_unsafe(in) };
+  ret.action_flags = { read_be_u16(in) };
   ret.script_id = read_script_id(in);
   ret.type = read_scenery_type(in);
   ret.material_id = read_material_id(in);
