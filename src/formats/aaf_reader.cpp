@@ -7,7 +7,7 @@
 
 #include "src/utils/io.hpp"
 
-using klmth::read_be_u32_unsafe;
+using klmth::read_be_u32;
 using klmth::read_be_u16_unsafe;
 
 namespace {
@@ -60,7 +60,7 @@ namespace {
 
       g.dimensions.width = read_be_u16_unsafe(c);
       g.dimensions.height = read_be_u16_unsafe(c);
-      read_be_u32_unsafe(c);
+      read_be_u32(c);
     }
 
     // read glyph opacities

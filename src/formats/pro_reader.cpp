@@ -9,7 +9,7 @@ using namespace klmth;
 using std::runtime_error;
 using std::istream;
 using std::stringstream;
-using klmth::read_be_u32_unsafe;
+using klmth::read_be_u32;
 using klmth::pro::Header;
 using klmth::pro::ObjectId;
 using klmth::pro::ObjectType;
@@ -48,7 +48,7 @@ namespace {
   }
 
   ObjectId read_oid(istream& in) {
-    uint32_t b = read_be_u32_unsafe(in);
+    uint32_t b = read_be_u32(in);
     ObjectType type = parse_obj_type(b >> 24);
     uint16_t val = b & 0xffff;
 
@@ -81,7 +81,7 @@ namespace {
   }
 
   FrmId read_frmid(istream& in) {
-    uint32_t b = read_be_u32_unsafe(in);
+    uint32_t b = read_be_u32(in);
     FrmType type = parse_frm_type(b >> 24);
     uint16_t val = b & 0xffff;
 
@@ -121,7 +121,7 @@ namespace {
   }
 
   MaterialId read_material_id(istream& in) {
-    uint32_t v = read_be_u32_unsafe(in);
+    uint32_t v = read_be_u32(in);
 
     switch (v) {
     case 0:
@@ -148,7 +148,7 @@ namespace {
   }
 
   ItemType read_item_type(istream& in) {
-    uint32_t v = read_be_u32_unsafe(in);
+    uint32_t v = read_be_u32(in);
     switch (v) {
     case 0:
       return ItemType::armor;
@@ -172,7 +172,7 @@ namespace {
   }
 
   SceneryType read_scenery_type(istream& in) {
-    uint32_t v = read_be_u32_unsafe(in);
+    uint32_t v = read_be_u32(in);
     switch (v) {
     case 0:
       return SceneryType::door;
@@ -197,11 +197,11 @@ namespace {
 Header klmth::pro::parse_header(std::istream& in) {
   Header h;
   h.obj_id = read_oid(in);
-  h.text_id = read_be_u32_unsafe(in);
+  h.text_id = read_be_u32(in);
   h.frm_id = read_frmid(in);
-  h.light_radius = read_be_u32_unsafe(in);
-  h.light_intensity = read_be_u32_unsafe(in);
-  h.flags = { read_be_u32_unsafe(in) };
+  h.light_radius = read_be_u32(in);
+  h.light_intensity = read_be_u32(in);
+  h.flags = { read_be_u32(in) };
   return h;
 }
 
@@ -223,10 +223,10 @@ ItemData pro::parse_item_data(std::istream& in) {
 
   ret.type = read_item_type(in);
   ret.material_id = read_material_id(in);
-  ret.size = read_be_u32_unsafe(in);
-  ret.weight = read_be_u32_unsafe(in);
-  ret.cost = read_be_u32_unsafe(in);
-  ret.inventory_fid = read_be_u32_unsafe(in);
+  ret.size = read_be_u32(in);
+  ret.weight = read_be_u32(in);
+  ret.cost = read_be_u32(in);
+  ret.inventory_fid = read_be_u32(in);
   ret.sound_id = read_byte(in);
 
   return ret;

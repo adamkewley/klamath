@@ -19,7 +19,7 @@ using klmth::map::ScriptType;
 
 namespace {
   Version read_version(std::istream& in) {
-    auto v = read_be_u32_unsafe(in);
+    auto v = read_be_u32(in);
     switch (v) {
     case map::fallout_1:
     case map::fallout_2:
@@ -102,13 +102,13 @@ namespace {
   }
 
   Pid read_pid(std::istream& in) {
-    return {read_be_u32_unsafe(in)};
+    return {read_be_u32(in)};
   }
 
   std::vector<Script> read_scripts(std::istream& in) {
     std::vector<Script> ret;
     for (auto i = 0U; i < 5; ++i) {
-      uint32_t count = read_be_u32_unsafe(in);
+      uint32_t count = read_be_u32(in);
 
       if (count == 0) {
         continue;
@@ -122,42 +122,42 @@ namespace {
       uint32_t check = 0;
       for (auto j = 0U; j < loop; ++j) {
         Pid pid = read_pid(in);
-        read_be_u32_unsafe(in);  // next script. unused
+        read_be_u32(in);  // next script. unused
 
         switch (pid.type()) {
         case ScriptType::spatial:
-          read_be_u32_unsafe(in);  // spatial tile
-          read_be_u32_unsafe(in);  // spatial radius
+          read_be_u32(in);  // spatial tile
+          read_be_u32(in);  // spatial radius
           break;
         case ScriptType::timer:
-          read_be_u32_unsafe(in);  // time
+          read_be_u32(in);  // time
           break;
         default:
           break;  // others have nothing to skip
         }
 
-        read_be_u32_unsafe(in); //flags
-        read_be_u32_unsafe(in); // script ID
-        read_be_u32_unsafe(in); //unknown 5
-        read_be_u32_unsafe(in); //oid == object->OID
-        read_be_u32_unsafe(in); //local var offset
-        read_be_u32_unsafe(in); //loal var cnt
-        read_be_u32_unsafe(in); //unknown 9
-        read_be_u32_unsafe(in); //unknown 10
-        read_be_u32_unsafe(in); //unknown 11
-        read_be_u32_unsafe(in); //unknown 12
-        read_be_u32_unsafe(in); //unknown 13
-        read_be_u32_unsafe(in); //unknown 14
-        read_be_u32_unsafe(in); //unknown 15
-        read_be_u32_unsafe(in); //unknown 16
+        read_be_u32(in); //flags
+        read_be_u32(in); // script ID
+        read_be_u32(in); //unknown 5
+        read_be_u32(in); //oid == object->OID
+        read_be_u32(in); //local var offset
+        read_be_u32(in); //loal var cnt
+        read_be_u32(in); //unknown 9
+        read_be_u32(in); //unknown 10
+        read_be_u32(in); //unknown 11
+        read_be_u32(in); //unknown 12
+        read_be_u32(in); //unknown 13
+        read_be_u32(in); //unknown 14
+        read_be_u32(in); //unknown 15
+        read_be_u32(in); //unknown 16
 
         if (j < count) {
           ret.push_back({ pid });
         }
 
         if ((j % 16) == 15) {
-          check += read_be_u32_unsafe(in);
-          read_be_u32_unsafe(in);
+          check += read_be_u32(in);
+          read_be_u32(in);
         }
       }
 
@@ -189,7 +189,7 @@ Header map::parse_header(std::istream& in) {
 
   ret.num_global_vars = read_be_i32_unsafe(in);
   ret.map_id = read_be_i32_unsafe(in);
-  ret.timestamp = read_be_u32_unsafe(in);
+  ret.timestamp = read_be_u32(in);
 
   char throwaway_buf[4*44];
   in.read(throwaway_buf, sizeof(throwaway_buf));

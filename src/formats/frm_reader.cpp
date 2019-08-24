@@ -6,7 +6,7 @@
 
 #include "src/utils/io.hpp"
 
-using klmth::read_be_u32_unsafe;
+using klmth::read_be_u32;
 using klmth::read_be_u16_unsafe;
 using klmth::read_be_i16_unsafe;
 using klmth::geometry::area;
@@ -29,7 +29,7 @@ namespace {
         read_be_u16_unsafe(c),
     };
 
-    if (read_be_u32_unsafe(c) != area(dimensions)) {
+    if (read_be_u32(c) != area(dimensions)) {
       throw std::runtime_error("frame header size field does not match the dimensions of the frame");
     }
 
@@ -82,7 +82,7 @@ frm::Header frm::read_header(std::istream& in) {
   }
 
   klmth::Cursor c{buf.data(), buf.size()};
-  uint32_t version_number = read_be_u32_unsafe(c);
+  uint32_t version_number = read_be_u32(c);
   uint16_t fps = read_be_u16_unsafe(c);
   uint16_t action_frame = read_be_u16_unsafe(c);
   uint16_t frames_per_direction = read_be_u16_unsafe(c);
@@ -98,10 +98,10 @@ frm::Header frm::read_header(std::istream& in) {
   
   std::array<uint32_t, frm::num_orientations> offsets_in_frame_data;
   for (uint32_t& offset_in_frame_data : offsets_in_frame_data) {
-    offset_in_frame_data = read_be_u32_unsafe(c);
+    offset_in_frame_data = read_be_u32(c);
   }
 
-  uint32_t size_of_frame_data = read_be_u32_unsafe(c);
+  uint32_t size_of_frame_data = read_be_u32(c);
 
   return {
     version_number,
