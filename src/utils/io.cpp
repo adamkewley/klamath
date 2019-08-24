@@ -70,6 +70,12 @@ std::vector<int32_t> klmth::read_n_be_i32(std::istream& in, size_t n) {
   return ret;
 }
 
+uint8_t klmth::read_byte(std::istream& in) {
+  uint8_t buf[1];
+  read(in, buf, sizeof(buf));
+  return buf[0];
+}
+
 klmth::Cursor::Cursor(const uint8_t* _buf, size_t _size, size_t _offset) :
   buf(_buf), size(_size), offset(_offset) {
 }

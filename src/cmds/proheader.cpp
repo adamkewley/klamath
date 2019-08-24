@@ -16,10 +16,12 @@ using std::ostream;
 using klmth::pro::Header;
 using klmth::pro::ObjectType;
 using klmth::pro::WallData;
+using klmth::pro::ItemData;
+using klmth::pro::SceneryData;
 
 namespace {
   using namespace klmth;
-  
+
   struct NamedStrm {
     istream& strm;
     string name;
@@ -42,7 +44,7 @@ namespace {
     if (els.size() == 0) {
       return "";
     }
-    
+
     std::ostringstream ss;
     auto it = els.begin();
     auto end = els.end() - 1;
@@ -66,6 +68,23 @@ namespace {
     print_kv(out, "material_id", pro::str(wd.material_id));
   }
 
+  void read_and_print_item(ostream& out, istream& in) {
+    ItemData item = pro::parse_item_data(in);
+    print_kv(out, "item_type", pro::str(item.type));
+    print_kv(out, "material_id", pro::str(item.material_id));
+    print_kv(out, "size", item.size);
+    print_kv(out, "weight", item.weight);
+    print_kv(out, "cost", item.weight);
+    print_kv(out, "inventory_fid", item.inventory_fid);
+    print_kv(out, "sound_id", item.sound_id);
+  }
+
+  void read_and_print_scenery(ostream& out, istream& in) {
+    SceneryData scenery = pro::parse_scenery_data(in);
+    print_kv(out, "orientation", pro::str(scenery.type));
+    print_kv(out, "action_flags", join(", ", pro::flag_strs(scenery.action_flags)));
+  }
+
   void print(ostream& out, const Header& h, istream& in) {
     print_kv(out, "type", pro::str(h.obj_id.type));
     print_kv(out, "object_id", h.obj_id.val);
@@ -79,6 +98,12 @@ namespace {
     case ObjectType::wall:
       read_and_print_wall(out, in);
       break;
+    case ObjectType::item:
+      read_and_print_item(out, in);
+      break;
+    case ObjectType::scenery:
+      read_and_print_scenery(out, in);
+      break;
     default:
       break;  // todo: other pro data types
     }
@@ -89,8 +114,8 @@ namespace {
     Header h = pro::parse_header(strm.strm);
     print(out, h, strm.strm);
     out << std::endl;
-  }  
-  
+  }
+
   void run(ostream& out, const vector<string>& pths) {
     if (pths.empty()) {
       NamedStrm stdin{ std::cin, "stdin" };

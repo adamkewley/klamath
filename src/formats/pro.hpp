@@ -8,7 +8,7 @@
 
 namespace klmth {
   namespace pro {
-    
+
     enum class ObjectType {
       item,
       critter,
@@ -19,7 +19,7 @@ namespace klmth {
     };
 
     const char* str(ObjectType type);
-    
+
     struct ObjectId {
       ObjectType type;
       uint16_t val;
@@ -57,7 +57,7 @@ namespace klmth {
       bool walltransend() const;
       bool lightthru() const;
       bool shootthru() const;
-      
+
       uint32_t val;
     };
 
@@ -67,7 +67,7 @@ namespace klmth {
       ObjectId obj_id;
       // object name and description in
       // text/english/game/pro_item.msg, etc.
-      uint32_t text_id; 
+      uint32_t text_id;
       FrmId frm_id;
       uint32_t light_radius;
       uint32_t light_intensity;
@@ -129,6 +129,48 @@ namespace klmth {
       ActionFlags action_flags;
       nonstd::optional<ScriptId> script_id;
       MaterialId material_id;
+    };
+
+    enum class ItemType {
+      armor,
+      container,
+      drug,
+      weapon,
+      ammo,
+      misc,
+      key,
+    };
+
+    const char* str(ItemType item_type);
+
+    struct ItemData {
+      ItemType type;
+      MaterialId material_id;
+      uint32_t size;  // volume in containers
+      uint32_t weight;
+      uint32_t cost;
+      uint32_t inventory_fid;
+      uint8_t sound_id;
+    };
+
+    enum class SceneryType {
+      door,
+      stairs,
+      elevator,
+      ladder_bottom,
+      ladder_top,
+      generic,
+    };
+
+    const char* str(SceneryType scenery_type);
+
+    struct SceneryData {
+      WallOrientation orientation;
+      ActionFlags action_flags;
+      nonstd::optional<ScriptId> script_id;
+      SceneryType type;
+      MaterialId material_id;
+      uint8_t sound_id;
     };
   }
 }

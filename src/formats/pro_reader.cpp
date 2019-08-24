@@ -20,6 +20,10 @@ using klmth::pro::WallData;
 using klmth::pro::ActionFlags;
 using klmth::pro::ScriptId;
 using klmth::pro::MaterialId;
+using klmth::pro::ItemData;
+using klmth::pro::ItemType;
+using klmth::pro::SceneryData;
+using klmth::pro::SceneryType;
 
 namespace {
   ObjectType parse_obj_type(uint8_t c) {
@@ -42,7 +46,7 @@ namespace {
       throw runtime_error{ss.str()};
     }
   }
-  
+
   ObjectId read_oid(istream& in) {
     uint32_t b = read_be_u32_unsafe(in);
     ObjectType type = parse_obj_type(b >> 24);
@@ -80,7 +84,7 @@ namespace {
     uint32_t b = read_be_u32_unsafe(in);
     FrmType type = parse_frm_type(b >> 24);
     uint16_t val = b & 0xffff;
-    
+
     return { type, val };
   }
 
@@ -115,7 +119,7 @@ namespace {
       return {v};
     }
   }
-  
+
   MaterialId read_material_id(istream& in) {
     uint32_t v = read_be_u32_unsafe(in);
 
@@ -142,6 +146,52 @@ namespace {
       throw std::runtime_error{ss.str()};
     }
   }
+
+  ItemType read_item_type(istream& in) {
+    uint32_t v = read_be_u32_unsafe(in);
+    switch (v) {
+    case 0:
+      return ItemType::armor;
+    case 1:
+      return ItemType::container;
+    case 2:
+      return ItemType::drug;
+    case 3:
+      return ItemType::weapon;
+    case 4:
+      return ItemType::ammo;
+    case 5:
+      return ItemType::misc;
+    case 6:
+      return ItemType::key;
+    default:
+      stringstream msg;
+      msg << "unknown item type value (" << v << ") encountered";
+      throw std::runtime_error{msg.str()};
+    }
+  }
+
+  SceneryType read_scenery_type(istream& in) {
+    uint32_t v = read_be_u32_unsafe(in);
+    switch (v) {
+    case 0:
+      return SceneryType::door;
+    case 1:
+      return SceneryType::stairs;
+    case 2:
+      return SceneryType::elevator;
+    case 3:
+      return SceneryType::ladder_bottom;
+    case 4:
+      return SceneryType::ladder_top;
+    case 5:
+      return SceneryType::generic;
+    default:
+      stringstream msg;
+      msg << "unknown scenery type (" << v << ") encountered";
+      throw std::runtime_error{msg.str()};
+    }
+  }
 }
 
 Header klmth::pro::parse_header(std::istream& in) {
@@ -162,4 +212,33 @@ WallData pro::parse_wall_data(std::istream& in) {
   wd.script_id = read_script_id(in);
   wd.material_id = read_material_id(in);
   return wd;
+}
+
+ItemData pro::parse_item_data(std::istream& in) {
+  ItemData ret;
+
+  in.ignore(3);  // flags ext: some parts for all items, some parts for weapons
+  in.ignore(1);  // attack modes: only for weapons
+  in.ignore(4);  // script ID
+
+  ret.type = read_item_type(in);
+  ret.material_id = read_material_id(in);
+  ret.size = read_be_u32_unsafe(in);
+  ret.weight = read_be_u32_unsafe(in);
+  ret.cost = read_be_u32_unsafe(in);
+  ret.inventory_fid = read_be_u32_unsafe(in);
+  ret.sound_id = read_byte(in);
+
+  return ret;
+}
+
+SceneryData pro::parse_scenery_data(std::istream& in) {
+  SceneryData ret;
+  ret.orientation = read_wall_orientation(in);
+  ret.action_flags = { read_be_u16_unsafe(in) };
+  ret.script_id = read_script_id(in);
+  ret.type = read_scenery_type(in);
+  ret.material_id = read_material_id(in);
+  ret.sound_id = read_byte(in);
+  return ret;
 }

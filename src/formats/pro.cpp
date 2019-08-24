@@ -240,16 +240,16 @@ const char* pro::str(MaterialId id) {
 }
 
 pro::ScriptId::ScriptId(uint32_t _val): val{_val} {
-  uint8_t type = (val >> 16) & 0xff;
+  uint8_t type = (val >> 24) & 0xff;
   if (type != 3) {
     std::stringstream msg;
-    msg << "incorrect pro::ScriptId value (" << val << "). Can only be equal to 3 (for holodisk script";
+    msg << "incorrect pro::ScriptId value (" << val << "). Can only have a type id of 3 (for holodisk script) but has a value of " << std::to_string(type);
     throw std::runtime_error{msg.str()};
   }
 }
 
 pro::ScriptType pro::ScriptId::type() const noexcept {
-  // it's actually (val >> 16) & 0xff, but only one script type is
+  // it's actually (val >> 24) & 0xff, but only one script type is
   // used in PRO files
   return ScriptType::holodisk;
 }
@@ -259,3 +259,42 @@ uint16_t pro::ScriptId::id() const noexcept {
 }
 
 
+const char* pro::str(ItemType item_type) {
+  switch (item_type) {
+  case ItemType::armor:
+    return "armor";
+  case ItemType::container:
+    return "container";
+  case ItemType::drug:
+    return "drug";
+  case ItemType::weapon:
+    return "weapon";
+  case ItemType::ammo:
+    return "ammo";
+  case ItemType::misc:
+    return "misc";
+  case ItemType::key:
+    return "key";
+  default:
+    throw std::runtime_error{"unknown ItemType passed to pro::str"};
+  }
+}
+
+const char* pro::str(SceneryType scenery_type) {
+  switch (scenery_type) {
+  case SceneryType::door:
+    return "door";
+  case SceneryType::stairs:
+    return "stairs";
+  case SceneryType::elevator:
+    return "elevator";
+  case SceneryType::ladder_bottom:
+    return "ladder_bottom";
+  case SceneryType::ladder_top:
+    return "ladder_top";
+  case SceneryType::generic:
+    return "generic";
+  default:
+    throw std::runtime_error{"unknown SceneryType passed to pro::str"};
+  }
+}
