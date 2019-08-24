@@ -27,16 +27,9 @@ int cmd_paldump(int argc, char** argv) {
 
   CLI11_PARSE(app, argc, argv);
 
-  try {
-    auto handler = [](cli::NamedStream& strm) {
-                     pal::File f = pal::parse(strm.strm);
-                     print_pal(f, std::cout);
-                   };
-    cli::handle_paths(paths, handler);
-
-    return 0;
-  } catch (const std::exception& ex) {
-    std::cerr << argv[0] << ": " << ex.what() << std::endl;
-    return 1;
-  }
+  auto path_handler = [](cli::NamedStream& strm) {
+                   pal::File f = pal::parse(strm.strm);
+                   print_pal(f, std::cout);
+                 };
+  return cli::main_with_paths("paldump", paths, path_handler);
 }

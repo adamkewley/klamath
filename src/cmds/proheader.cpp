@@ -100,16 +100,9 @@ int cmd_proheader(int argc, char** argv) {
 
   CLI11_PARSE(app, argc, argv);
 
-  try {
-    auto handler = [](cli::NamedStream& strm) {
-                     run(std::cout, strm);
-                   };
+  auto path_handler = [](cli::NamedStream& strm) {
+                        run(std::cout, strm);
+                      };
 
-    cli::handle_paths(paths, handler);
-
-    return 0;
-  } catch (const std::exception& ex) {
-    std::cerr << "proheader: " << ex.what() << std::endl;
-    return 1;
-  }
+  return cli::main_with_paths("proheader", paths, path_handler);
 }

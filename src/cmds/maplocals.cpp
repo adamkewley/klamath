@@ -29,16 +29,9 @@ int cmd_maplocals(int argc, char** argv) {
 
   CLI11_PARSE(app, argc, argv);
 
-  try {
-    auto handler = [](cli::NamedStream& strm) {
-                     print_stream(strm, std::cout);
-                   };
+  auto path_handler = [](cli::NamedStream& strm) {
+                        print_stream(strm, std::cout);
+                      };
 
-    cli::handle_paths(paths, handler);
-
-    return 0;
-  } catch (const std::exception& ex) {
-    std::cerr << "maplocals: " << ex.what() << std::endl;
-    return 1;
-  }
+  return cli::main_with_paths("maplocals", paths, path_handler);
 }

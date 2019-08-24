@@ -50,3 +50,15 @@ void cli::handle_paths(const std::vector<std::string>& pths,
     }
   }
 }
+
+int cli::main_with_paths(const char* appname,
+                         const std::vector<std::string>& pths,
+                         std::function<void(NamedStream&)> callback) {
+  try {
+    cli::handle_paths(pths, callback);
+    return 0;
+  } catch (const std::exception& ex) {
+    std::cerr << appname << ": " << ex.what() << std::endl;
+    return 1;
+  }
+}

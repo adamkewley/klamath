@@ -50,17 +50,10 @@ int cmd_aafprint(int argc, char** argv) {
 
   CLI11_PARSE(app, argc, argv);
 
-  try {
-    auto handler = [](cli::NamedStream& strm) {
-                     aaf::File aaf_file = aaf::read_file(strm.strm);
-                     print_aaf_file(aaf_file, std::cout);
-                   };
+  auto path_handler = [](cli::NamedStream& strm) {
+                        aaf::File aaf_file = aaf::read_file(strm.strm);
+                        print_aaf_file(aaf_file, std::cout);
+                      };
 
-    cli::handle_paths(aaf_pths, handler);
-
-    return 0;
-  } catch (const std::exception& ex) {
-    std::cerr << "aafprint: " << ex.what() << std::endl;
-    return 1;
-  }
+  return cli::main_with_paths("aafprint", aaf_pths, path_handler);
 }

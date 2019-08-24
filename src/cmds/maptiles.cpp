@@ -75,15 +75,8 @@ int cmd_maptiles(int argc, char** argv) {
 
   CLI11_PARSE(app, argc, argv);
 
-  try {
-    auto handler = [](cli::NamedStream& strm) {
-                     handle_output(strm, std::cout);
-                   };
-
-    cli::handle_paths(paths, handler);
-    return 0;
-  } catch (const std::exception& ex) {
-    std::cerr << "maptiles: " << ex.what() << std::endl;
-    return 1;
-  }
+  auto path_handler = [](cli::NamedStream& strm) {
+                        handle_output(strm, std::cout);
+                      };
+  return cli::main_with_paths("maptiles", paths, path_handler);
 }
