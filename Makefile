@@ -26,7 +26,7 @@ package-deb: compile
 	    --input-type dir \
 	    --output-type deb \
             --force \
-	    ${OUT_DIR}klamath/klamath=/usr/local/bin/klamath
+	    ${OUT_DIR}klamath=/usr/local/bin/klamath
 
 package: package-deb
 
