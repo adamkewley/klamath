@@ -44,8 +44,6 @@ LST file. Valid types include:
 * 08: heads 
 * 09: background
 
-------------
-
 .. note::
    For PIDs that refer to critter :doc:`frm` files, the
    PID format is more complex. This format will be documented later.
@@ -57,6 +55,7 @@ Header of the MAP file
 
 .. list-table:: MAP header
    :header-rows: 1
+   :widths: 10, 10, 15, 65
 
    * - Offset
      - Size
@@ -64,7 +63,8 @@ Header of the MAP file
      - Description
    * - 0x0000
      - 4
-     - unsigned = 19 or 20
+     - | unsigned 
+       | = 19 or 20
      - | Map version.
        | *Fallout 1* uses map version 19, while *Fallout 2* uses 20.
    * - 0x0004
@@ -73,17 +73,20 @@ Header of the MAP file
      - Map filename.
    * - 0x0014
      - 4
-     - signed = [0..39999]
+     - | signed 
+       | = [0..39999]
      - | Default player position. 
        | The default hex grid that the player will start in when the map is entered, if not overridden.
    * - 0x0018
      - 4
-     - signed = [0..2]
+     - | signed
+       | = [0..2]
      - | Default map elevation. 
        | The default map elevation for the player to start in when the map is entered, if not overridden.
    * - 0x001C
      - 4
-     - signed = [0..5]
+     - | signed
+       | = [0..5]
      - | Default player orientation. 
        | The default orientation the player is facing when the map is entered.
    * - 0x0020
@@ -94,12 +97,13 @@ Header of the MAP file
      - 4
      - signed
      - | Script id for this map. 
-       | Value of -1 means no map. Text string is found in MSG file scrname.msg at index [id + 101].
+       | Value of -1 means no map. 
+       | Text string is found in MSG file scrname.msg at index [id + 101].
    * - 0x0028
      - 4
      - signed
      - | Elevation flags.
-       * If (flag & 0x1) == 0 then ?? unknown. 
+       * If (flag & 0x1) != 0 then the map is a savegame map (.SAV).
        * If (flag & 0x2) == 0 then the map has an elevation at level 0. 
        * If (flag & 0x4) == 0 then the map has an elevation at level 1. 
        * If (flag & 0x8) == 0 then the map has an elevation at level 2.
@@ -209,11 +213,11 @@ Here is some sample C code used to skip over the script section.
 .. code-block:: c
 
    /* read in each sequence of scripts */
-   for (i = 0; i &lt; 5; i++) {
+   for (i = 0; i < 5; i++) {
 
       /* number of scripts used in this sequence */
       count = read_int32_big_endian(stream);
-      if (count &gt; 0) {
+      if (count > 0) {
 
          /* loop counter must be modulo 16 (rounded up) */
          loop = MODULO_16(count);
@@ -221,7 +225,7 @@ Here is some sample C code used to skip over the script section.
          check = 0;
 
          /* read in all the scripts of this sequence */
-         for (j = 0; j &lt; loop; j++) {
+         for (j = 0; j < loop; j++) {
             read_script(stream);
 
             /* after every 16 scripts is the check block */
@@ -234,7 +238,7 @@ Here is some sample C code used to skip over the script section.
             }
          }
          if (check != count) {
-            set_error_message(&quot;error reading scripts: check is incorrect&quot;);
+            set_error_message("error reading scripts: check is incorrect");
             okay = FALSE;
             break;
          }
